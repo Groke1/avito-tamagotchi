@@ -1,0 +1,720 @@
+openapi: 3.0.3
+info:
+  title: Avito Tamagotchi API
+  description:
+    "MVP API для авторизации, профиля, питомца, ежедневных заданий и лидерборда.
+
+
+    Все защищённые HTTP-методы принимают JWT access-токен:
+
+    `Authorization: Bearer <access_token>`.
+
+
+    Методы регистрации, входа и обновления токенов возвращают пару `access_token` и `refresh_token` в JSON."
+  version: 2.0.1
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Локальный сервер разработки
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+  - name: Profile
+  - name: Pet
+  - name: Tasks
+  - name: Leaderboard
+  - name: Realtime
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Зарегистрировать пользователя
+      description: Создаёт пользователя, но не создаёт питомца. После регистрации frontend предлагает выбрать имя питомца и вызвать POST /pet. Возвращает access_token и refresh_token.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Пользователь зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          $ref: "#/components/responses/UserAlreadyExists"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Войти в приложение и получить пару токенов
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Обновить пару токенов
+      description: Принимает refresh_token в JSON и возвращает новую пару access_token и refresh_token.
+      security: []
+      responses:
+        "200":
+          description: Access-токен обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/InvalidRefreshToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+  /profile:
+    get:
+      tags:
+        - Profile
+      summary: Получить профиль текущего пользователя
+      responses:
+        "200":
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /pet:
+    get:
+      tags:
+        - Pet
+      summary: Получить питомца текущего пользователя
+      responses:
+        "200":
+          description: Текущее состояние питомца
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PetNotFound"
+    post:
+      tags:
+        - Pet
+      summary: Создать питомца
+      description: "Создаёт единственного питомца текущего пользователя.
+
+        user_id определяется из claim sub access-токена и не передаётся клиентом.
+
+        "
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePetRequest"
+      responses:
+        "201":
+          description: Питомец создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/PetAlreadyExists"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /pet/feed:
+    post:
+      tags:
+        - Pet
+      summary: Покормить питомца
+      description:
+        "Выполняет действие кормления и возвращает полное новое состояние питомца.
+
+        Повторное действие и ограничения определяются серверной бизнес-логикой.
+
+        "
+      responses:
+        "200":
+          description: Полное новое состояние питомца
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PetNotFound"
+        "409":
+          $ref: "#/components/responses/ActionUnavailable"
+  /pet/stroke:
+    post:
+      tags:
+        - Pet
+      summary: Погладить питомца
+      description: Выполняет действие и возвращает полное новое состояние питомца.
+      responses:
+        "200":
+          description: Полное новое состояние питомца
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/PetNotFound"
+        "409":
+          $ref: "#/components/responses/ActionUnavailable"
+  /pet/ws-ticket:
+    post:
+      tags:
+        - Realtime
+      summary: Получить одноразовый ticket для WebSocket
+      description:
+        "Проверяет access-токен и выдаёт короткоживущий одноразовый ticket.
+
+        Затем frontend открывает `ws://host/api/v1/ws?ticket=<ticket>`.
+
+        "
+      responses:
+        "200":
+          description: Ticket выдан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebSocketTicket"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ws:
+    get:
+      tags:
+        - Realtime
+      summary: Открыть WebSocket-соединение
+      description:
+        "Endpoint для WebSocket Upgrade. Принимает одноразовый ticket в query.
+
+
+        Одно соединение используется для всех персональных realtime-событий:
+
+        `pet.updated`, `task.completed`, `leaderboard.position_updated`.
+
+
+        Первичная загрузка данных выполняется через REST, WebSocket сообщает
+
+        только о последующих изменениях.
+
+        "
+      security: []
+      parameters:
+        - name: ticket
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "101":
+          description: Switching Protocols
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /leaderboard:
+    get:
+      tags:
+        - Leaderboard
+      summary: Получить топ пользователей
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Количество записей, максимум 100
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Список лидеров
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LeaderboardEntry"
+                  current_user:
+                    allOf:
+                      - $ref: "#/components/schemas/LeaderboardEntry"
+                    nullable: true
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /tasks:
+    get:
+      tags:
+        - Tasks
+      summary: Получить ежедневные задания текущего пользователя
+      description: "Возвращает задания на текущий серверный день.
+
+        Если задания ещё не созданы, сервис создаёт набор лениво при первом запросе.
+
+        "
+      responses:
+        "200":
+          description: Список заданий
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - date
+                  - items
+                properties:
+                  date:
+                    type: string
+                    format: date
+                    example: "2026-08-03"
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserTask"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /tasks/{task_id}:
+    get:
+      tags:
+        - Tasks
+      summary: Получить одно задание
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Задание пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserTask"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/TaskNotFound"
+  /tasks/{task_id}/complete:
+    post:
+      tags:
+        - Tasks
+      summary: Завершить ежедневное задание
+      description: "Для MVP frontend явно подтверждает выполнение задания.
+
+        Сервер проверяет принадлежность задания пользователю, текущую дату
+
+        и отсутствие предыдущего завершения. Награда начисляется один раз.
+
+        "
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Задание завершено, награда начислена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompleteTaskResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/TaskNotFound"
+        "409":
+          $ref: "#/components/responses/TaskCompletionConflict"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access-токен в заголовке Authorization
+  parameters:
+    TaskId:
+      name: task_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Unauthorized:
+      description: Access-токен отсутствует, невалиден или истёк
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: UNAUTHORIZED
+            message: Требуется повторная авторизация
+    InvalidCredentials:
+      description: Неверный email или пароль
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: INVALID_CREDENTIALS
+            message: Неверный email или пароль
+    InvalidRefreshToken:
+      description: Refresh-токен отсутствует, невалиден, отозван или истёк
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: INVALID_REFRESH_TOKEN
+            message: Сессия истекла. Выполните вход снова
+    UserAlreadyExists:
+      description: Email или username уже занят
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: USER_ALREADY_EXISTS
+            message: Пользователь с такими данными уже существует
+    PetNotFound:
+      description: У текущего пользователя нет питомца
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: PET_NOT_FOUND
+            message: Сначала создайте питомца
+    PetAlreadyExists:
+      description: У пользователя уже есть питомец
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: PET_ALREADY_EXISTS
+            message: У пользователя уже есть питомец
+    ActionUnavailable:
+      description: Действие сейчас недоступно
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: PET_ACTION_UNAVAILABLE
+            message: Это действие пока недоступно
+    TaskNotFound:
+      description: Задание не найдено или не принадлежит текущему пользователю
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: TASK_NOT_FOUND
+            message: Задание не найдено
+    TaskCompletionConflict:
+      description: Задание нельзя завершить
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            alreadyCompleted:
+              value:
+                code: TASK_ALREADY_COMPLETED
+                message: Награда за это задание уже получена
+            expired:
+              value:
+                code: TASK_EXPIRED
+                message: Задание больше не активно
+    ValidationError:
+      description: Ошибка валидации входных данных
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: VALIDATION_ERROR
+            message: Проверьте переданные данные
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 2
+          maxLength: 40
+          example: kot_master
+        email:
+          type: string
+          format: email
+          example: kot@avito.ru
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          example: supersecret123
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: kot@avito.ru
+        password:
+          type: string
+          format: password
+          example: supersecret123
+    RefreshRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh-токен текущей сессии
+          example: d9b2d63d-ce23-4e95-96e9-3be8d02a1512
+    AuthResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+      properties:
+        access_token:
+          type: string
+          description: JWT access-токен для защищённых запросов
+          example: eyJhbGciOiJIUzI1NiIsInR...
+        refresh_token:
+          type: string
+          description: Токен для обновления пары токенов
+          example: d9b2d63d-ce23-4e95-96e9-3be8d02a1512
+    UserProfile:
+      type: object
+      required:
+        - user_id
+        - username
+        - email
+        - coins
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+        username:
+          type: string
+          example: kot_master
+        email:
+          type: string
+          format: email
+          example: kot@avito.ru
+        coins:
+          type: integer
+          minimum: 0
+          example: 450
+    CreatePetRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+          example: Авито-Кот
+    Pet:
+      type: object
+      required:
+        - id
+        - name
+        - level
+        - xp
+        - next_level_xp
+        - satiety
+        - happiness
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        name:
+          type: string
+          example: Авито-Кот
+        level:
+          type: integer
+          minimum: 1
+          example: 3
+        xp:
+          type: integer
+          minimum: 0
+          example: 145
+        next_level_xp:
+          type: integer
+          minimum: 1
+          example: 200
+        satiety:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 85
+        happiness:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 95
+    LeaderboardEntry:
+      type: object
+      required:
+        - rank
+        - username
+        - pet_name
+        - level
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          example: 1
+        username:
+          type: string
+          example: kot_master
+        pet_name:
+          type: string
+          example: Авито-Кот
+        level:
+          type: integer
+          minimum: 1
+          example: 12
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - reward_coins
+        - reward_xp
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Посмотри три объявления
+        description:
+          type: string
+          example: Открой три разных объявления в выбранной категории
+        reward_coins:
+          type: integer
+          minimum: 0
+          example: 20
+        reward_xp:
+          type: integer
+          minimum: 0
+          example: 50
+    UserTask:
+      allOf:
+        - $ref: "#/components/schemas/Task"
+        - type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              enum:
+                - active
+                - completed
+              example: active
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+    CompleteTaskResponse:
+      type: object
+      required:
+        - task
+        - awarded
+        - pet
+      properties:
+        task:
+          $ref: "#/components/schemas/UserTask"
+        awarded:
+          type: object
+          required:
+            - coins
+            - xp
+          properties:
+            coins:
+              type: integer
+              example: 20
+            xp:
+              type: integer
+              example: 50
+        balance:
+          type: object
+          required:
+            - coins
+          properties:
+            coins:
+              type: integer
+              example: 470
+        pet:
+          $ref: "#/components/schemas/Pet"
+    WebSocketTicket:
+      type: object
+      required:
+        - ticket
+      properties:
+        ticket:
+          type: string
+          example: f202c7c483c34c4da20b87efb717e34f
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: PET_NOT_FOUND
+        message:
+          type: string
+          example: Сначала создайте питомца
