@@ -1,2 +1,6 @@
-.idea
-/bin
+.idea/
+.vscode/
+/bin/
+node_modules/
+.DS_Store
+*.log
