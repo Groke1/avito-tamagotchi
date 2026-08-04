@@ -1,1 +1,47 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@theme {
+  --color-avito-green: #04e061;
+  --color-avito-green-dark: #006e2b;
+  --color-avito-green-container: #04e061;
+
+  --color-avito-blue: #00aaff;
+  --color-avito-blue-dark: #006398;
+  --color-avito-blue-container: #00a9fd;
+
+  --color-avito-red: #ff4053;
+  --color-avito-red-dark: #bf002c;
+
+  --color-avito-yellow: #ffc800;
+
+  --color-surface-bg: #f7f9fc;
+  --color-surface-lowest: #ffffff;
+  --color-surface-low: #f2f4f7;
+  --color-surface-container: #eceef1;
+  --color-surface-high: #e6e8eb;
+  --color-surface-highest: #e0e3e6;
+
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #3c4a3b;
+  --color-outline: #6b7b6a;
+  --color-outline-variant: #bacbb7;
+
+  --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --shadow-level-1: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-level-2: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  --radius-card: 1rem;
+  --radius-section: 1.5rem;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  font-family: var(--font-inter);
+  color: var(--color-on-surface-variant);
+  background-color: var(--color-surface-bg);
+}
