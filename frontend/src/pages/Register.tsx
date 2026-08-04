@@ -4,7 +4,7 @@ import { RegisterForm } from '@/features/auth'
 const Register = () => {
   return (
     <AuthLayout>
-      <div className="flex flex-col items-center mb-6 text-center">
+      <div className="flex flex-col items-center mb-6 text-center max-w-xs">
         <div className="flex items-center gap-1.5 mb-2">
           <span className="text-2xl font-black tracking-tight text-avito-green">Авито</span>
           <span className="bg-avito-blue/15 text-avito-blue px-2.5 py-0.5 rounded-lg text-sm font-semibold">

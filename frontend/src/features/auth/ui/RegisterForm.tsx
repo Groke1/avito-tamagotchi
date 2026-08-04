@@ -1,3 +1,4 @@
+import { ROUTES_PATHS } from '@/app/router/config'
 import { Button, Checkbox, FormField } from '@/shared/ui'
 import { Lock, Mail, PawPrint, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -49,7 +50,7 @@ export const RegisterForm = () => {
       </form>
       <div className="mt-6 text-center text-sm text-on-surface-variant">
         Уже есть аккаунт?{' '}
-        <Link to="/login" className="text-avito-blue font-semibold hover:underline">
+        <Link to={ROUTES_PATHS.LOGIN} className="text-avito-blue font-semibold hover:underline">
           Войти
         </Link>
       </div>
