@@ -1,0 +1,7 @@
+.git
+.gitignore
+.idea
+bin
+Dockerfile
+docker-compose.yml
+mocks
