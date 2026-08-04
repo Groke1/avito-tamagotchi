@@ -76,3 +76,26 @@ lint-install: $(GOLANGCI_LINT_BIN)
 .PHONY: lint-clean
 lint-clean:
 	@rm -f "$(GOLANGCI_LINT_BIN)"
+
+.PHONY: integration-test
+
+test:
+	@set -eu; \
+	docker-compose \
+		-f docker-compose.test.yml \
+		down -v --remove-orphans || true; \
+	\
+	status=0; \
+	docker-compose \
+		-f docker-compose.test.yml \
+		up \
+		--build \
+		--abort-on-container-exit \
+		--exit-code-from integration-tests \
+		|| status=$$?; \
+	\
+	docker-compose \
+		-f docker-compose.test.yml \
+		down -v --remove-orphans; \
+	\
+	exit $$status

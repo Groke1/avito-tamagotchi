@@ -5,4 +5,5 @@ use (
 	//./tasks
 	./user
 	./pkg
+	./integration-tests
 )

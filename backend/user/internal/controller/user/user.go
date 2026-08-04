@@ -15,6 +15,8 @@ import (
 
 const maxRequestBodySize = 1 << 20
 
+//go:generate mockgen -source=user.go -destination=mocks/user_mocks.go -package=mocks
+
 type authService interface {
 	Register(ctx context.Context, user entity.User) (*entity.JWT, error)
 	Login(ctx context.Context, email, password string) (*entity.JWT, error)
@@ -54,7 +56,6 @@ func (c *controller) InitRoutes(router *mux.Router, auth func(http.Handler) http
 
 	api.HandleFunc("/usernames", c.Usernames).Methods(http.MethodPost)
 	api.HandleFunc("/update-coins", c.UpdateCoins).Methods(http.MethodPut)
-
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
