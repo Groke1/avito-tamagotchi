@@ -1,15 +1,21 @@
-import * as React from 'react'
 import { cn } from '@/shared/lib/utils'
+import * as React from 'react'
 
 export interface InputProps extends React.ComponentProps<'input'> {
   leftIcon?: React.ReactNode
+  error?: string
 }
 
-function Input({ className, type, leftIcon, ...props }: InputProps) {
+function Input({ className, type, leftIcon, error, ...props }: InputProps) {
   return (
     <div className="group relative w-full flex items-center">
       {leftIcon && (
-        <div className="absolute left-3.5 inset-y-0 flex items-center justify-center text-on-surface-variant/60 pointer-events-none transition-colors group-focus-within:text-avito-green">
+        <div
+          className={cn(
+            'absolute left-3.5 inset-y-0 flex items-center justify-center text-on-surface-variant/60 pointer-events-none transition-colors group-focus-within:text-avito-green',
+            error && 'group-focus-within:text-avito-red text-avito-red',
+          )}
+        >
           {leftIcon}
         </div>
       )}
@@ -19,7 +25,8 @@ function Input({ className, type, leftIcon, ...props }: InputProps) {
         className={cn(
           'w-full bg-surface-container-low rounded-xl px-4 py-3 text-sm text-on-surface border border-surface-container placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-1 focus:ring-avito-green transition-all disabled:opacity-50 disabled:cursor-not-allowed',
           leftIcon && 'pl-11',
-          className
+          error && 'ring-1 ring-avito-red focus:ring-avito-red',
+          className,
         )}
         {...props}
       />

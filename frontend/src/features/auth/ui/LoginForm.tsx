@@ -11,14 +11,14 @@ export const LoginForm = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) })
+  } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema), mode: 'onTouched' })
 
   const onSubmit: SubmitHandler<LoginFormData> = (data) => console.log(data)
 
   return (
     <div className="bg-surface-lowest rounded-3xl shadow-level-1 p-6 md:p-8 w-full border-2 border-white relative overflow-hidden z-10">
       <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-avito-green to-avito-blue" />
-      <form className="flex flex-col gap-5 mt-1" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col gap-5 mt-1" onSubmit={handleSubmit(onSubmit)} noValidate>
         <FormField
           label="Email"
           id="email"

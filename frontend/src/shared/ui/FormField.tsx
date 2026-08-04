@@ -20,7 +20,7 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
         >
           {label}
         </label>
-        <Input id={id} ref={ref} {...props} />
+        <Input id={id} ref={ref} error={error} {...props} />
         {error && <p className="text-xs text-avito-red ml-1 font-medium">{error}</p>}
       </div>
     )
