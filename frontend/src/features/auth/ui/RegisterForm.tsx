@@ -1,4 +1,4 @@
-import { FormField } from '@/shared/ui'
+import { Button, Checkbox, FormField } from '@/shared/ui'
 import { Lock, Mail, PawPrint, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -30,11 +30,7 @@ export const RegisterForm = () => {
         />
         <div className="flex items-start bg-surface-bright p-3 rounded-xl border border-surface-container">
           <div className="flex items-center h-5 mt-0.5">
-            <input
-              id="terms"
-              type="checkbox"
-              className="w-5 h-5 accent-avito-green rounded cursor-pointer"
-            />
+            <Checkbox id="terms" />
           </div>
           <div className="ml-2.5 text-xs text-on-surface-variant leading-tight">
             <label htmlFor="terms" className="cursor-pointer select-none">
@@ -46,13 +42,10 @@ export const RegisterForm = () => {
             </label>
           </div>
         </div>
-        <button
-          type="submit"
-          className="w-full bg-avito-blue hover:bg-avito-blue/70 text-white font-semibold text-base py-3.5 px-6 rounded-2xl transition-all active:scale-[0.98] flex justify-center items-center gap-2 cursor-pointer"
-        >
+        <Button type="submit">
           <span>Создать аккаунт</span>
           <PawPrint size="20" />
-        </button>
+        </Button>
       </form>
       <div className="mt-6 text-center text-sm text-on-surface-variant">
         Уже есть аккаунт?{' '}
