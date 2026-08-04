@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	repository "github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/repository"
@@ -32,6 +31,9 @@ func NewPetService(petRepository *repository.PetRepository) *PetService {
 
 func (ps *PetService) GetPet(ctx context.Context, userID int64) (*Pet, error) {
 	dbPet, err := ps.petRepository.GetPet(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
 
 	pet := Pet{
 		ID:          dbPet.ID,
@@ -51,8 +53,7 @@ func (ps *PetService) GetPet(ctx context.Context, userID int64) (*Pet, error) {
 func (ps *PetService) CreatePet(ctx context.Context, petName string, userID int64) (*Pet, error) {
 	dbPet, err := ps.petRepository.CreatePet(ctx, petName, userID)
 	if err != nil {
-		fmt.Printf("err: %v", err)
-		panic(1)
+		return nil, err
 	}
 
 	pet := Pet{

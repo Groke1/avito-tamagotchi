@@ -11,10 +11,17 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				// TODO
+				writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется повторная авторизация")
+				return
 			}
 
-			jwtToken := strings.Split(authHeader, " ")[1]
+			parts := strings.Split(authHeader, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется повторная авторизация")
+				return
+			}
+
+			jwtToken := parts[1]
 			_ = jwtToken
 
 			userID := int64(1) // TODO

@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/domain"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -36,9 +39,8 @@ func (pr *PetRepository) GetPet(ctx context.Context, userID int64) (*Pet, error)
 
 	var pet Pet
 	err := pr.db.GetContext(ctx, &pet, query, userID)
-	if err != nil {
-		// TODO
-		return nil, nil
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.ErrPetNotFound
 	}
 
 	return &pet, err
@@ -54,8 +56,7 @@ func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID i
 	var pet Pet
 	err := pr.db.GetContext(ctx, &pet, query, petName, userID)
 	if err != nil {
-		// TODO
-		return nil, err
+		return nil, domain.ErrPetAlreadyExists
 	}
 
 	return &pet, err
