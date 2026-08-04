@@ -1,4 +1,4 @@
-import { Input } from '@/shared/ui'
+import { FormField } from '@/shared/ui'
 import { Lock, Mail, PawPrint, User } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -7,48 +7,27 @@ export const RegisterForm = () => {
     <div className="bg-surface-lowest rounded-3xl shadow-level-1 p-6 md:p-8 w-full max-w-md border-2 border-white relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-avito-green to-avito-blue" />
       <form className="flex flex-col gap-5 mt-1" onSubmit={(e) => e.preventDefault()}>
-        <div>
-          <label
-            htmlFor="username"
-            className="block text-sm font-semibold text-on-surface mb-1.5 ml-1"
-          >
-            Имя пользователя
-          </label>
-          <Input
-            id="username"
-            type="text"
-            placeholder="Ваш никнейм"
-            leftIcon={<User size="20" />}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-semibold text-on-surface mb-1.5 ml-1"
-          >
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="mail@example.com"
-            leftIcon={<Mail size="20" />}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-semibold text-on-surface mb-1.5 ml-1"
-          >
-            Пароль
-          </label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            leftIcon={<Lock size="20" />}
-          />
-        </div>
+        <FormField
+          label="Имя пользователя"
+          id="username"
+          type="text"
+          placeholder="Ваш никнейм"
+          leftIcon={<User size="20" />}
+        />
+        <FormField
+          label="Email"
+          id="email"
+          type="email"
+          placeholder="mail@example.com"
+          leftIcon={<Mail size="20" />}
+        />
+        <FormField
+          label="Пароль"
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          leftIcon={<Lock size="20" />}
+        />
         <div className="flex items-start bg-surface-bright p-3 rounded-xl border border-surface-container">
           <div className="flex items-center h-5 mt-0.5">
             <input
