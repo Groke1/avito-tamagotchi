@@ -16,6 +16,7 @@ export const RegisterForm = () => {
           id="username"
           type="text"
           placeholder="Ваш никнейм"
+          disabled={isLoading}
           leftIcon={<User size="20" />}
           error={errors.username?.message}
           {...register('username')}
@@ -25,6 +26,7 @@ export const RegisterForm = () => {
           id="email"
           type="email"
           placeholder="mail@example.com"
+          disabled={isLoading}
           leftIcon={<Mail size="20" />}
           error={errors.email?.message}
           {...register('email')}
@@ -34,6 +36,7 @@ export const RegisterForm = () => {
           id="password"
           type="password"
           placeholder="••••••••"
+          disabled={isLoading}
           leftIcon={<Lock size="20" />}
           error={errors.password?.message}
           {...register('password')}
@@ -43,6 +46,7 @@ export const RegisterForm = () => {
             <div className="flex items-center h-5 mt-0.5">
               <Checkbox
                 id="terms"
+                disabled={isLoading}
                 checked={termsChecked}
                 onCheckedChange={(checked) =>
                   setValue('terms', Boolean(checked), { shouldValidate: true })

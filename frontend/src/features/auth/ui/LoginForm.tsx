@@ -16,6 +16,7 @@ export const LoginForm = () => {
           id="email"
           type="email"
           placeholder="mail@example.com"
+          disabled={isLoading}
           error={errors.email?.message}
           leftIcon={<Mail size="20" />}
           {...register('email')}
@@ -25,6 +26,7 @@ export const LoginForm = () => {
           id="password"
           type="password"
           placeholder="••••••••"
+          disabled={isLoading}
           leftIcon={<Lock size="20" />}
           {...register('password')}
           error={errors.password?.message}
