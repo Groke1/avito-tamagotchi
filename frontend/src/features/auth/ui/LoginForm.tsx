@@ -1,24 +1,16 @@
 import { ROUTES_PATHS } from '@/app/router/config'
-import { type LoginFormData, loginSchema } from '@/features/auth/model/login.schema'
 import { Button, FormField } from '@/shared/ui'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRight, Lock, Mail } from 'lucide-react'
-import { type SubmitHandler, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
+import { useLoginForm } from '../model/useLoginForm'
 
 export const LoginForm = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema), mode: 'onTouched' })
-
-  const onSubmit: SubmitHandler<LoginFormData> = (data) => console.log(data)
+  const { errors, isLoading, register, handleSubmit } = useLoginForm()
 
   return (
     <div className="bg-surface-lowest rounded-3xl shadow-level-1 p-6 md:p-8 w-full border-2 border-white relative overflow-hidden z-10">
       <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-avito-green to-avito-blue" />
-      <form className="flex flex-col gap-5 mt-1" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form className="flex flex-col gap-5 mt-1" onSubmit={handleSubmit} noValidate>
         <FormField
           label="Email"
           id="email"
@@ -37,7 +29,7 @@ export const LoginForm = () => {
           {...register('password')}
           error={errors.password?.message}
         />
-        <Button type="submit">
+        <Button type="submit" isLoading={isLoading}>
           <span>Войти</span>
           <ArrowRight size="20" />
         </Button>
