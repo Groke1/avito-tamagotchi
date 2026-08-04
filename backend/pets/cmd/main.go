@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/api"
 	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/repository"
 	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/service"
+	"github.com/joho/godotenv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,10 +17,28 @@ import (
 )
 
 func main() {
-	dsn := "postgres://postgres:postgres@localhost:5432/pet_db?sslmode=disable"
-	driver := "postgres"
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf(".env not found: %v", err)
+	}
 
-	db, err := sqlx.Connect(driver, dsn)
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL is not set")
+		return
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("PORT is not set")
+	}
+
+	authSecret := os.Getenv("AUTH_SECRET")
+	if authSecret == "" {
+		log.Fatal("AUTH_SECRET is not set")
+	}
+
+	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		log.Fatalf("Database connection failed: %v", err)
 	}
@@ -35,11 +54,11 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/pet", func(r chi.Router) {
-		r.Use(api.AuthMiddleware("jwt-secret")) // TODO
+		r.Use(api.AuthMiddleware(authSecret))
 		r.Get("/", handler.GetPet)
 		r.Post("/", handler.CreatePet)
 	})
 
-	fmt.Println("RUN")
-	http.ListenAndServe(":8080", r)
+	log.Println("[SERVICE STARTED]")
+	http.ListenAndServe(":"+port, r)
 }

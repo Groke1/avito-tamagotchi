@@ -99,5 +99,6 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(petResponse)
 }
