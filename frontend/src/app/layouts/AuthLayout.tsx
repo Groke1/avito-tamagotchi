@@ -2,19 +2,12 @@ import type { FC, PropsWithChildren } from 'react'
 
 export const AuthLayout: FC<PropsWithChildren> = ({ children }) => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="flex items-center justify-between px-6 py-4">
-        <h2>
-          Авито <span>Тамагочи</span>
-        </h2>
-        <div>
-          <div>Шаг 1 из 2</div>
-          <div className="relative p-1 rounded-full bg-surface-high">
-            <span className="absolute inset-0 w-1/2 bg-avito-green rounded-full"></span>
-          </div>
-        </div>
-      </header>
-      <div className="flex justify-center items-center ">{children}</div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 bg-surface-bg relative overflow-hidden">
+      <div className="hidden xl:block absolute -top-80 -left-40 w-150 h-150 bg-avito-green/20 rounded-full blur-2xl pointer-events-none" />
+      <div className="hidden xl:block absolute left-[20%] -bottom-100 w-200 h-200 bg-avito-red/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="hidden xl:block absolute -right-60 bottom-50 w-150 h-150 bg-avito-blue/20 rounded-full blur-2xl pointer-events-none" />
+
+      <main className="w-full max-w-lg z-10 flex flex-col items-center">{children}</main>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 export const RegisterForm = () => {
   return (
-    <div className="bg-surface-lowest rounded-3xl shadow-level-1 p-6 md:p-8 w-full max-w-md border-2 border-white relative overflow-hidden">
+    <div className="bg-surface-lowest rounded-3xl shadow-level-1 p-6 md:p-8 w-full border-2 border-white relative overflow-hidden z-10">
       <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-avito-green to-avito-blue" />
       <form className="flex flex-col gap-5 mt-1" onSubmit={(e) => e.preventDefault()}>
         <FormField
