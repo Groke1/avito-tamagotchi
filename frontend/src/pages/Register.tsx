@@ -1,9 +1,10 @@
 import { AuthLayout } from '@/app/layouts/AuthLayout'
+import { RegisterForm } from '@/features/auth'
 
 const Register = () => {
   return (
     <AuthLayout>
-      <div className="border p-2 bg-amber-700"></div>
+      <RegisterForm />
     </AuthLayout>
   )
 }
