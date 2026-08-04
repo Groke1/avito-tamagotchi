@@ -72,9 +72,9 @@ func pbkdf2Block(password, salt []byte, iterations, blockNum int) []byte {
 	mac := hmac.New(sha256.New, password)
 	_, _ = mac.Write(salt)
 	_, _ = mac.Write([]byte{
-		byte(blockNum >> 24),
-		byte(blockNum >> 16),
-		byte(blockNum >> 8),
+		byte(blockNum >> 24), //nolint:mnd // Standard byte shift for PBKDF2
+		byte(blockNum >> 16), //nolint:mnd // Standard byte shift for PBKDF2
+		byte(blockNum >> 8),  //nolint:mnd // Standard byte shift for PBKDF2
 		byte(blockNum),
 	})
 	u := mac.Sum(nil)

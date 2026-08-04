@@ -15,22 +15,30 @@ import (
 
 const maxRequestBodySize = 1 << 20
 
-type UserService interface {
+type authService interface {
 	Register(ctx context.Context, user entity.User) (*entity.JWT, error)
 	Login(ctx context.Context, email, password string) (*entity.JWT, error)
 	Refresh(ctx context.Context, refreshToken string) (*entity.JWT, error)
+}
+
+type userService interface {
 	Profile(ctx context.Context, userID string) (*entity.User, error)
+	GetUsers(ctx context.Context, userIDs []string) ([]entity.User, error)
+	UpdateCoins(ctx context.Context, userID string, coins int64) error
 }
 
 type controller struct {
-	logger  *zap.Logger
-	service UserService
+	logger      *zap.Logger
+	authService authService
+	userService userService
 }
 
-func NewController(logger *zap.Logger, service UserService) *controller {
+func NewController(logger *zap.Logger, authService authService, userService userService) *controller {
 	return &controller{
-		logger:  logger,
-		service: service}
+		logger:      logger,
+		authService: authService,
+		userService: userService,
+	}
 }
 
 func (c *controller) InitRoutes(router *mux.Router, auth func(http.Handler) http.Handler) {
@@ -43,6 +51,10 @@ func (c *controller) InitRoutes(router *mux.Router, auth func(http.Handler) http
 	profile := api.PathPrefix("/profile").Subrouter()
 	profile.Use(auth)
 	profile.HandleFunc("", c.Profile).Methods(http.MethodGet)
+
+	api.HandleFunc("/usernames", c.Usernames).Methods(http.MethodPost)
+	api.HandleFunc("/update-coins", c.UpdateCoins).Methods(http.MethodPut)
+
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
@@ -102,6 +114,24 @@ type profileResponse struct {
 	Coins    uint64 `json:"coins"`
 }
 
+type usernamesRequest struct {
+	UserIDs []string `json:"user_ids"`
+}
+
+type usernameResponse struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+}
+
+type usernamesResponse struct {
+	Users []usernameResponse `json:"users"`
+}
+
+type updateCoinsRequest struct {
+	UserID string `json:"user_id"`
+	Delta  int64  `json:"delta"`
+}
+
 type errorResponse struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -116,6 +146,8 @@ var (
 	errInvalidCredentials  errCode = "INVALID_CREDENTIALS"
 	errInvalidRefreshToken errCode = "INVALID_REFRESH_TOKEN"
 	errUnauthorized        errCode = "UNAUTHORIZED"
+	errUserNotFound        errCode = "USER_NOT_FOUND"
+	errInsufficientCoins   errCode = "INSUFFICIENT_COINS"
 )
 
 func (e errCode) message() string {
@@ -132,6 +164,11 @@ func (e errCode) message() string {
 		return "Сессия истекла. Выполните вход снова"
 	case errUnauthorized:
 		return "Требуется повторная авторизация"
+	case errUserNotFound:
+		return "Пользователь не найден"
+	case errInsufficientCoins:
+		return "Недостаточно монет"
+
 	default:
 		return "Unknown error"
 	}
@@ -144,6 +181,5 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 }
 
 func writeError(w http.ResponseWriter, status int, code errCode) {
-
 	writeJSON(w, status, errorResponse{Code: string(code), Message: code.message()})
 }

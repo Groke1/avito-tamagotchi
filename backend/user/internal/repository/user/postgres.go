@@ -27,7 +27,7 @@ func NewUserRepository(qdb sqlcuser.DBTX) *userRepository {
 }
 
 func (r *userRepository) AddUser(ctx context.Context, user entity.User) (userID string, err error) {
-	uuid, err := r.getQueries(ctx).AddUser(ctx, sqlcuser.AddUserParams{
+	userUUID, err := r.getQueries(ctx).AddUser(ctx, sqlcuser.AddUserParams{
 		Username:     user.Username,
 		Email:        user.Email,
 		PasswordHash: user.PasswordHash,
@@ -53,21 +53,17 @@ func (r *userRepository) AddUser(ctx context.Context, user entity.User) (userID 
 		}
 		return "", fmt.Errorf("add user: %w", err)
 	}
-	return uuid.String(), nil
+	return userUUID.String(), nil
 }
 
 func (r *userRepository) GetUserByID(ctx context.Context, userID string) (*entity.User, error) {
-	parsedUserID, err := uuid.Parse(userID)
+	userUUID, err := getUUID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("get user by id: parse user id: %w", err)
 	}
 
-	user, err := r.getQueries(ctx).GetUserByID(
-		ctx,
-		pgtype.UUID{
-			Bytes: parsedUserID,
-			Valid: true,
-		})
+	user, err := r.getQueries(ctx).GetUserByID(ctx, userUUID)
+
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, entity.ErrUserNotFound
@@ -111,6 +107,67 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*ent
 	}, nil
 }
 
+func (r *userRepository) GetUsersByIDs(ctx context.Context, ids []string) ([]entity.User, error) {
+	uuids := make([]pgtype.UUID, len(ids))
+	for i, id := range ids {
+		userUUID, err := getUUID(id)
+		if err != nil {
+			return nil, fmt.Errorf("get users by ids: %w", err)
+		}
+		uuids[i] = userUUID
+	}
+
+	rawUsers, err := r.getQueries(ctx).GetUsersByIDs(ctx, uuids)
+	if err != nil {
+		return nil, fmt.Errorf("get users by ids: %w", err)
+	}
+
+	users := make([]entity.User, len(rawUsers))
+	for i, u := range rawUsers {
+		users[i] = entity.User{
+			ID:       u.ID.String(),
+			Username: u.Username,
+		}
+	}
+	return users, nil
+}
+
+func (r *userRepository) UpdateCoins(
+	ctx context.Context,
+	userID string,
+	deltaCoins int64,
+) error {
+	userUUID, err := getUUID(userID)
+	if err != nil {
+		return fmt.Errorf("update coins: parse user id: %w", err)
+	}
+
+	_, err = r.getQueries(ctx).UpdateCoins(ctx,
+		sqlcuser.UpdateCoinsParams{
+			UserID:     userUUID,
+			DeltaCoins: deltaCoins,
+		},
+	)
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("update coins: %w", err)
+	}
+
+	exists, err := r.getQueries(ctx).UserExists(ctx, userUUID)
+	if err != nil {
+		return fmt.Errorf("update coins: check user existence: %w", err)
+	}
+
+	if !exists {
+		return entity.ErrUserNotFound
+	}
+
+	return entity.ErrInsufficientCoins
+}
+
 func (r *userRepository) getQueries(ctx context.Context) *sqlcuser.Queries {
 	tx, err := db.ExtractTx(ctx)
 	if err != nil {
@@ -118,4 +175,15 @@ func (r *userRepository) getQueries(ctx context.Context) *sqlcuser.Queries {
 	}
 
 	return sqlcuser.New(tx)
+}
+
+func getUUID(userID string) (pgtype.UUID, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return pgtype.UUID{}, fmt.Errorf("get uuid: %w", err)
+	}
+	return pgtype.UUID{
+		Bytes: parsedUserID,
+		Valid: true,
+	}, nil
 }

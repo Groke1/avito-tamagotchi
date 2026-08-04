@@ -100,3 +100,69 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDR
 	)
 	return i, err
 }
+
+const getUsersByIDs = `-- name: GetUsersByIDs :many
+SELECT id, username
+FROM account.users
+WHERE id = ANY($1::uuid[])
+`
+
+type GetUsersByIDsRow struct {
+	ID       pgtype.UUID `json:"id"`
+	Username string      `json:"username"`
+}
+
+func (q *Queries) GetUsersByIDs(ctx context.Context, ids []pgtype.UUID) ([]GetUsersByIDsRow, error) {
+	rows, err := q.db.Query(ctx, getUsersByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUsersByIDsRow
+	for rows.Next() {
+		var i GetUsersByIDsRow
+		if err := rows.Scan(&i.ID, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateCoins = `-- name: UpdateCoins :one
+UPDATE account.users
+SET coins = coins + $1
+WHERE id = $2
+  AND coins + $1 >= 0
+RETURNING coins
+`
+
+type UpdateCoinsParams struct {
+	DeltaCoins int64       `json:"delta_coins"`
+	UserID     pgtype.UUID `json:"user_id"`
+}
+
+func (q *Queries) UpdateCoins(ctx context.Context, arg UpdateCoinsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, updateCoins, arg.DeltaCoins, arg.UserID)
+	var coins int64
+	err := row.Scan(&coins)
+	return coins, err
+}
+
+const userExists = `-- name: UserExists :one
+SELECT EXISTS (
+    SELECT 1
+    FROM account.users
+    WHERE id = $1
+)
+`
+
+func (q *Queries) UserExists(ctx context.Context, userID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, userExists, userID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
