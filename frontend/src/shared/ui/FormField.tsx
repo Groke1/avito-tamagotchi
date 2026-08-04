@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from 'react'
+import { type ReactNode, forwardRef } from 'react'
 import { Input } from './input'
 
 interface FormFieldProps {
@@ -10,21 +10,19 @@ interface FormFieldProps {
   error?: string
 }
 
-export const FormField: FC<FormFieldProps> = ({
-  label,
-  id,
-  type,
-  placeholder,
-  leftIcon,
-  error,
-}) => {
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="block text-sm font-semibold text-on-surface ml-1">
-        {label}
-      </label>
-      <Input id={id} type={type} placeholder={placeholder} leftIcon={leftIcon} />
-      {error && <p className="text-xs text-avito-red ml-1">{error}</p>}
-    </div>
-  )
-}
+export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
+  ({ label, id, error, ...props }, ref) => {
+    return (
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor={id}
+          className="block text-sm font-semibold text-on-surface ml-1 select-none cursor-pointer"
+        >
+          {label}
+        </label>
+        <Input id={id} ref={ref} {...props} />
+        {error && <p className="text-xs text-avito-red ml-1 font-medium">{error}</p>}
+      </div>
+    )
+  },
+)
