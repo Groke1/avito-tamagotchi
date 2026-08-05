@@ -9,6 +9,7 @@ main
 # Go test and coverage artifacts
 *.out
 *.test
+*.http
 
 # Environment files
 .env
@@ -18,3 +19,5 @@ main
 # Temp and OS files
 tmp/
 .DS_Store
+
+go.work.sum
