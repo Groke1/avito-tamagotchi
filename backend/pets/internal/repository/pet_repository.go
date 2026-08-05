@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/domain"
@@ -28,6 +29,10 @@ type PetRepository struct {
 
 func NewPetRepository(db *sqlx.DB) *PetRepository {
 	return &PetRepository{db: db}
+}
+
+func (pr *PetRepository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	return pr.db.BeginTxx(ctx, nil)
 }
 
 func (pr *PetRepository) GetPet(ctx context.Context, userID int64) (*domain.Pet, error) {
@@ -55,7 +60,7 @@ func (pr *PetRepository) GetPet(ctx context.Context, userID int64) (*domain.Pet,
 		CreatedAt:   dbPet.CreatedAt,
 	}
 
-	return &pet, err
+	return &pet, nil
 }
 
 func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID int64) (*domain.Pet, error) {
@@ -83,7 +88,50 @@ func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID i
 		CreatedAt:   dbPet.CreatedAt,
 	}
 
-	return &pet, err
+	return &pet, nil
 }
 
-func (pr *PetRepository) SavePet(ctx context.Context)
+func (pr *PetRepository) GetPetForUpdate(ctx context.Context, tx *sqlx.Tx, userID int64) (*domain.Pet, error) {
+	query := `
+				SELECT *
+				FROM pets p
+				WHERE p.user_id = $1
+				FOR UPDATE
+	`
+
+	var dbPet Pet
+	err := tx.GetContext(ctx, &dbPet, query, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.ErrPetNotFound
+	}
+
+	pet := domain.Pet{
+		ID:          dbPet.ID,
+		UserID:      dbPet.UserID,
+		Name:        dbPet.Name,
+		Level:       dbPet.Level,
+		XP:          dbPet.XP,
+		NextLevelXP: dbPet.NextLevelXP,
+		Satiety:     dbPet.Satiety,
+		Happiness:   dbPet.Happiness,
+		CreatedAt:   dbPet.CreatedAt,
+	}
+
+	return &pet, nil
+}
+
+func (pr *PetRepository) UpdatePet(ctx context.Context, tx *sqlx.Tx, pet *domain.Pet) error {
+	query := `
+				UPDATE pets
+				SET satiety = $1, happiness = $2, xp = $3, next_level_xp = $4, level = $5
+				WHERE id = $6
+	`
+
+	_, err := tx.ExecContext(ctx, query, pet.Satiety, pet.Happiness, pet.XP, pet.NextLevelXP, pet.Level, pet.ID)
+	if err != nil {
+		fmt.Printf("%+v\n", err)
+		return fmt.Errorf("failed to update pet: %v", err)
+	}
+
+	return nil
+}

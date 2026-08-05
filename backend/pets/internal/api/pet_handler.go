@@ -116,7 +116,7 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
-	} else if errors.Is(err, domain.ErrForbiddenAction) {
+	} else if errors.Is(err, domain.ErrUnavailableAction) {
 		writeError(w, ErrUnavailableAction)
 		return
 	}
@@ -132,7 +132,6 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(petResponse)
-
 }
 
 func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +147,7 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
-	} else if errors.Is(err, domain.ErrForbiddenAction) {
+	} else if errors.Is(err, domain.ErrUnavailableAction) {
 		writeError(w, ErrUnavailableAction)
 		return
 	}
