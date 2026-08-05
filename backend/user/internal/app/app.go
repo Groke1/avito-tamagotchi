@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
@@ -61,7 +60,7 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 	})
 
 	router := mux.NewRouter()
-	controller := user.NewController(logger, userService)
+	controller := user.NewController(logger, userService, userService)
 	controller.InitRoutes(
 		router,
 		user.RequireAccessToken(userService),
@@ -71,7 +70,7 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 	server := &http.Server{
 		Addr:              ":" + cfg.HTTP.Port,
 		Handler:           handler,
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: cfg.Settings.ServerReadHeaderTimeout,
 	}
 
 	go worker.StartTokenCleaner(ctx, logger, tokenRepo, cfg.Settings.TokenCleanupInterval)

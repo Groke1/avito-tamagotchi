@@ -7,7 +7,7 @@
 make generate
 ```
 
-Запустить unit-тесты:
+Запуск тестов:
 ```bash
 make test
 ```

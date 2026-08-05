@@ -24,15 +24,16 @@ type (
 			MinConns int32  `env:"POSTGRES_MIN_CONNS" envDefault:"1"`
 		}
 		Settings struct {
-			RegistrationBonusCoins uint64        `env:"REGISTRATION_BONUS_COINS" envDefault:"100"`
-			AccessTokenTTL         time.Duration `env:"ACCESS_TOKEN_TTL" envDefault:"15m"`
-			RefreshTokenTTL        time.Duration `env:"REFRESH_TOKEN_TTL" envDefault:"720h"`
-			TokenCleanupInterval   time.Duration `env:"TOKEN_CLEANUP_INTERVAL" envDefault:"24h"`
-			ShutdownTimeout        time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"5s"`
-			JWTSecret              string        `env:"JWT_SECRET,required"`
-			PGHealthCheckPeriod    time.Duration `env:"POSTGRES_HEALTH_CHECK_PERIOD" envDefault:"30s"`
-			PGMaxConnLifetime      time.Duration `env:"POSTGRES_MAX_CONN_LIFETIME" envDefault:"1h"`
-			PGMaxConnIdleTime      time.Duration `env:"POSTGRES_MAX_CONN_IDLE_TIME" envDefault:"5m"`
+			RegistrationBonusCoins  uint64        `env:"REGISTRATION_BONUS_COINS" envDefault:"100"`
+			AccessTokenTTL          time.Duration `env:"ACCESS_TOKEN_TTL" envDefault:"15m"`
+			RefreshTokenTTL         time.Duration `env:"REFRESH_TOKEN_TTL" envDefault:"720h"`
+			TokenCleanupInterval    time.Duration `env:"TOKEN_CLEANUP_INTERVAL" envDefault:"24h"`
+			ShutdownTimeout         time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"5s"`
+			JWTSecret               string        `env:"JWT_SECRET,required"`
+			PGHealthCheckPeriod     time.Duration `env:"POSTGRES_HEALTH_CHECK_PERIOD" envDefault:"30s"`
+			PGMaxConnLifetime       time.Duration `env:"POSTGRES_MAX_CONN_LIFETIME" envDefault:"1h"`
+			PGMaxConnIdleTime       time.Duration `env:"POSTGRES_MAX_CONN_IDLE_TIME" envDefault:"5m"`
+			ServerReadHeaderTimeout time.Duration `env:"SERVER_READ_HEADER_TIMEOUT" envDefault:"5s"`
 		}
 	}
 )

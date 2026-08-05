@@ -15,7 +15,7 @@ func (c *controller) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, err := c.service.Profile(r.Context(), userID)
+	profile, err := c.userService.Profile(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, entity.ErrUserNotFound) {
 			writeError(w, http.StatusUnauthorized, errUnauthorized)

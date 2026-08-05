@@ -20,6 +20,8 @@ type (
 		AddUser(ctx context.Context, arg entity.User) (string, error)
 		GetUserByID(ctx context.Context, id string) (*entity.User, error)
 		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
+		GetUsersByIDs(ctx context.Context, ids []string) ([]entity.User, error)
+		UpdateCoins(ctx context.Context, userID string, coins int64) (*entity.User, error)
 	}
 
 	tokenRepository interface {
@@ -73,7 +75,8 @@ func (s *userService) Register(ctx context.Context, user entity.User) (*entity.J
 
 	var tokens *entity.JWT
 	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
-		userID, err := s.userRepository.AddUser(ctx, user)
+		var userID string
+		userID, err = s.userRepository.AddUser(ctx, user)
 		if err != nil {
 			return err
 		}
@@ -127,13 +130,13 @@ func (s *userService) Refresh(ctx context.Context, refreshToken string) (*entity
 		}
 
 		if time.Now().UTC().After(storedToken.ExpiresAt) {
-			if err := s.tokenRepository.DeleteRefreshTokenByHash(ctx, refreshTokenHash); err != nil {
+			if err = s.tokenRepository.DeleteRefreshTokenByHash(ctx, refreshTokenHash); err != nil {
 				return err
 			}
 			return entity.ErrInvalidRefreshToken
 		}
 
-		if err := s.tokenRepository.DeleteRefreshTokenByHash(ctx, refreshTokenHash); err != nil {
+		if err = s.tokenRepository.DeleteRefreshTokenByHash(ctx, refreshTokenHash); err != nil {
 			return err
 		}
 
@@ -160,8 +163,9 @@ func (s *userService) Profile(ctx context.Context, userID string) (*entity.User,
 }
 
 func (s *userService) ValidateAccessToken(_ context.Context, token string) (string, error) {
+	const jwtPartsAmount = 3
 	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
+	if len(parts) != jwtPartsAmount {
 		return "", entity.ErrInvalidAccessToken
 	}
 
@@ -186,4 +190,22 @@ func (s *userService) ValidateAccessToken(_ context.Context, token string) (stri
 	}
 
 	return claims.Sub, nil
+}
+
+func (s *userService) GetUsers(ctx context.Context, userIDs []string) ([]entity.User, error) {
+	users, err := s.userRepository.GetUsersByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, fmt.Errorf("get users: %w", err)
+	}
+
+	return users, nil
+}
+
+func (s *userService) UpdateCoins(ctx context.Context, userID string, deltaCoins int64) (*entity.User, error) {
+	user, err := s.userRepository.UpdateCoins(ctx, userID, deltaCoins)
+	if err != nil {
+		return nil, fmt.Errorf("update coins: %w", err)
+	}
+
+	return user, nil
 }

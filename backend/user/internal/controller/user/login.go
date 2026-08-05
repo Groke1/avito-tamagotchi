@@ -22,7 +22,7 @@ func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := c.service.Login(r.Context(), req.Email, req.Password)
+	tokens, err := c.authService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, entity.ErrInvalidCredentials) {
 			writeError(w, http.StatusUnauthorized, errInvalidCredentials)
