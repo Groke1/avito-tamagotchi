@@ -1,4 +1,4 @@
-import { ROUTES_PATHS } from '@/app/router/config'
+import { ROUTES_PATHS } from '@/app/router/paths'
 import { useAppSelector } from '@/app/store/hooks'
 import type { FC } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'

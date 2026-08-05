@@ -1,4 +1,4 @@
-import { ROUTES_PATHS } from '@/app/router/config'
+import { ROUTES_PATHS } from '@/app/router/paths'
 import { Button, FormField } from '@/shared/ui'
 import { ArrowRight, Lock, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'

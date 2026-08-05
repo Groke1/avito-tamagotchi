@@ -1,7 +1,7 @@
 import { AuthLayout } from '@/app/layouts/AuthLayout'
 import { RegisterForm } from '@/features/auth'
 
-const Register = () => {
+export const Register = () => {
   return (
     <AuthLayout>
       <div className="flex flex-col items-center mb-6 text-center max-w-xs">
@@ -17,12 +17,10 @@ const Register = () => {
           <div className="flex-1 h-1.5 bg-surface-high rounded-full overflow-hidden">
             <div className="h-full bg-avito-green w-1/2 rounded-full transition-all duration-300" />
           </div>
-          <span className="text-xs font-semibold text-on-surface-variant/80">1 из 2</span>
+          <span className="text-xs font-semibold text-on-surface">Шаг 1 из 2</span>
         </div>
       </div>
       <RegisterForm />
     </AuthLayout>
   )
 }
-
-export default Register
