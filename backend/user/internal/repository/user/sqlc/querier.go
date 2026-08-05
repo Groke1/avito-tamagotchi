@@ -14,6 +14,9 @@ type Querier interface {
 	AddUser(ctx context.Context, arg AddUserParams) (pgtype.UUID, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDRow, error)
+	GetUsersByIDs(ctx context.Context, ids []pgtype.UUID) ([]GetUsersByIDsRow, error)
+	UpdateCoins(ctx context.Context, arg UpdateCoinsParams) (int64, error)
+	UserExists(ctx context.Context, userID pgtype.UUID) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

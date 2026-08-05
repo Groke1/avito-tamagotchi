@@ -16,31 +16,33 @@ curl.exe -X GET http://localhost:8081/api/v1/tasks/9b3541db-9942-4625-ba51-b6afc
 ```
 ### POST /api/v1/tasks/{task_id}/complete
 ```
- curl.exe -X POST http://localhost:8081/api/v1/tasks/9b3541db-9942-4625-ba51-b6afcb23754a/complete -H "Authorization: Bearer $token" -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
+curl.exe -X POST http://localhost:8081/api/v1/tasks/9b3541db-9942-4625-ba51-b6afcb23754a/complete -H "Authorization: Bearer $token" -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
 
 {"task":{"id":"9b3541db-9942-4625-ba51-b6afcb23754a","title":"Лояльный продавец","description":"Получите новый отзыв с оценкой 5 звезд от верифицированного покупателя.","reward_coins":300,"reward_xp":500,"status":"completed","completed_at":"2026-08-05T16:26:34.386331502Z"},"awarded":{"coins":300,"xp":500}}
 ```
 ### плохие сценарии
 
 ```
-PS C:\Users\Admin> curl.exe -X GET http://localhost:8081/api/v1/tasks `
->>   -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
+curl.exe -X GET http://localhost:8081/api/v1/tasks -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
 {"code":"UNAUTHORIZED","message":"Требуется повторная авторизация"}
-PS C:\Users\Admin> curl.exe -X GET http://localhost:8081/api/v1/tasks `
->>   -H "Authorization: Bearer $token"
+
+curl.exe -X GET http://localhost:8081/api/v1/tasks `
+ -H "Authorization: Bearer $token"
 {"code":"UNAUTHORIZED","message":"Идентификатор пользователя не найден"}
-PS C:\Users\Admin> curl.exe -X GET http://localhost:8081/api/v1/tasks/00000000-0000-0000-0000-000000000000 `
->>   -H "Authorization: Bearer $token" `
->>   -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
+
+curl.exe -X GET http://localhost:8081/api/v1/tasks/00000000-0000-0000-0000-000000000000 `
+ -H "Authorization: Bearer $token" `
+ -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
 {"code":"TASK_NOT_FOUND","message":"Задание не найдено"}
-PS C:\Users\Admin> curl.exe -X POST http://localhost:8081/api/v1/tasks/00000000-0000-0000-0000-000000000000/complete `
->>   -H "Authorization: Bearer $token" `
->>   -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
+
+curl.exe -X POST http://localhost:8081/api/v1/tasks/00000000-0000-0000-0000-000000000000/complete `
+   -H "Authorization: Bearer $token" `
+   -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
 {"code":"TASK_NOT_FOUND","message":"Задание не найдено"}
-PS C:\Users\Admin> # Замените ID на реальный ID задачи, которую вы УЖЕ завершили
-PS C:\Users\Admin> curl.exe -X POST http://localhost:8081/api/v1/tasks/9b3541db-9942-4625-ba51-b6afcb23754a/complete `
->>   -H "Authorization: Bearer $token" `
->>   -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
+
+curl.exe -X POST http://localhost:8081/api/v1/tasks/9b3541db-9942-4625-ba51-b6afcb23754a/complete `
+  -H "Authorization: Bearer $token" `
+  -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
 {"code":"TASK_ALREADY_COMPLETED","message":"Награда за это задание уже получена"}
-PS C:\Users\Admin>
+
 ```

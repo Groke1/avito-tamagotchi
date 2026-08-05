@@ -2,7 +2,9 @@ LOCAL_BIN := $(CURDIR)/backend/bin
 SERVICES_DIR := $(CURDIR)/backend
 
 SERVICES := \
-	user
+	user \
+	pets \
+	tasks
 
 GOLANGCI_LINT_VERSION := v2.12.0
 GOLANGCI_CONFIG := $(CURDIR)/backend/.golangci.yaml
@@ -76,3 +78,26 @@ lint-install: $(GOLANGCI_LINT_BIN)
 .PHONY: lint-clean
 lint-clean:
 	@rm -f "$(GOLANGCI_LINT_BIN)"
+
+.PHONY: integration-test
+
+test:
+	@set -eu; \
+	docker-compose \
+		-f docker-compose.test.yml \
+		down -v --remove-orphans || true; \
+	\
+	status=0; \
+	docker-compose \
+		-f docker-compose.test.yml \
+		up \
+		--build \
+		--abort-on-container-exit \
+		--exit-code-from integration-tests \
+		|| status=$$?; \
+	\
+	docker-compose \
+		-f docker-compose.test.yml \
+		down -v --remove-orphans; \
+	\
+	exit $$status
