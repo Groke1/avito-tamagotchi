@@ -53,7 +53,7 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Route("/pet", func(r chi.Router) {
+	r.Route("/api/v1/pet", func(r chi.Router) {
 		r.Use(api.AuthMiddleware(authSecret))
 		r.Get("/", handler.GetPet)
 		r.Post("/", handler.CreatePet)
