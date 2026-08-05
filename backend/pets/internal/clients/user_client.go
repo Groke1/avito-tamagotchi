@@ -26,7 +26,7 @@ func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount i
 	url := fmt.Sprintf("%s/update-coins", uc.baseUrl)
 
 	body, _ := json.Marshal(UpdateCoinsRequest{UserID: userID, Delta: -amount})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}

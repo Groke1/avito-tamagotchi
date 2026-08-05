@@ -1,4 +1,4 @@
-package api
+package clients
 
 import "net/http"
 
@@ -9,30 +9,6 @@ type APIError struct {
 }
 
 var (
-	ErrUnauthorized = APIError{
-		StatusCode: http.StatusUnauthorized,
-		Code:       "UNAUTHORIZED",
-		Message:    "Требуется повторная авторизация",
-	}
-
-	ErrPetNotFound = APIError{
-		StatusCode: http.StatusNotFound,
-		Code:       "PET_NOT_FOUND",
-		Message:    "Сначала создайте питомца",
-	}
-
-	ErrUnavailableAction = APIError{
-		StatusCode: http.StatusConflict,
-		Code:       "PET_ACTION_UNAVAILABLE",
-		Message:    "Это действие пока недоступно",
-	}
-
-	ErrPetAlreadyExists = APIError{
-		StatusCode: http.StatusNotFound,
-		Code:       "PET_ALREADY_EXISTS",
-		Message:    "У пользователя уже есть питомец",
-	}
-
 	ErrValidationError = APIError{
 		StatusCode: http.StatusUnprocessableEntity,
 		Code:       "VALIDATION_ERROR",

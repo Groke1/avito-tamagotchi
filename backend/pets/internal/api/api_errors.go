@@ -1,4 +1,4 @@
-package clients
+package api
 
 import "net/http"
 
@@ -16,7 +16,7 @@ var (
 	}
 
 	ErrPetNotFound = APIError{
-		StatusCode: http.StatusNotFound,
+		StatusCode: http.StatusConflict,
 		Code:       "PET_NOT_FOUND",
 		Message:    "Сначала создайте питомца",
 	}

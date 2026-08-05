@@ -112,7 +112,7 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
-	} else if errors.Is(err, domain.ErrUnavailableAction) {
+	} else if err != nil {
 		writeError(w, ErrUnavailableAction)
 		return
 	}

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/clients"
 	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/domain"
@@ -18,6 +17,7 @@ type PetService struct {
 func NewPetService(petRepository *repository.PetRepository) *PetService {
 	return &PetService{
 		petRepository: petRepository,
+		client:        clients.NewUserClient("http://localhost:8080/internal"),
 	}
 }
 
@@ -40,7 +40,6 @@ func (ps *PetService) CreatePet(ctx context.Context, petName string, userID stri
 }
 
 func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, error) {
-	// TODO списать монетки
 	err := ps.client.WithdrawCoins(ctx, userID, 5)
 	if err != nil {
 		return nil, fmt.Errorf("failed to withdraw coins: %v", err)
@@ -79,7 +78,10 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 }
 
 func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet, error) {
-	// TODO списать монетки
+	err := ps.client.WithdrawCoins(ctx, userID, 7)
+	if err != nil {
+		return nil, fmt.Errorf("failed to withdraw coins: %v", err)
+	}
 
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
@@ -106,7 +108,6 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 
 	if levelUp {
 		// TODO сообщить о награде
-		log.Println("LEVEL UP")
 	}
 
 	return pet, nil
