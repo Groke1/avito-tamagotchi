@@ -16,7 +16,11 @@ type Handlers struct {
 	completeTaskHandler  *controller.CompleteTaskHandler
 }
 
-func NewHandlers(getTaskHandler *controller.GetTaskHandler, getTodayTasksHandler *controller.GetTodayTasksHandler, completeTaskHandler *controller.CompleteTaskHandler) *Handlers {
+func NewHandlers(
+	getTaskHandler *controller.GetTaskHandler,
+	getTodayTasksHandler *controller.GetTodayTasksHandler,
+	completeTaskHandler *controller.CompleteTaskHandler,
+) *Handlers {
 	return &Handlers{
 		getTaskHandler:       getTaskHandler,
 		getTodayTasksHandler: getTodayTasksHandler,
@@ -28,14 +32,18 @@ func (h *Handlers) GetTask(con *gin.Context) {
 	userID, _ := con.Get("userID")
 	uid, _ := userID.(string)
 	if uid == "" {
-		con.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		sendError(con, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется повторная авторизация")
 		return
 	}
 	taskId := con.Param("task_id")
 	query := controller.GetTaskQuery{TaskId: taskId, UserId: uid}
 	result, err := h.getTaskHandler.Handle(con.Request.Context(), query)
 	if err != nil {
-		con.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
+		if errors.Is(err, entity.ErrTaskNotFound) {
+			sendError(con, http.StatusNotFound, "TASK_NOT_FOUND", "Задание не найдено")
+			return
+		}
+		sendError(con, http.StatusInternalServerError, "INTERNAL_ERROR", "Внутренняя ошибка сервера")
 		return
 	}
 	con.JSON(http.StatusOK, result)
@@ -46,13 +54,13 @@ func (h *Handlers) GetTodayTasks(con *gin.Context) {
 	userID, _ := con.Get("userID")
 	uid, _ := userID.(string)
 	if uid == "" {
-		con.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		sendError(con, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется повторная авторизация")
 		return
 	}
 
 	result, err := h.getTodayTasksHandler.Handle(con.Request.Context(), controller.GetTodayTasksQuery{UserID: uid})
 	if err != nil {
-		con.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+		sendError(con, http.StatusInternalServerError, "INTERNAL_ERROR", "Внутренняя ошибка сервера")
 		return
 	}
 
@@ -63,7 +71,7 @@ func (h *Handlers) CompleteTask(con *gin.Context) {
 	userID, _ := con.Get("userID")
 	uid, _ := userID.(string)
 	if uid == "" {
-		con.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		sendError(con, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется повторная авторизация")
 		return
 	}
 
@@ -71,14 +79,14 @@ func (h *Handlers) CompleteTask(con *gin.Context) {
 	result, err := h.completeTaskHandler.Handle(con.Request.Context(), controller.CompleteTaskQuery{TaskID: taskID, UserID: uid})
 	if err != nil {
 		if errors.Is(err, entity.ErrTaskNotFound) {
-			con.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
+			sendError(con, http.StatusNotFound, "TASK_NOT_FOUND", "Задание не найдено")
 			return
 		}
 		if errors.Is(err, entity.ErrTaskAlreadyCompleted) {
-			con.JSON(http.StatusConflict, gin.H{"error": "task already completed"})
+			sendError(con, http.StatusConflict, "TASK_ALREADY_COMPLETED", "Награда за это задание уже получена")
 			return
 		}
-		con.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+		sendError(con, http.StatusInternalServerError, "INTERNAL_ERROR", "Внутренняя ошибка сервера")
 		return
 	}
 

@@ -13,7 +13,7 @@ func NewRouter(handlers *Handlers) *gin.Engine {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
-	api := r.Group("/api")
+	api := r.Group("/api/v1")
 	// protect API routes with auth middleware
 	api.Use(AuthMiddleware())
 	{

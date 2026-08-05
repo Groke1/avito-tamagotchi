@@ -6,198 +6,172 @@ import (
 	"fmt"
 	"time"
 
-	"gorm.io/gorm"
+	sqlctask "github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres/sqlc"
 
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type TaskModel struct {
-	ID          string `gorm:"primaryKey;type:uuid"`
-	Title       string `gorm:"not null"`
-	Description string `gorm:"not null"`
-	RewardCoins int    `gorm:"not null"`
-	RewardXP    int64  `gorm:"not null"`
-}
-
-func (TaskModel) TableName() string {
-	return "tasks"
-}
-
-type UserTaskModel struct {
-	UserID      string `gorm:"primaryKey;type:uuid"`
-	TaskID      string `gorm:"primaryKey;type:uuid;not null"`
-	Status      string `gorm:"not null;default:active"`
-	CompletedAt *time.Time
-	UpdatedAt   time.Time
-}
-
-func (UserTaskModel) TableName() string {
-	return "user_tasks"
-}
-
 type TaskRepository struct {
-	db *gorm.DB
+	pool *pgxpool.Pool
 }
 
-func NewTaskRepository(db *gorm.DB) *TaskRepository {
-	return &TaskRepository{db: db}
+func NewTaskRepository(pool *pgxpool.Pool) *TaskRepository {
+	return &TaskRepository{pool: pool}
 }
 
-func (r *TaskRepository) FindByID(ctx context.Context, id string) (*entity.Task, error) {
-	db := GetDB(ctx, r.db)
-
-	var model TaskModel
-	err := db.Where("id = ?", id).First(&model).Error
+func (r *TaskRepository) FindByIDForUser(ctx context.Context, userID, taskID string) (*entity.UserTask, error) {
+	userId, err := uuid.Parse(userID)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		return nil, fmt.Errorf("invalid user id: %w", err)
+	}
+	taskId, err := uuid.Parse(taskID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid task id: %w", err)
+	}
+	q := sqlctask.New(r.pool)
+	row, err := q.FindByIDForUser(ctx, sqlctask.FindByIDForUserParams{
+		UserID: pgtype.UUID{Bytes: userId, Valid: true},
+		ID:     pgtype.UUID{Bytes: taskId, Valid: true},
+	})
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, entity.ErrTaskNotFound
 		}
 		return nil, err
 	}
-	return r.toDomain(&model), nil
-}
-
-func (r *TaskRepository) CompleteTask(ctx context.Context, userID, taskID string) (*entity.UserTask, error) {
-	db := GetDB(ctx, r.db)
-
-	var taskModel TaskModel
-	if err := db.Where("id = ?", taskID).First(&taskModel).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, entity.ErrTaskNotFound
-		}
-		return nil, fmt.Errorf("complete task: get task: %w", err)
-	}
-
-	var current struct {
-		Status      string
-		CompletedAt *time.Time
-	}
-	result := db.Raw(
-		`SELECT status, completed_at FROM user_tasks WHERE user_id = ? AND task_id = ? FOR UPDATE`,
-		userID,
-		taskID,
-	).Scan(&current)
-	if result.Error != nil {
-		return nil, fmt.Errorf("complete task: get user task: %w", result.Error)
-	}
-
-	now := time.Now().UTC()
-	if result.RowsAffected == 0 {
-		if err := db.Exec(
-			`INSERT INTO user_tasks (user_id, task_id, status, completed_at, updated_at) VALUES (?, ?, 'completed', ?, NOW())`,
-			userID,
-			taskID,
-			now,
-		).Error; err != nil {
-			return nil, fmt.Errorf("complete task: insert user task: %w", err)
-		}
-	} else {
-		if current.Status == string(entity.StatusCompleted) {
-			return nil, entity.ErrTaskAlreadyCompleted
-		}
-		if err := db.Exec(
-			`UPDATE user_tasks SET status = 'completed', completed_at = ?, updated_at = NOW() WHERE user_id = ? AND task_id = ?`,
-			now,
-			userID,
-			taskID,
-		).Error; err != nil {
-			return nil, fmt.Errorf("complete task: update user task: %w", err)
-		}
+	var completedAt *time.Time
+	if row.CompletedAt.Valid {
+		completedAt = &row.CompletedAt.Time
 	}
 
 	return &entity.UserTask{
 		Task: entity.Task{
-			ID:          taskModel.ID,
-			Title:       taskModel.Title,
-			Description: taskModel.Description,
-			RewardCoins: taskModel.RewardCoins,
-			RewardXP:    taskModel.RewardXP,
+			ID:          row.ID.String(),
+			Title:       row.Title,
+			Description: row.Description,
+			RewardCoins: int(row.RewardCoins),
+			RewardXP:    row.RewardXp,
 		},
-		Status:      entity.StatusCompleted,
-		CompletedAt: &now,
+		Status:      entity.Status(row.Status),
+		CompletedAt: completedAt,
 	}, nil
 }
-
-type taskWithUserStatusRow struct {
-	ID          string
-	Title       string
-	Description string
-	RewardCoins int
-	RewardXP    int64
-	Status      string
-	CompletedAt *time.Time
-}
-
-func (r *TaskRepository) FindByIDForUser(ctx context.Context, userID, taskID string) (*entity.UserTask, error) {
-	rows, err := r.listRows(ctx, userID, taskID)
+func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]entity.UserTask, error) {
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, entity.ErrTaskNotFound
+		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	return r.rowToUserTask(rows[0]), nil
-}
-
-func (r *TaskRepository) ListForUser(ctx context.Context, userID string) ([]entity.UserTask, error) {
-	rows, err := r.listRows(ctx, userID, "")
+	q := sqlctask.New(r.pool)
+	rows, err := q.ListRandomTasksForUser(ctx, pgtype.UUID{Bytes: userID, Valid: true})
 	if err != nil {
 		return nil, err
 	}
 
 	tasks := make([]entity.UserTask, 0, len(rows))
 	for _, row := range rows {
-		tasks = append(tasks, *r.rowToUserTask(row))
+		var completedAt *time.Time
+		if row.CompletedAt.Valid {
+			completedAt = &row.CompletedAt.Time
+		}
+
+		tasks = append(tasks, entity.UserTask{
+			Task: entity.Task{
+				ID:          row.ID.String(),
+				Title:       row.Title,
+				Description: row.Description,
+				RewardCoins: int(row.RewardCoins),
+				RewardXP:    row.RewardXp,
+			},
+			Status:      entity.Status(row.Status),
+			CompletedAt: completedAt,
+		})
 	}
 
 	return tasks, nil
 }
 
-func (r *TaskRepository) listRows(ctx context.Context, userID, taskID string) ([]taskWithUserStatusRow, error) {
-	db := GetDB(ctx, r.db)
-
-	query := `
-SELECT
-    t.id,
-    t.title,
-    t.description,
-    t.reward_coins,
-    t.reward_xp,
-    COALESCE(ut.status, 'active') AS status,
-    ut.completed_at
-FROM tasks t
-LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = ?
-`
-	args := []any{userID}
-	if taskID != "" {
-		query += " WHERE t.id = ?"
-		args = append(args, taskID)
-	}
-	query += " ORDER BY t.title"
-
-	var rows []taskWithUserStatusRow
-	if err := db.Raw(query, args...).Scan(&rows).Error; err != nil {
-		return nil, err
+func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr string) (*entity.UserTask, error) {
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	return rows, nil
-}
+	taskID, err := uuid.Parse(taskIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid task id: %w", err)
+	}
 
-func (r *TaskRepository) rowToUserTask(row taskWithUserStatusRow) *entity.UserTask {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	q := sqlctask.New(tx)
+
+	taskModel, err := q.GetTaskByID(ctx, pgtype.UUID{Bytes: taskID, Valid: true})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entity.ErrTaskNotFound
+		}
+		return nil, fmt.Errorf("get task: %w", err)
+	}
+
+	userTask, err := q.GetUserTaskForUpdate(ctx, sqlctask.GetUserTaskForUpdateParams{
+		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		TaskID: pgtype.UUID{Bytes: taskID, Valid: true},
+	})
+
+	now := time.Now().UTC()
+	pgNow := pgtype.Timestamptz{Time: now, Valid: true}
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = q.InsertUserTaskCompleted(ctx, sqlctask.InsertUserTaskCompletedParams{
+				UserID:      pgtype.UUID{Bytes: userID, Valid: true},
+				TaskID:      pgtype.UUID{Bytes: taskID, Valid: true},
+				CompletedAt: pgNow,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("insert user task: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("get user task: %w", err)
+		}
+	} else {
+		if userTask.Status == string(entity.StatusCompleted) {
+			return nil, entity.ErrTaskAlreadyCompleted
+		}
+
+		err = q.UpdateUserTaskCompleted(ctx, sqlctask.UpdateUserTaskCompletedParams{
+			CompletedAt: pgNow,
+			UserID:      pgtype.UUID{Bytes: userID, Valid: true},
+			TaskID:      pgtype.UUID{Bytes: taskID, Valid: true},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("update user task: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit tx: %w", err)
+	}
+
 	return &entity.UserTask{
 		Task: entity.Task{
-			ID:          row.ID,
-			Title:       row.Title,
-			Description: row.Description,
-			RewardCoins: row.RewardCoins,
-			RewardXP:    row.RewardXP,
+			ID:          taskModel.ID.String(),
+			Title:       taskModel.Title,
+			Description: taskModel.Description,
+			RewardCoins: int(taskModel.RewardCoins),
+			RewardXP:    taskModel.RewardXp,
 		},
-		Status:      entity.Status(row.Status),
-		CompletedAt: row.CompletedAt,
-	}
-}
-
-func (r *TaskRepository) toDomain(model *TaskModel) *entity.Task {
-	return entity.ReconstructTask(model.ID, model.Title, model.Description, model.RewardCoins, model.RewardXP)
+		Status:      entity.StatusCompleted,
+		CompletedAt: &now,
+	}, nil
 }

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,11 +12,27 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/controller"
 	taskhttp "github.com/cayman444/avito-gamification-hackathon.tasks/internal/http"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres"
+	"github.com/cayman444/avito-gamification-hackathon.tasks/migrations"
 
-	gormpostgres "gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
+
+func runMigrations(dsn string) error {
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return fmt.Errorf("failed to open db for migrations: %w", err)
+	}
+	defer db.Close()
+
+	log.Println("applying database migrations...")
+	if err := migrations.RunMigrations(db); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+	log.Println("migrations applied successfully")
+
+	return nil
+}
 
 func main() {
 	dsn := os.Getenv("DATABASE_DSN")
@@ -25,19 +44,23 @@ func main() {
 	if addr == "" {
 		addr = ":8080"
 	}
+	if err := runMigrations(dsn); err != nil {
+		log.Fatalf("migration error: %v", err)
+	}
+	cnx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	db, err := gorm.Open(gormpostgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Warn),
-	})
+	pool, err := pgxpool.New(cnx, dsn)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("unable to connect to database: %v", err)
+	}
+	defer pool.Close()
+
+	if err := pool.Ping(cnx); err != nil {
+		log.Fatalf("unable to ping database: %v", err)
 	}
 
-	if err := db.AutoMigrate(&postgres.TaskModel{}, &postgres.UserTaskModel{}); err != nil {
-		log.Fatal(err)
-	}
-
-	repo := postgres.NewTaskRepository(db)
+	repo := postgres.NewTaskRepository(pool)
 	handlers := taskhttp.NewHandlers(
 		controller.NewGetTaskHandler(repo),
 		controller.NewGetTodayTasksHandler(repo),

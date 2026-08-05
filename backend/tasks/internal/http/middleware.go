@@ -7,26 +7,37 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AuthMiddleware performs a basic authorization check:
-// - Requires Authorization: Bearer <token>
-// - Requires X-User-ID header (or token parsing can be added later)
-// It sets `userID` in the Gin context when present.
+type ErrorResponse struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+func sendError(c *gin.Context, status int, code string, message string) {
+	c.JSON(status, ErrorResponse{
+		Code:    code,
+		Message: message,
+	})
+}
+
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth := c.GetHeader("Authorization")
 		if auth == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization required"})
+			sendError(c, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется повторная авторизация")
+			c.Abort()
 			return
 		}
 		parts := strings.SplitN(auth, " ", 2)
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" || parts[1] == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			sendError(c, http.StatusUnauthorized, "UNAUTHORIZED", "Невалидный токен авторизации")
+			c.Abort()
 			return
 		}
 
 		userID := c.GetHeader("X-User-ID")
 		if userID == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user id missing"})
+			sendError(c, http.StatusUnauthorized, "UNAUTHORIZED", "Идентификатор пользователя не найден")
+			c.Abort()
 			return
 		}
 
