@@ -1,0 +1,433 @@
+openapi: 3.0.3
+info:
+  title: User Service API
+  version: 1.0.0
+  description: |
+    API микросервиса пользователей.
+
+tags:
+  - name: Auth
+    description: Регистрация и управление сессией
+  - name: Profile
+    description: Профиль текущего пользователя
+  - name: Internal
+    description: Внутренние методы межсервисного взаимодействия
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      operationId: registerUser
+      summary: Зарегистрировать пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              username: ivan
+              email: ivan@example.com
+              password: strong-password
+      responses:
+        '201':
+          description: Пользователь зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          $ref: '#/components/responses/UserAlreadyExists'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      operationId: loginUser
+      summary: Выполнить вход
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: ivan@example.com
+              password: strong-password
+      responses:
+        '200':
+          description: Вход выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/InvalidCredentials'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshTokens
+      summary: Обновить пару токенов
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refresh_token: eyJhbGciOiJIUzI1NiJ9...
+      responses:
+        '200':
+          description: Токены обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/InvalidRefreshToken'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/profile:
+    get:
+      tags: [Profile]
+      operationId: getProfile
+      summary: Получить профиль текущего пользователя
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+              example:
+                user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+                username: ivan
+                email: ivan@example.com
+                coins: 150
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /internal/usernames:
+    post:
+      tags: [Internal]
+      operationId: getUsernames
+      summary: Получить имена пользователей по идентификаторам
+      description: Принимает от 1 до 1000 идентификаторов пользователей.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsernamesRequest'
+            example:
+              user_ids:
+                - 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+                - a17ce10d-8cac-41cf-a283-c9f38166c296
+      responses:
+        '200':
+          description: Найденные пользователи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsernamesResponse'
+              example:
+                users:
+                  - id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+                    username: ivan
+                  - id: a17ce10d-8cac-41cf-a283-c9f38166c296
+                    username: maria
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /internal/update-coins:
+    put:
+      tags: [Internal]
+      operationId: updateUserCoins
+      summary: Изменить баланс монет пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCoinsRequest'
+            examples:
+              accrue:
+                summary: Начисление монет
+                value:
+                  user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+                  delta: 25
+              debit:
+                summary: Списание монет
+                value:
+                  user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+                  delta: -10
+      responses:
+        '200':
+          description: Баланс успешно изменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCoinsResponse'
+              example:
+                user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+                coins: 175
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '409':
+          $ref: '#/components/responses/InsufficientCoins'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Access token в заголовке `Authorization: Bearer <token>`."
+
+  schemas:
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+          minLength: 2
+          maxLength: 40
+          description: Имя пользователя после удаления пробелов по краям.
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          description: От 8 до 72 байт в UTF-8 представлении.
+
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 1
+          writeOnly: true
+
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          minLength: 1
+          writeOnly: true
+
+    AuthResponse:
+      type: object
+      additionalProperties: false
+      required: [access_token, refresh_token]
+      properties:
+        access_token:
+          type: string
+          readOnly: true
+        refresh_token:
+          type: string
+          readOnly: true
+
+    ProfileResponse:
+      type: object
+      additionalProperties: false
+      required: [user_id, username, email, coins]
+      properties:
+        user_id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        coins:
+          type: integer
+          format: int64
+          minimum: 0
+
+    UsernamesRequest:
+      type: object
+      additionalProperties: false
+      required: [user_ids]
+      properties:
+        user_ids:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            type: string
+
+    Username:
+      type: object
+      additionalProperties: false
+      required: [id, username]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+
+    UsernamesResponse:
+      type: object
+      additionalProperties: false
+      required: [users]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/Username'
+
+    UpdateCoinsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        user_id:
+          type: string
+        delta:
+          type: integer
+          format: int64
+
+    UpdateCoinsResponse:
+      type: object
+      additionalProperties: false
+      required: [user_id, coins]
+      properties:
+        user_id:
+          type: string
+          readOnly: true
+        coins:
+          type: integer
+          format: int64
+          minimum: 0
+          readOnly: true
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            - USER_ALREADY_EXISTS
+            - VALIDATION_ERROR
+            - INTERNAL_ERROR
+            - INVALID_CREDENTIALS
+            - INVALID_REFRESH_TOKEN
+            - UNAUTHORIZED
+            - USER_NOT_FOUND
+            - INSUFFICIENT_COINS
+        message:
+          type: string
+
+  responses:
+    ValidationError:
+      description: Некорректное тело запроса или данные не прошли валидацию
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: VALIDATION_ERROR
+            message: Проверьте переданные данные
+
+    UserAlreadyExists:
+      description: Пользователь с таким именем или email уже существует
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: USER_ALREADY_EXISTS
+            message: Пользователь с такими данными уже существует
+
+    InvalidCredentials:
+      description: Неверный email или пароль
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: INVALID_CREDENTIALS
+            message: Неверный email или пароль
+
+    InvalidRefreshToken:
+      description: Refresh token отсутствует, недействителен или не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: INVALID_REFRESH_TOKEN
+            message: Сессия истекла. Выполните вход снова
+
+    Unauthorized:
+      description: Access token отсутствует или недействителен либо пользователь не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: UNAUTHORIZED
+            message: Требуется повторная авторизация
+
+    UserNotFound:
+      description: Пользователь не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: USER_NOT_FOUND
+            message: Пользователь не найден
+
+    InsufficientCoins:
+      description: На балансе недостаточно монет для списания
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: INSUFFICIENT_COINS
+            message: Недостаточно монет
+
+    InternalError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: INTERNAL_ERROR
+            message: Внутренняя ошибка сервер

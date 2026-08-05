@@ -2,7 +2,9 @@ LOCAL_BIN := $(CURDIR)/backend/bin
 SERVICES_DIR := $(CURDIR)/backend
 
 SERVICES := \
-	user
+	user \
+	pets \
+	tasks
 
 GOLANGCI_LINT_VERSION := v2.12.0
 GOLANGCI_CONFIG := $(CURDIR)/backend/.golangci.yaml

@@ -21,7 +21,7 @@ type (
 		GetUserByID(ctx context.Context, id string) (*entity.User, error)
 		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
 		GetUsersByIDs(ctx context.Context, ids []string) ([]entity.User, error)
-		UpdateCoins(ctx context.Context, userID string, coins int64) error
+		UpdateCoins(ctx context.Context, userID string, coins int64) (*entity.User, error)
 	}
 
 	tokenRepository interface {
@@ -201,11 +201,11 @@ func (s *userService) GetUsers(ctx context.Context, userIDs []string) ([]entity.
 	return users, nil
 }
 
-func (s *userService) UpdateCoins(ctx context.Context, userID string, deltaCoins int64) error {
-	err := s.userRepository.UpdateCoins(ctx, userID, deltaCoins)
+func (s *userService) UpdateCoins(ctx context.Context, userID string, deltaCoins int64) (*entity.User, error) {
+	user, err := s.userRepository.UpdateCoins(ctx, userID, deltaCoins)
 	if err != nil {
-		return fmt.Errorf("update coins: %w", err)
+		return nil, fmt.Errorf("update coins: %w", err)
 	}
 
-	return nil
+	return user, nil
 }

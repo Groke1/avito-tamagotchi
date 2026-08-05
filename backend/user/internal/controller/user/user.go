@@ -26,7 +26,7 @@ type authService interface {
 type userService interface {
 	Profile(ctx context.Context, userID string) (*entity.User, error)
 	GetUsers(ctx context.Context, userIDs []string) ([]entity.User, error)
-	UpdateCoins(ctx context.Context, userID string, coins int64) error
+	UpdateCoins(ctx context.Context, userID string, coins int64) (*entity.User, error)
 }
 
 type controller struct {
@@ -45,6 +45,8 @@ func NewController(logger *zap.Logger, authService authService, userService user
 
 func (c *controller) InitRoutes(router *mux.Router, auth func(http.Handler) http.Handler) {
 	api := router.PathPrefix("/api/v1").Subrouter()
+	internal := router.PathPrefix("/internal").Subrouter()
+
 	authRouter := api.PathPrefix("/auth").Subrouter()
 	authRouter.HandleFunc("/register", c.Register).Methods(http.MethodPost)
 	authRouter.HandleFunc("/login", c.Login).Methods(http.MethodPost)
@@ -54,8 +56,8 @@ func (c *controller) InitRoutes(router *mux.Router, auth func(http.Handler) http
 	profile.Use(auth)
 	profile.HandleFunc("", c.Profile).Methods(http.MethodGet)
 
-	api.HandleFunc("/usernames", c.Usernames).Methods(http.MethodPost)
-	api.HandleFunc("/update-coins", c.UpdateCoins).Methods(http.MethodPut)
+	internal.HandleFunc("/usernames", c.Usernames).Methods(http.MethodPost)
+	internal.HandleFunc("/update-coins", c.UpdateCoins).Methods(http.MethodPut)
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
@@ -131,6 +133,11 @@ type usernamesResponse struct {
 type updateCoinsRequest struct {
 	UserID string `json:"user_id"`
 	Delta  int64  `json:"delta"`
+}
+
+type updateCoinsResponse struct {
+	UserID string `json:"user_id"`
+	Coins  uint64 `json:"coins"`
 }
 
 type errorResponse struct {

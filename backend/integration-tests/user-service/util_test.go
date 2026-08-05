@@ -24,7 +24,9 @@ type config struct {
 	db *sql.DB
 
 	Users struct {
-		BaseURL string `env:"USERS_BASE_URL" envDefault:"localhost:8080/api/v1"`
+		BaseURL     string `env:"USERS_BASE_URL" envDefault:"http://users:8080"`
+		APIURL      string
+		InternalURL string
 	}
 
 	PG struct {
@@ -48,6 +50,11 @@ type profileResponse struct {
 	Coins    uint64 `json:"coins"`
 }
 
+type updateCoinsResponse struct {
+	UserID string `json:"user_id"`
+	Coins  uint64 `json:"coins"`
+}
+
 type apiError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -57,7 +64,7 @@ func setup(t *testing.T) *config {
 	t.Helper()
 
 	cfg := loadConfig(t)
-	waitForUsers(t, cfg.Users.BaseURL, 45*time.Second)
+	waitForUsers(t, cfg.Users.APIURL, 45*time.Second)
 	require.NoError(t, cleanDB(t.Context(), cfg.db))
 
 	t.Cleanup(func() {
@@ -75,6 +82,8 @@ func loadConfig(t *testing.T) *config {
 	require.NoError(t, env.Parse(&cfg))
 
 	cfg.Users.BaseURL = normalizeURL(cfg.Users.BaseURL)
+	cfg.Users.APIURL = cfg.Users.BaseURL + "/api/v1"
+	cfg.Users.InternalURL = cfg.Users.BaseURL + "/internal"
 	cfg.initDB(t)
 
 	return &cfg
@@ -211,15 +220,6 @@ func decodeBody[T any](t *testing.T, resp *http.Response) T {
 	return result
 }
 
-func requireEmptyBody(t *testing.T, resp *http.Response) {
-	t.Helper()
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	require.Empty(t, body)
-}
-
 func registerUser(
 	t *testing.T,
 	cfg *config,
@@ -229,7 +229,7 @@ func registerUser(
 ) authResponse {
 	t.Helper()
 
-	resp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/register", map[string]any{
+	resp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/register", map[string]any{
 		"username": username,
 		"email":    email,
 		"password": password,
@@ -252,7 +252,7 @@ func uniqueSuffix(t *testing.T) string {
 func getProfile(t *testing.T, cfg *config, accessToken string) profileResponse {
 	t.Helper()
 
-	resp := jsonReq(t, http.MethodGet, cfg.Users.BaseURL+"/profile", nil, accessToken)
+	resp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/profile", nil, accessToken)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	return decodeBody[profileResponse](t, resp)

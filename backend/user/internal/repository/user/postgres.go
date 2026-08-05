@@ -136,36 +136,39 @@ func (r *userRepository) UpdateCoins(
 	ctx context.Context,
 	userID string,
 	deltaCoins int64,
-) error {
+) (*entity.User, error) {
 	userUUID, err := getUUID(userID)
 	if err != nil {
-		return fmt.Errorf("update coins: parse user id: %w", err)
+		return nil, fmt.Errorf("update coins: parse user id: %w", err)
 	}
 
-	_, err = r.getQueries(ctx).UpdateCoins(ctx,
+	coins, err := r.getQueries(ctx).UpdateCoins(ctx,
 		sqlcuser.UpdateCoinsParams{
 			UserID:     userUUID,
 			DeltaCoins: deltaCoins,
 		},
 	)
 	if err == nil {
-		return nil
+		return &entity.User{
+			ID:    userID,
+			Coins: uint64(coins),
+		}, nil
 	}
 
 	if !errors.Is(err, pgx.ErrNoRows) {
-		return fmt.Errorf("update coins: %w", err)
+		return nil, fmt.Errorf("update coins: %w", err)
 	}
 
 	exists, err := r.getQueries(ctx).UserExists(ctx, userUUID)
 	if err != nil {
-		return fmt.Errorf("update coins: check user existence: %w", err)
+		return nil, fmt.Errorf("update coins: check user existence: %w", err)
 	}
 
 	if !exists {
-		return entity.ErrUserNotFound
+		return nil, entity.ErrUserNotFound
 	}
 
-	return entity.ErrInsufficientCoins
+	return nil, entity.ErrInsufficientCoins
 }
 
 func (r *userRepository) getQueries(ctx context.Context) *sqlcuser.Queries {

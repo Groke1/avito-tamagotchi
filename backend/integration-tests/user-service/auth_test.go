@@ -26,7 +26,7 @@ func TestRegisterLoginRefreshAndProfile(t *testing.T) {
 	require.Equal(t, username, profile.Username)
 	require.Equal(t, email, profile.Email)
 
-	loginResp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/login", map[string]any{
+	loginResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/login", map[string]any{
 		"email":    email,
 		"password": testPassword,
 	}, "")
@@ -36,7 +36,7 @@ func TestRegisterLoginRefreshAndProfile(t *testing.T) {
 	require.NotEmpty(t, loggedIn.AccessToken)
 	require.NotEmpty(t, loggedIn.RefreshToken)
 
-	refreshResp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/refresh", map[string]any{
+	refreshResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/refresh", map[string]any{
 		"refresh_token": loggedIn.RefreshToken,
 	}, "")
 	require.Equal(t, http.StatusOK, refreshResp.StatusCode)
@@ -49,7 +49,7 @@ func TestRegisterLoginRefreshAndProfile(t *testing.T) {
 	refreshedProfile := getProfile(t, cfg, refreshed.AccessToken)
 	require.Equal(t, profile.UserID, refreshedProfile.UserID)
 
-	reusedResp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/refresh", map[string]any{
+	reusedResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/refresh", map[string]any{
 		"refresh_token": loggedIn.RefreshToken,
 	}, "")
 	require.Equal(t, http.StatusUnauthorized, reusedResp.StatusCode)
@@ -67,7 +67,7 @@ func TestRegisterDuplicateUser(t *testing.T) {
 
 	registerUser(t, cfg, username, email, testPassword)
 
-	resp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/register", map[string]any{
+	resp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/register", map[string]any{
 		"username": username,
 		"email":    email,
 		"password": testPassword,
@@ -85,7 +85,7 @@ func TestLoginWithWrongPassword(t *testing.T) {
 	email := fmt.Sprintf("wrong-password-%s@example.com", suffix)
 	registerUser(t, cfg, fmt.Sprintf("wrong-password-%s", suffix), email, testPassword)
 
-	resp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/login", map[string]any{
+	resp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/login", map[string]any{
 		"email":    email,
 		"password": "WrongPassword123",
 	}, "")
@@ -98,7 +98,7 @@ func TestLoginWithWrongPassword(t *testing.T) {
 func TestProfileRequiresAccessToken(t *testing.T) {
 	cfg := setup(t)
 
-	resp := jsonReq(t, http.MethodGet, cfg.Users.BaseURL+"/profile", nil, "")
+	resp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/profile", nil, "")
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	apiErr := decodeBody[apiError](t, resp)
@@ -118,7 +118,7 @@ func TestRegisterNormalizesUsernameAndEmail(t *testing.T) {
 	require.Equal(t, fmt.Sprintf("normalized-user-%s", suffix), profile.Username)
 	require.Equal(t, fmt.Sprintf("normalized-%s@example.com", suffix), profile.Email)
 
-	loginResp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/login", map[string]any{
+	loginResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/login", map[string]any{
 		"email":    rawEmail,
 		"password": testPassword,
 	}, "")
@@ -158,7 +158,7 @@ func TestRegisterValidationCases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resp := rawReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/register", tc.body, "")
+			resp := rawReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/register", tc.body, "")
 			require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 
 			apiErr := decodeBody[apiError](t, resp)
@@ -190,7 +190,7 @@ func TestLoginValidationCases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resp := rawReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/login", tc.body, "")
+			resp := rawReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/login", tc.body, "")
 			require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 
 			apiErr := decodeBody[apiError](t, resp)
@@ -214,7 +214,7 @@ func TestRefreshValidationCases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resp := rawReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/refresh", tc.body, "")
+			resp := rawReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/refresh", tc.body, "")
 			require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 			apiErr := decodeBody[apiError](t, resp)
@@ -237,7 +237,7 @@ func TestProfileRejectsMalformedAuthorization(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, cfg.Users.BaseURL+"/profile", nil)
+			req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, cfg.Users.APIURL+"/profile", nil)
 			require.NoError(t, err)
 			req.Header.Set("Authorization", tc.authorization)
 

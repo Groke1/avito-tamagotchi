@@ -41,7 +41,7 @@ func TestGetUsernames(t *testing.T) {
 	firstProfile := getProfile(t, cfg, firstAuth.AccessToken)
 	secondProfile := getProfile(t, cfg, secondAuth.AccessToken)
 
-	resp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/usernames", map[string]any{
+	resp := jsonReq(t, http.MethodPost, cfg.Users.InternalURL+"/usernames", map[string]any{
 		"user_ids": []string{firstProfile.UserID, secondProfile.UserID},
 	}, "")
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -93,7 +93,7 @@ func TestGetUsernamesManyUsers(t *testing.T) {
 		userIDs = append(userIDs, profile.UserID)
 	}
 
-	resp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/usernames", map[string]any{
+	resp := jsonReq(t, http.MethodPost, cfg.Users.InternalURL+"/usernames", map[string]any{
 		"user_ids": userIDs,
 	}, "")
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -124,25 +124,29 @@ func TestUpdateCoins(t *testing.T) {
 	)
 	profileBefore := getProfile(t, cfg, auth.AccessToken)
 
-	addResp := jsonReq(t, http.MethodPut, cfg.Users.BaseURL+"/update-coins", map[string]any{
+	addResp := jsonReq(t, http.MethodPut, cfg.Users.InternalURL+"/update-coins", map[string]any{
 		"user_id": profileBefore.UserID,
 		"delta":   15,
 	}, "")
-	require.Equal(t, http.StatusNoContent, addResp.StatusCode)
-	requireEmptyBody(t, addResp)
+	require.Equal(t, http.StatusOK, addResp.StatusCode)
+	addBody := decodeBody[updateCoinsResponse](t, addResp)
+	require.Equal(t, profileBefore.UserID, addBody.UserID)
+	require.Equal(t, profileBefore.Coins+15, addBody.Coins)
 
 	profileAfterAdd := getProfile(t, cfg, auth.AccessToken)
-	require.Equal(t, profileBefore.Coins+15, profileAfterAdd.Coins)
+	require.Equal(t, addBody.Coins, profileAfterAdd.Coins)
 
-	subtractResp := jsonReq(t, http.MethodPut, cfg.Users.BaseURL+"/update-coins", map[string]any{
+	subtractResp := jsonReq(t, http.MethodPut, cfg.Users.InternalURL+"/update-coins", map[string]any{
 		"user_id": profileBefore.UserID,
 		"delta":   -5,
 	}, "")
-	require.Equal(t, http.StatusNoContent, subtractResp.StatusCode)
-	requireEmptyBody(t, subtractResp)
+	require.Equal(t, http.StatusOK, subtractResp.StatusCode)
+	subtractBody := decodeBody[updateCoinsResponse](t, subtractResp)
+	require.Equal(t, profileBefore.UserID, subtractBody.UserID)
+	require.Equal(t, profileBefore.Coins+10, subtractBody.Coins)
 
 	profileAfterSubtract := getProfile(t, cfg, auth.AccessToken)
-	require.Equal(t, profileBefore.Coins+10, profileAfterSubtract.Coins)
+	require.Equal(t, subtractBody.Coins, profileAfterSubtract.Coins)
 }
 
 func TestUpdateCoinsRejectsInsufficientBalance(t *testing.T) {
@@ -158,7 +162,7 @@ func TestUpdateCoinsRejectsInsufficientBalance(t *testing.T) {
 	)
 	profile := getProfile(t, cfg, auth.AccessToken)
 
-	resp := jsonReq(t, http.MethodPut, cfg.Users.BaseURL+"/update-coins", map[string]any{
+	resp := jsonReq(t, http.MethodPut, cfg.Users.InternalURL+"/update-coins", map[string]any{
 		"user_id": profile.UserID,
 		"delta":   -int64(profile.Coins) - 1,
 	}, "")
@@ -174,7 +178,7 @@ func TestUpdateCoinsRejectsInsufficientBalance(t *testing.T) {
 func TestUpdateCoinsUserNotFound(t *testing.T) {
 	cfg := setup(t)
 
-	resp := jsonReq(t, http.MethodPut, cfg.Users.BaseURL+"/update-coins", map[string]any{
+	resp := jsonReq(t, http.MethodPut, cfg.Users.InternalURL+"/update-coins", map[string]any{
 		"user_id": "00000000-0000-0000-0000-000000000000",
 		"delta":   10,
 	}, "")
@@ -207,9 +211,9 @@ func TestGetUsernamesValidationCases(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var resp *http.Response
 			if tc.raw != "" {
-				resp = rawReq(t, http.MethodPost, cfg.Users.BaseURL+"/usernames", tc.raw, "")
+				resp = rawReq(t, http.MethodPost, cfg.Users.InternalURL+"/usernames", tc.raw, "")
 			} else {
-				resp = jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/usernames", tc.body, "")
+				resp = jsonReq(t, http.MethodPost, cfg.Users.InternalURL+"/usernames", tc.body, "")
 			}
 
 			require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
@@ -240,17 +244,19 @@ func TestUpdateCoinsRandomizedSequence(t *testing.T) {
 			delta = -expectedCoins
 		}
 
-		resp := jsonReq(t, http.MethodPut, cfg.Users.BaseURL+"/update-coins", map[string]any{
+		resp := jsonReq(t, http.MethodPut, cfg.Users.InternalURL+"/update-coins", map[string]any{
 			"user_id": profile.UserID,
 			"delta":   delta,
 		}, "")
-		require.Equalf(t, http.StatusNoContent, resp.StatusCode, "step=%d delta=%d", step, delta)
-		requireEmptyBody(t, resp)
+		require.Equalf(t, http.StatusOK, resp.StatusCode, "step=%d delta=%d", step, delta)
 
 		expectedCoins += delta
+		body := decodeBody[updateCoinsResponse](t, resp)
+		require.Equalf(t, profile.UserID, body.UserID, "step=%d delta=%d", step, delta)
+		require.Equalf(t, uint64(expectedCoins), body.Coins, "step=%d delta=%d", step, delta)
 
 		currentProfile := getProfile(t, cfg, auth.AccessToken)
-		require.Equalf(t, uint64(expectedCoins), currentProfile.Coins, "step=%d delta=%d", step, delta)
+		require.Equalf(t, body.Coins, currentProfile.Coins, "step=%d delta=%d", step, delta)
 	}
 }
 
@@ -270,7 +276,7 @@ func TestUpdateCoinsValidationCases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resp := rawReq(t, http.MethodPut, cfg.Users.BaseURL+"/update-coins", tc.raw, "")
+			resp := rawReq(t, http.MethodPut, cfg.Users.InternalURL+"/update-coins", tc.raw, "")
 			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 
 			apiErr := decodeBody[apiError](t, resp)

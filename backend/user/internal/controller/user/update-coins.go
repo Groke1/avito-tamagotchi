@@ -16,7 +16,7 @@ func (c *controller) UpdateCoins(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := c.userService.UpdateCoins(r.Context(), req.UserID, req.Delta)
+	user, err := c.userService.UpdateCoins(r.Context(), req.UserID, req.Delta)
 	if err != nil {
 		switch {
 		case errors.Is(err, entity.ErrUserNotFound):
@@ -35,5 +35,8 @@ func (c *controller) UpdateCoins(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	writeJSON(w, http.StatusOK, updateCoinsResponse{
+		UserID: user.ID,
+		Coins:  user.Coins,
+	})
 }

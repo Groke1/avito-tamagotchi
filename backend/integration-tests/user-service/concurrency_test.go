@@ -33,7 +33,7 @@ func TestConcurrentRefreshOnlyOneSucceeds(t *testing.T) {
 			defer wg.Done()
 			<-start
 
-			resp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/refresh", map[string]any{
+			resp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/refresh", map[string]any{
 				"refresh_token": auth.RefreshToken,
 			}, "")
 			statuses[index] = resp.StatusCode
@@ -89,7 +89,7 @@ func TestConcurrentRegisterLoginRefreshAndProfile(t *testing.T) {
 			require.Equal(t, username, profile.Username)
 			require.Equal(t, email, profile.Email)
 
-			loginResp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/login", map[string]any{
+			loginResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/login", map[string]any{
 				"email":    email,
 				"password": testPassword,
 			}, "")
@@ -97,7 +97,7 @@ func TestConcurrentRegisterLoginRefreshAndProfile(t *testing.T) {
 
 			loggedIn := decodeBody[authResponse](t, loginResp)
 
-			refreshResp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/refresh", map[string]any{
+			refreshResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/refresh", map[string]any{
 				"refresh_token": loggedIn.RefreshToken,
 			}, "")
 			require.Equal(t, http.StatusOK, refreshResp.StatusCode)
@@ -108,7 +108,7 @@ func TestConcurrentRegisterLoginRefreshAndProfile(t *testing.T) {
 			refreshedProfile := getProfile(t, cfg, refreshed.AccessToken)
 			require.Equal(t, profile.UserID, refreshedProfile.UserID)
 
-			reusedResp := jsonReq(t, http.MethodPost, cfg.Users.BaseURL+"/auth/refresh", map[string]any{
+			reusedResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/refresh", map[string]any{
 				"refresh_token": loggedIn.RefreshToken,
 			}, "")
 			require.Equal(t, http.StatusUnauthorized, reusedResp.StatusCode)
