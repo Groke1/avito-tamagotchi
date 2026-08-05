@@ -14,6 +14,7 @@ var (
 	ErrInvalidCredentials   = errors.New("invalid credentials")
 	ErrInvalidRefreshToken  = errors.New("invalid refresh token")
 	ErrInvalidAccessToken   = errors.New("invalid access token")
+	ErrInsufficientCoins    = errors.New("insufficient coins")
 )
 
 type User struct {

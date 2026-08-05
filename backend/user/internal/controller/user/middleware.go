@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+//go:generate mockgen -source=middleware.go -destination=mocks/middleware_mocks.go -package=mocks
+
 type AccessTokenValidator interface {
 	ValidateAccessToken(ctx context.Context, token string) (userID string, err error)
 }

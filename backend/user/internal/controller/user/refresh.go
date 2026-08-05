@@ -16,7 +16,7 @@ func (c *controller) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := c.service.Refresh(r.Context(), req.RefreshToken)
+	tokens, err := c.authService.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
 		if errors.Is(err, entity.ErrInvalidRefreshToken) || errors.Is(err, entity.ErrRefreshTokenNotFound) {
 			writeError(w, http.StatusUnauthorized, errInvalidRefreshToken)

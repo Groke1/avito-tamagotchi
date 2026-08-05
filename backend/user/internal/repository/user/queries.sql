@@ -25,3 +25,22 @@ SELECT
     coins
 FROM account.users
 WHERE email = sqlc.arg(email);
+
+-- name: UpdateCoins :one
+UPDATE account.users
+SET coins = coins + sqlc.arg(delta_coins)
+WHERE id = sqlc.arg(user_id)
+  AND coins + sqlc.arg(delta_coins) >= 0
+RETURNING coins;
+
+-- name: GetUsersByIDs :many
+SELECT id, username
+FROM account.users
+WHERE id = ANY(sqlc.arg(ids)::uuid[]);
+
+-- name: UserExists :one
+SELECT EXISTS (
+    SELECT 1
+    FROM account.users
+    WHERE id = sqlc.arg(user_id)
+);

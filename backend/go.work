@@ -2,7 +2,7 @@ go 1.26.2
 
 use (
 	./pets
-	//./tasks
 	./user
 	./pkg
+	./integration-tests
 )

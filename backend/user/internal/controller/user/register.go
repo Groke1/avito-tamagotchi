@@ -23,7 +23,7 @@ func (c *controller) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwt, err := c.service.Register(r.Context(), entity.User{
+	jwt, err := c.authService.Register(r.Context(), entity.User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,

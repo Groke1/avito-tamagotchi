@@ -73,7 +73,7 @@ func (r *tokenRepository) GetRefreshTokenByHashForUpdate(ctx context.Context, ha
 	}
 
 	if !token.ExpiresAt.Valid {
-		return nil, fmt.Errorf("get refresh token by hash: expires_at is null")
+		return nil, errors.New("get refresh token by hash: expires_at is null")
 	}
 
 	return &entity.RefreshToken{
