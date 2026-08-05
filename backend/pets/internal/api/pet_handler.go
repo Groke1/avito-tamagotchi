@@ -2,8 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/service"
 
 	"github.com/go-playground/validator/v10"
@@ -40,13 +42,13 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := ctx.Value("user_id").(int64)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется повторная авторизация")
+		writeError(w, ErrUnauthorized)
 		return
 	}
 
 	pet, err := ph.service.GetPet(ctx, userID)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "PET_NOT_FOUND", "Сначала создайте питомца")
+		writeError(w, ErrPetNotFound)
 		return
 	}
 
@@ -68,24 +70,22 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := ctx.Value("user_id").(int64)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется повторная авторизация")
+		writeError(w, ErrUnauthorized)
 		return
 	}
 
 	var req CreatePetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusUnprocessableEntity, "VALIDATION_ERROR", "Проверьте переданные данные")
+		writeError(w, ErrValidationError)
 		return
-	}
-
-	if err := ph.validator.Struct(req); err != nil {
-		writeError(w, http.StatusUnprocessableEntity, "VALIDATION_ERROR", "Проверьте переданные данные")
+	} else if err := ph.validator.Struct(req); err != nil {
+		writeError(w, ErrValidationError)
 		return
 	}
 
 	pet, err := ph.service.CreatePet(ctx, req.Name, userID)
 	if err != nil {
-		writeError(w, http.StatusConflict, "PET_ALREADY_EXISTS", "У пользователя уже есть питомец")
+		writeError(w, ErrPetAlreadyExists)
 		return
 	}
 
@@ -100,5 +100,68 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(petResponse)
+}
+
+func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userID, ok := ctx.Value("user_id").(int64)
+	if !ok {
+		writeError(w, ErrUnauthorized)
+		return
+	}
+
+	pet, err := ph.service.FeedPet(ctx, userID)
+	if errors.Is(err, domain.ErrPetNotFound) {
+		writeError(w, ErrPetNotFound)
+		return
+	} else if errors.Is(err, domain.ErrForbiddenAction) {
+		writeError(w, ErrUnavailableAction)
+		return
+	}
+
+	petResponse := PetResponse{
+		ID:          pet.ID,
+		Name:        pet.Name,
+		Level:       pet.Level,
+		XP:          pet.XP,
+		NextLevelXP: pet.NextLevelXP,
+		Satiety:     pet.Satiety,
+		Happiness:   pet.Happiness,
+	}
+
+	json.NewEncoder(w).Encode(petResponse)
+
+}
+
+func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userID, ok := ctx.Value("user_id").(int64)
+	if !ok {
+		writeError(w, ErrUnauthorized)
+		return
+	}
+
+	pet, err := ph.service.StrokePet(ctx, userID)
+	if errors.Is(err, domain.ErrPetNotFound) {
+		writeError(w, ErrPetNotFound)
+		return
+	} else if errors.Is(err, domain.ErrForbiddenAction) {
+		writeError(w, ErrUnavailableAction)
+		return
+	}
+
+	petResponse := PetResponse{
+		ID:          pet.ID,
+		Name:        pet.Name,
+		Level:       pet.Level,
+		XP:          pet.XP,
+		NextLevelXP: pet.NextLevelXP,
+		Satiety:     pet.Satiety,
+		Happiness:   pet.Happiness,
+	}
+
 	json.NewEncoder(w).Encode(petResponse)
 }

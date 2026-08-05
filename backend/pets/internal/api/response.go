@@ -10,8 +10,8 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-func writeError(w http.ResponseWriter, status_code int, code string, message string) {
+func writeError(w http.ResponseWriter, err APIError) {
 	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(status_code)
-	json.NewEncoder(w).Encode(ErrorResponse{Code: code, Message: message})
+	w.WriteHeader(err.StatusCode)
+	json.NewEncoder(w).Encode(ErrorResponse{Code: err.Code, Message: err.Message})
 }
