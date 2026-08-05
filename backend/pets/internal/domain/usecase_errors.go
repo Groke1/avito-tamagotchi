@@ -9,4 +9,6 @@ var (
 	ErrPetIsFull         = errors.New("pet is already full")
 	ErrPetIsTooHappy     = errors.New("pet is too happy")
 	ErrPetIsTooHungry    = errors.New("pet is too hungry")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrNotEnoguhCoins    = errors.New("insuffient amount of coins")
 )

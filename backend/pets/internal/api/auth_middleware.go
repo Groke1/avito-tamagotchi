@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func AuthMiddleware(secret string) func(http.Handler) http.Handler {
@@ -22,9 +24,25 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 			}
 
 			jwtToken := parts[1]
-			_ = jwtToken
+			token, err := jwt.Parse(jwtToken, func(t *jwt.Token) (any, error) {
+				return []byte(secret), nil
+			})
+			if err != nil || !token.Valid {
+				writeError(w, ErrUnauthorized)
+				return
+			}
 
-			userID := int64(1) // TODO
+			claims, ok := token.Claims.(jwt.MapClaims)
+			if !ok {
+				writeError(w, ErrUnauthorized)
+				return
+			}
+
+			userID, ok := claims["user_id"].(string)
+			if !ok {
+				writeError(w, ErrUnauthorized)
+				return
+			}
 
 			ctx := context.WithValue(r.Context(), "user_id", userID)
 			next.ServeHTTP(w, r.WithContext(ctx))

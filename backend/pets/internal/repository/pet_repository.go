@@ -13,7 +13,7 @@ import (
 
 type Pet struct {
 	ID          int64     `db:"id"`
-	UserID      int64     `db:"user_id"`
+	UserID      string    `db:"user_id"`
 	Name        string    `db:"name"`
 	Level       int       `db:"level"`
 	XP          int       `db:"xp"`
@@ -35,7 +35,7 @@ func (pr *PetRepository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return pr.db.BeginTxx(ctx, nil)
 }
 
-func (pr *PetRepository) GetPet(ctx context.Context, userID int64) (*domain.Pet, error) {
+func (pr *PetRepository) GetPet(ctx context.Context, userID string) (*domain.Pet, error) {
 	query := `
 				SELECT *
 				FROM pets p
@@ -63,7 +63,7 @@ func (pr *PetRepository) GetPet(ctx context.Context, userID int64) (*domain.Pet,
 	return &pet, nil
 }
 
-func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID int64) (*domain.Pet, error) {
+func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID string) (*domain.Pet, error) {
 	query := `
 				INSERT INTO pets (name, user_id)
 				VALUES ($1, $2)
@@ -91,7 +91,7 @@ func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID i
 	return &pet, nil
 }
 
-func (pr *PetRepository) GetPetForUpdate(ctx context.Context, tx *sqlx.Tx, userID int64) (*domain.Pet, error) {
+func (pr *PetRepository) GetPetForUpdate(ctx context.Context, tx *sqlx.Tx, userID string) (*domain.Pet, error) {
 	query := `
 				SELECT *
 				FROM pets p

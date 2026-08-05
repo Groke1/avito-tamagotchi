@@ -21,10 +21,6 @@ type PetResponse struct {
 	Happiness   int    `json:"happiness"`
 }
 
-type CreatePetRequest struct {
-	Name string `json:"name" validate:"required,min=2,max=25"`
-}
-
 type PetHandler struct {
 	service   *service.PetService
 	validator *validator.Validate
@@ -40,7 +36,7 @@ func NewPetHandler(service *service.PetService) *PetHandler {
 func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(int64)
+	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		writeError(w, ErrUnauthorized)
 		return
@@ -68,7 +64,7 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(int64)
+	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		writeError(w, ErrUnauthorized)
 		return
@@ -106,7 +102,7 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(int64)
+	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		writeError(w, ErrUnauthorized)
 		return
@@ -137,7 +133,7 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(int64)
+	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		writeError(w, ErrUnauthorized)
 		return
