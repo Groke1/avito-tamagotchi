@@ -4,27 +4,24 @@ import type { Pet, PetState } from './types'
 
 const initialState: PetState = {
   pet: null,
-  hasPet: null,
+  isInitialized: false,
 }
 
 export const petSlice = createSlice({
   name: 'pet',
   initialState,
   reducers: {
-    setPet: (state, action: PayloadAction<Pet>) => {
+    setPet: (state, action: PayloadAction<Pet | null>) => {
       state.pet = action.payload
-      state.hasPet = true
-    },
-    setHasPet: (state, action: PayloadAction<boolean>) => {
-      state.hasPet = action.payload
+      state.isInitialized = true
     },
   },
   extraReducers: (builder) => {
     builder.addCase(logout, (state) => {
       state.pet = null
-      state.hasPet = null
+      state.isInitialized = false
     })
   },
 })
 
-export const { setPet, setHasPet } = petSlice.actions
+export const { setPet } = petSlice.actions

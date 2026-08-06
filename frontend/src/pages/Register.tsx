@@ -1,9 +1,8 @@
-import { AuthLayout } from '@/app/layouts/AuthLayout'
 import { RegisterForm } from '@/features/auth'
 
 export const Register = () => {
   return (
-    <AuthLayout>
+    <>
       <div className="flex flex-col items-center mb-6 text-center max-w-xs">
         <div className="flex items-center gap-1.5 mb-2">
           <span className="text-2xl font-black tracking-tight text-avito-green">Авито</span>
@@ -21,6 +20,6 @@ export const Register = () => {
         </div>
       </div>
       <RegisterForm />
-    </AuthLayout>
+    </>
   )
 }
