@@ -2,13 +2,14 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func AuthMiddleware(secret string) func(http.Handler) http.Handler {
+func JwtMiddleware(secret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -25,6 +26,9 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 
 			jwtToken := parts[1]
 			token, err := jwt.Parse(jwtToken, func(t *jwt.Token) (any, error) {
+				if t.Method != jwt.SigningMethodHS256 {
+					return nil, fmt.Errorf("unexpected signature method: %v", t.Header["alg"])
+				}
 				return []byte(secret), nil
 			})
 			if err != nil || !token.Valid {
@@ -38,7 +42,7 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 				return
 			}
 
-			userID, ok := claims["user_id"].(string)
+			userID, ok := claims["sub"].(string)
 			if !ok {
 				writeError(w, ErrUnauthorized)
 				return
@@ -48,4 +52,32 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func CorsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(
+			"Access-Control-Allow-Origin",
+			"http://localhost:5173",
+		)
+		w.Header().Set(
+			"Access-Control-Allow-Methods",
+			"GET, POST, OPTIONS",
+		)
+		w.Header().Set(
+			"Access-Control-Allow-Headers",
+			"Content-Type, Accept, Authorization",
+		)
+		w.Header().Set(
+			"Access-Control-Max-Age",
+			"86400",
+		)
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/domain"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 )
 
 type UserClient struct {

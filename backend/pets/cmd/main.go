@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/api"
-	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/repository"
-	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/service"
-	"github.com/joho/godotenv"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/api"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -54,7 +54,8 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/api/v1/pet", func(r chi.Router) {
-		r.Use(api.AuthMiddleware(authSecret))
+		r.Use(api.CorsMiddleware)
+		r.Use(api.JwtMiddleware(authSecret))
 		r.Get("/", handler.GetPet)
 		r.Post("/", handler.CreatePet)
 		r.Post("/feed", handler.FeedPet)

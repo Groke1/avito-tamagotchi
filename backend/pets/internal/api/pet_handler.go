@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/domain"
-	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/service"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -58,7 +58,7 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	json.NewEncoder(w).Encode(petResponse)
+	writeJsonResponse(w, http.StatusOK, petResponse)
 }
 
 func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
@@ -95,8 +95,7 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(petResponse)
+	writeJsonResponse(w, http.StatusCreated, petResponse)
 }
 
 func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
@@ -127,7 +126,7 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	json.NewEncoder(w).Encode(petResponse)
+	writeJsonResponse(w, http.StatusOK, petResponse)
 }
 
 func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
@@ -158,5 +157,5 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	json.NewEncoder(w).Encode(petResponse)
+	writeJsonResponse(w, http.StatusOK, petResponse)
 }

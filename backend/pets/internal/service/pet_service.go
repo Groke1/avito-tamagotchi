@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/clients"
-	"github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/domain"
-	repository "github.com/cayman444/avito-gamification-hackathon/blob/main/backend/pets/internal/repository"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/clients"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
+	repository "github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 )
 
 type PetService struct {
