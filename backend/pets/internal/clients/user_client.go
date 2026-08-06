@@ -61,3 +61,37 @@ func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount i
 		return fmt.Errorf("unexpected status %d from user service: %v", resp.StatusCode, apiErr.Message)
 	}
 }
+
+func (uc *UserClient) GetUsernamesByIDs(ctx context.Context, userIDs []string) (map[string]string, error) {
+	url := fmt.Sprintf("%s/usernames", uc.baseUrl)
+
+	body, _ := json.Marshal(struct {
+		UserIDs []string `json:"user_ids"`
+	}{
+		UserIDs: userIDs,
+	})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-type", "application/json")
+
+	resp, err := uc.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var userNames UserNamesResponse
+	if err := json.NewDecoder(resp.Body).Decode(&userNames); err != nil {
+		return nil, err
+	}
+
+	userMap := make(map[string]string, len(userNames.Users))
+	for _, user := range userNames.Users {
+		userMap[user.ID] = user.UserName
+	}
+
+	return userMap, nil
+}

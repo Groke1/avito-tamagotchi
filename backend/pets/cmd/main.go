@@ -53,13 +53,18 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Route("/api/v1/pet", func(r chi.Router) {
+	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(api.CorsMiddleware)
 		r.Use(api.JwtMiddleware(authSecret))
-		r.Get("/", handler.GetPet)
-		r.Post("/", handler.CreatePet)
-		r.Post("/feed", handler.FeedPet)
-		r.Post("/stroke", handler.StrokePet)
+
+		r.Route("/pet", func(r chi.Router) {
+			r.Get("/", handler.GetPet)
+			r.Post("/", handler.CreatePet)
+			r.Post("/feed", handler.FeedPet)
+			r.Post("/stroke", handler.StrokePet)
+		})
+
+		r.Get("/leaderboard", handler.GetLeaderboard)
 	})
 
 	log.Println("[SERVICE STARTED]")
