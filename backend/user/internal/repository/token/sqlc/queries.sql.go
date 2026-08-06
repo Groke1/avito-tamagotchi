@@ -12,7 +12,7 @@ import (
 )
 
 const addToken = `-- name: AddToken :exec
-INSERT INTO account.refresh_tokens (
+INSERT INTO users.refresh_tokens (
     user_id,
     token_hash,
     expires_at
@@ -36,7 +36,7 @@ func (q *Queries) AddToken(ctx context.Context, arg AddTokenParams) error {
 }
 
 const deleteExpiredTokens = `-- name: DeleteExpiredTokens :exec
-DELETE FROM account.refresh_tokens WHERE expires_at < NOW()
+DELETE FROM users.refresh_tokens WHERE expires_at < NOW()
 `
 
 func (q *Queries) DeleteExpiredTokens(ctx context.Context) error {
@@ -45,7 +45,7 @@ func (q *Queries) DeleteExpiredTokens(ctx context.Context) error {
 }
 
 const deleteRefreshTokenByHash = `-- name: DeleteRefreshTokenByHash :exec
-DELETE FROM account.refresh_tokens
+DELETE FROM users.refresh_tokens
 WHERE token_hash = $1
 `
 
@@ -61,14 +61,14 @@ SELECT
     token_hash,
     expires_at,
     created_at
-FROM account.refresh_tokens
+FROM users.refresh_tokens
 WHERE token_hash = $1
 FOR UPDATE
 `
 
-func (q *Queries) GetRefreshTokenByHashForUpdate(ctx context.Context, tokenHash string) (AccountRefreshToken, error) {
+func (q *Queries) GetRefreshTokenByHashForUpdate(ctx context.Context, tokenHash string) (UsersRefreshToken, error) {
 	row := q.db.QueryRow(ctx, getRefreshTokenByHashForUpdate, tokenHash)
-	var i AccountRefreshToken
+	var i UsersRefreshToken
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,

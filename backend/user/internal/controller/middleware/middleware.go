@@ -1,12 +1,12 @@
-package user
+package middleware
 
 import (
 	"context"
 	"net/http"
 	"strings"
-)
 
-//go:generate mockgen -source=middleware.go -destination=mocks/middleware_mocks.go -package=mocks
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/httpx"
+)
 
 type AccessTokenValidator interface {
 	ValidateAccessToken(ctx context.Context, token string) (userID string, err error)
@@ -19,13 +19,13 @@ func RequireAccessToken(validator AccessTokenValidator) func(http.Handler) http.
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, ok := bearerToken(r.Header.Get("Authorization"))
 			if !ok {
-				writeError(w, http.StatusUnauthorized, errUnauthorized)
+				httpx.WriteError(w, http.StatusUnauthorized, httpx.ErrUnauthorized)
 				return
 			}
 
 			userID, err := validator.ValidateAccessToken(r.Context(), token)
 			if err != nil || userID == "" {
-				writeError(w, http.StatusUnauthorized, errUnauthorized)
+				httpx.WriteError(w, http.StatusUnauthorized, httpx.ErrUnauthorized)
 				return
 			}
 
@@ -35,7 +35,7 @@ func RequireAccessToken(validator AccessTokenValidator) func(http.Handler) http.
 	}
 }
 
-func userIDFromContext(ctx context.Context) (string, bool) {
+func UserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value(contextKey{}).(string)
 	return userID, ok && userID != ""
 }

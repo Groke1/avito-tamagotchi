@@ -10,6 +10,8 @@ tags:
     description: Регистрация и управление сессией
   - name: Profile
     description: Профиль текущего пользователя
+  - name: Rewards
+    description: Награды текущего пользователя
   - name: Internal
     description: Внутренние методы межсервисного взаимодействия
 
@@ -117,6 +119,203 @@ paths:
                 coins: 150
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+
+  /api/v1/rewards:
+    get:
+      tags: [Rewards]
+      operationId: getAllRewards
+      summary: Получить все награды текущего пользователя
+      description: Возвращает активные, использованные и истекшие награды. Поля `expires_at` и `redeemed-at` могут быть `null` - значит у промокода нет ограничения по времени или он еще не использован соответственно
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список наград пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRewardsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/rewards/active:
+    get:
+      tags: [Rewards]
+      operationId: getActiveRewards
+      summary: Получить доступные награды текущего пользователя
+      description: Возвращает награды со статусом `active`. Поля `expires_at` и `redeemed-at` могут быть `null` - значит у промокода нет ограничения по времени или он еще не использован соответственно
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список доступных наград пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRewardsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/rewards/{reward_id}:
+    get:
+      tags: [Rewards]
+      operationId: getReward
+      summary: Получить награду текущего пользователя
+      description: Возвращает награду только в том случае, если она принадлежит пользователю из access token.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          description: Идентификатор пользовательской награды
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награда пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRewardResponse'
+              examples:
+                active:
+                  summary: Активная награда
+                  value:
+                    reward_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                    promo_code: DELIVERYDISC-X8K2M7Q9WP
+                    name: Скидка 10% на доставку
+                    description: Скидка 10% на одну покупку с Авито Доставкой
+                    status: active
+                    expires_at: '2026-09-06T19:07:12Z'
+                    redeemed_at: null
+                redeemed:
+                  summary: Использованная награда
+                  value:
+                    reward_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                    promo_code: DELIVERYDISC-X8K2M7Q9WP
+                    name: Скидка 10% на доставку
+                    description: Скидка 10% на одну покупку с Авито Доставкой
+                    status: redeemed
+                    expires_at: '2026-09-06T19:07:12Z'
+                    redeemed_at: '2026-08-06T19:07:12Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/RewardNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/rewards/redeem:
+    post:
+      tags: [Rewards]
+      operationId: redeemReward
+      summary: Использовать промокод текущего пользователя
+      description: Помечает доступную награду использованной. Пользователь определяется по access token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RedeemRewardRequest'
+            example:
+              promo_code: DELIVERYDISC-X8K2M7Q9WP
+      responses:
+        '204':
+          description: Награда успешно использована
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/RewardUnavailable'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /internal/action:
+    post:
+      tags: [Internal]
+      operationId: registerUserAction
+      summary: Зарегистрировать действие пользователя
+      description: Обновляет стрик пользователя на основании времени совершения действия.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionRequest'
+            example:
+              user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+              occurred_at: '2026-08-06T19:07:12Z'
+      responses:
+        '204':
+          description: Действие учтено, стрик пользователя обновлён
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /internal/rewards:
+    post:
+      tags: [Internal]
+      operationId: grantReward
+      summary: Выдать награду пользователю
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantRewardRequest'
+            example:
+              user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+              code: DELIVERY_DISCOUNT_10
+      responses:
+        '201':
+          description: Награда выдана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRewardResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /internal/rewards/{code}:
+    get:
+      tags: [Internal]
+      operationId: getRewardDefinition
+      summary: Получить описание награды по коду
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Стабильный межсервисный код награды
+          schema:
+            type: string
+            minLength: 1
+          example: DELIVERY_DISCOUNT_10
+      responses:
+        '200':
+          description: Описание награды
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardDefinitionResponse'
+        '404':
+          $ref: '#/components/responses/RewardDefinitionNotFound'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -332,6 +531,126 @@ components:
           minimum: 0
           readOnly: true
 
+
+    RewardStatus:
+      type: string
+      description: Эффективный статус награды. Значение `expired` вычисляется по `expires_at`.
+      enum: [active, redeemed, expired]
+
+    UserRewardResponse:
+      type: object
+      additionalProperties: false
+      example:
+        reward_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        promo_code: DELIVERYDISC-X8K2M7Q9WP
+        name: Скидка 10% на доставку
+        description: Скидка 10% на одну покупку с Авито Доставкой
+        status: active
+        expires_at: '2026-09-06T19:07:12Z'
+        redeemed_at: null
+      required:
+        - reward_id
+        - promo_code
+        - name
+        - description
+        - status
+        - expires_at
+        - redeemed_at
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          readOnly: true
+        promo_code:
+          type: string
+          readOnly: true
+          example: DELIVERYDISC-X8K2M7Q9WP
+        name:
+          type: string
+          readOnly: true
+          example: Скидка 10% на доставку
+        description:
+          type: string
+          readOnly: true
+          example: Скидка 10% на одну покупку с Авито Доставкой
+        status:
+          allOf:
+            - $ref: '#/components/schemas/RewardStatus'
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        redeemed_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+
+    UserRewardsResponse:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRewardResponse'
+
+    RedeemRewardRequest:
+      type: object
+      additionalProperties: false
+      required: [promo_code]
+      properties:
+        promo_code:
+          type: string
+          minLength: 1
+          example: DELIVERYDISC-X8K2M7Q9WP
+
+    ActionRequest:
+      type: object
+      additionalProperties: false
+      required: [user_id, occurred_at]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+
+    GrantRewardRequest:
+      type: object
+      additionalProperties: false
+      required: [user_id, code]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 1
+          example: DELIVERY_DISCOUNT_10
+
+    RewardDefinitionResponse:
+      type: object
+      additionalProperties: false
+      required: [code, name, description]
+      properties:
+        code:
+          type: string
+          readOnly: true
+          example: DELIVERY_DISCOUNT_10
+        name:
+          type: string
+          readOnly: true
+          example: Скидка 10% на доставку
+        description:
+          type: string
+          readOnly: true
+          example: Скидка 10% на одну покупку с Авито Доставкой
+
     ErrorResponse:
       type: object
       additionalProperties: false
@@ -348,6 +667,9 @@ components:
             - UNAUTHORIZED
             - USER_NOT_FOUND
             - INSUFFICIENT_COINS
+            - REWARD_NOT_FOUND
+            - REWARD_UNAVAILABLE
+            - NOT_FOUND_DEFINITION
         message:
           type: string
 
@@ -421,6 +743,37 @@ components:
           example:
             code: INSUFFICIENT_COINS
             message: Недостаточно монет
+
+
+    RewardNotFound:
+      description: Награда не найдена либо не принадлежит текущему пользователю
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: REWARD_NOT_FOUND
+            message: Награда не найдена
+
+    RewardUnavailable:
+      description: Промокод не найден, принадлежит другому пользователю, уже использован или просрочен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: REWARD_UNAVAILABLE
+            message: Награда недоступна
+
+    RewardDefinitionNotFound:
+      description: Описание награды с указанным кодом не найдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: NOT_FOUND_DEFINITION
+            message: Награда не найдена
 
     InternalError:
       description: Внутренняя ошибка сервера
