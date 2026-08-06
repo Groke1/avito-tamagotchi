@@ -1,7 +1,7 @@
 import { baseApi } from '@/shared/api/baseApi'
 import type { PetDto, PetResponse } from '../model/types'
 
-const PET_URL = 'http://localhost:8082/api/v1/pet'
+const PET_URL = import.meta.env.VITE_API_PET_URL || 'http://localhost:8082/api/v1/pet'
 
 export const petApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
