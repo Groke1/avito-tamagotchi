@@ -159,6 +159,7 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJsonResponse(w, http.StatusOK, petResponse)
+<<<<<<< HEAD
 }
 
 func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
@@ -224,4 +225,6 @@ func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+=======
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 }

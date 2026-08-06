@@ -1,4 +1,5 @@
-import { petApi, setHasPet, setPet } from '@/entities/pet'
+import { store } from '@/app/store'
+import { petApi, setPet } from '@/entities/pet'
 import {
   authApi,
   getStoredRefreshToken,
@@ -8,7 +9,6 @@ import {
   setStoredRefreshToken,
   setUser,
 } from '@/entities/user'
-import { store } from '../store'
 
 export const rootLoader = async () => {
   if (store.getState().user.isInitialized) return null
@@ -38,7 +38,7 @@ export const rootLoader = async () => {
       const pet = await store.dispatch(petApi.endpoints.getPet.initiate()).unwrap()
       store.dispatch(setPet(pet))
     } catch {
-      store.dispatch(setHasPet(false))
+      store.dispatch(setPet(null))
     }
   } catch {
     store.dispatch(logout())

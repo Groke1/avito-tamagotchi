@@ -61,6 +61,7 @@ func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount i
 		return fmt.Errorf("unexpected status %d from user service: %v", resp.StatusCode, apiErr.Message)
 	}
 }
+<<<<<<< HEAD
 
 func (uc *UserClient) GetUsernamesByIDs(ctx context.Context, userIDs []string) (map[string]string, error) {
 	url := fmt.Sprintf("%s/usernames", uc.baseUrl)
@@ -95,3 +96,5 @@ func (uc *UserClient) GetUsernamesByIDs(ctx context.Context, userIDs []string) (
 
 	return userMap, nil
 }
+=======
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f

@@ -28,7 +28,11 @@ func writeError(w http.ResponseWriter, err APIError) {
 	json.NewEncoder(w).Encode(ErrorResponse{Code: err.Code, Message: err.Message})
 }
 
+<<<<<<< HEAD
 func writeJsonResponse(w http.ResponseWriter, status_code int, resp interface{}) {
+=======
+func writeJsonResponse(w http.ResponseWriter, status_code int, resp PetResponse) {
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(status_code)
 	json.NewEncoder(w).Encode(resp)

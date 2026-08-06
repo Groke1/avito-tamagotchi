@@ -1,5 +1,5 @@
 export interface Pet {
-  id: string
+  id: number
   name: string
   level: number
   xp: number
@@ -16,5 +16,5 @@ export interface PetDto {
 
 export interface PetState {
   pet: Pet | null
-  hasPet: boolean | null
+  isInitialized: boolean
 }

@@ -1,12 +1,10 @@
-import { ROUTES_PATHS } from '@/app/router/paths'
 import { useAppDispatch } from '@/app/store/hooks'
-import { setHasPet } from '@/entities/pet'
+import { setPet } from '@/entities/pet'
 import { login, setAccessToken, useLazyGetProfileQuery, useRegisterMutation } from '@/entities/user'
 import { isApiError, isFetchBaseQueryError } from '@/shared/lib/guards'
 import type { AuthErrorCode } from '@/shared/model/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { type SubmitHandler, useForm, useWatch } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { type RegisterFormData, registerSchema } from './register.schema'
 
@@ -14,7 +12,6 @@ export const useRegisterForm = () => {
   const [registerApi, { isLoading }] = useRegisterMutation()
   const [fetchProfile] = useLazyGetProfileQuery()
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
 
   const {
     register,
@@ -55,15 +52,13 @@ export const useRegisterForm = () => {
           user,
         }),
       )
-      dispatch(setHasPet(false))
+      dispatch(setPet(null))
 
       toast.success('Регистрация прошла успешно!')
       reset(
         { username: '', email: '', password: '', terms: false },
         { keepErrors: false, keepTouched: false },
       )
-
-      navigate(ROUTES_PATHS.CREATE_PET)
     } catch (error: unknown) {
       if (isFetchBaseQueryError(error) && isApiError<AuthErrorCode>(error.data)) {
         toast.error(error.data.message)

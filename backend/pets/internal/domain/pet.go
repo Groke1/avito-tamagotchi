@@ -51,6 +51,7 @@ func (p *Pet) Stroke() (bool, error) {
 
 	return false, nil
 }
+<<<<<<< HEAD
 
 func (p *Pet) AddXP(amount int) bool {
 	p.XP += amount
@@ -62,3 +63,5 @@ func (p *Pet) AddXP(amount int) bool {
 
 	return false
 }
+=======
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f

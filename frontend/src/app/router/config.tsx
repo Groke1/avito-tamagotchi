@@ -1,9 +1,9 @@
-import { CreatePet, Login, Register } from '@/pages'
+import { CreatePet, Dashboard, Login, Register } from '@/pages'
 import { PageLoader } from '@/shared/ui'
-import { GuestRoute } from '@/shared/ui/GuestRoute'
-import { ProtectedRoute } from '@/shared/ui/ProtectedRoute'
 import { createBrowserRouter } from 'react-router-dom'
-import { rootLoader } from '../loaders/rootLoader'
+import { AuthLayout, RootLayout } from '../layouts'
+import { GuestRoute, ProtectedRoute } from './guards'
+import { rootLoader } from './loaders'
 import { ROUTES_PATHS } from './paths'
 
 export const router = createBrowserRouter([
@@ -14,15 +14,32 @@ export const router = createBrowserRouter([
       {
         element: <GuestRoute />,
         children: [
-          { path: ROUTES_PATHS.REGISTER, element: <Register /> },
-          { path: ROUTES_PATHS.LOGIN, element: <Login /> },
+          {
+            element: <AuthLayout />,
+            children: [
+              { path: ROUTES_PATHS.REGISTER, element: <Register /> },
+              { path: ROUTES_PATHS.LOGIN, element: <Login /> },
+            ],
+          },
         ],
       },
       {
         element: <ProtectedRoute />,
         children: [
-          { path: ROUTES_PATHS.CREATE_PET, element: <CreatePet /> },
-          { path: ROUTES_PATHS.MAIN, element: <div>Main</div> },
+          {
+            element: <AuthLayout />,
+            children: [{ path: ROUTES_PATHS.CREATE_PET, element: <CreatePet /> }],
+          },
+          {
+            element: <RootLayout />,
+            children: [
+              { path: ROUTES_PATHS.DASHBOARD, element: <Dashboard /> },
+              { path: ROUTES_PATHS.TASKS, element: <div>Tasks</div> },
+              { path: ROUTES_PATHS.SHOP, element: <div>Shop</div> },
+              { path: ROUTES_PATHS.LEADERBOARD, element: <div>Leaderboard</div> },
+              { path: ROUTES_PATHS.DAILY_REPORT, element: <div>Daily report</div> },
+            ],
+          },
         ],
       },
     ],

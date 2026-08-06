@@ -17,7 +17,11 @@ type PetService struct {
 func NewPetService(petRepository *repository.PetRepository, userServiceURL string) *PetService {
 	return &PetService{
 		petRepository: petRepository,
+<<<<<<< HEAD
 		client:        clients.NewUserClient(fmt.Sprintf("%s/internal", userServiceURL)),
+=======
+		client:        clients.NewUserClient("http://localhost:8080/internal"),
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 	}
 }
 
@@ -111,6 +115,7 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	}
 
 	return pet, nil
+<<<<<<< HEAD
 }
 
 func (ps *PetService) GetLeaderboard(ctx context.Context, limit int, userID string) ([]domain.LeaderboardItem, *domain.LeaderboardItem, error) {
@@ -182,4 +187,6 @@ func (ps *PetService) ClaimDailyBonus(ctx context.Context, streak int, userID st
 	}
 
 	return nil
+=======
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 }
