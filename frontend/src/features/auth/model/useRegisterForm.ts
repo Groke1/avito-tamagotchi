@@ -1,5 +1,6 @@
-import { ROUTES_PATHS } from '@/app/router/config'
+import { ROUTES_PATHS } from '@/app/router/paths'
 import { useAppDispatch } from '@/app/store/hooks'
+import { setHasPet } from '@/entities/pet'
 import { login, setAccessToken, useLazyGetProfileQuery, useRegisterMutation } from '@/entities/user'
 import { isApiError, isFetchBaseQueryError } from '@/shared/lib/guards'
 import type { AuthErrorCode } from '@/shared/model/types'
@@ -54,6 +55,7 @@ export const useRegisterForm = () => {
           user,
         }),
       )
+      dispatch(setHasPet(false))
 
       toast.success('Регистрация прошла успешно!')
       reset(

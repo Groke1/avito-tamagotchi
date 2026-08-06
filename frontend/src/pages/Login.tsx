@@ -1,7 +1,7 @@
 import { AuthLayout } from '@/app/layouts/AuthLayout'
 import { LoginForm } from '@/features/auth'
 
-const Login = () => {
+export const Login = () => {
   return (
     <AuthLayout>
       <div className="flex flex-col items-center mb-6 text-center max-w-sm">
@@ -20,5 +20,3 @@ const Login = () => {
     </AuthLayout>
   )
 }
-
-export default Login

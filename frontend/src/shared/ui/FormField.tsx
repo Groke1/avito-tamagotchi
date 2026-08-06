@@ -4,7 +4,7 @@ import { Input, type InputProps } from './input'
 interface FormFieldProps extends InputProps {
   label: string
   id: string
-  leftIcon: ReactNode
+  leftIcon?: ReactNode
   error?: string
 }
 

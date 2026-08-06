@@ -1,5 +1,6 @@
-import { ROUTES_PATHS } from '@/app/router/config'
+import { ROUTES_PATHS } from '@/app/router/paths'
 import { useAppDispatch } from '@/app/store/hooks'
+import { setHasPet, setPet, useLazyGetPetQuery } from '@/entities/pet'
 import { login, setAccessToken, useLazyGetProfileQuery, useLoginMutation } from '@/entities/user'
 import { isApiError, isFetchBaseQueryError } from '@/shared/lib/guards'
 import type { AuthErrorCode } from '@/shared/model/types'
@@ -12,6 +13,7 @@ import { type LoginFormData, loginSchema } from './login.schema'
 export const useLoginForm = () => {
   const [loginApi, { isLoading }] = useLoginMutation()
   const [fetchProfile] = useLazyGetProfileQuery()
+  const [fetchPet] = useLazyGetPetQuery()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
@@ -40,10 +42,23 @@ export const useLoginForm = () => {
         }),
       )
 
+      let userHasPet = false
+      try {
+        const pet = await fetchPet().unwrap()
+        dispatch(setPet(pet))
+        userHasPet = true
+      } catch {
+        dispatch(setHasPet(false))
+      }
+
       toast.success('Успешный вход!')
       reset()
 
-      navigate(ROUTES_PATHS.MAIN)
+      if (userHasPet) {
+        navigate(ROUTES_PATHS.MAIN)
+      } else {
+        navigate(ROUTES_PATHS.CREATE_PET)
+      }
     } catch (error: unknown) {
       if (isFetchBaseQueryError(error) && isApiError<AuthErrorCode>(error.data)) {
         toast.error(error.data.message)
