@@ -1,4 +1,4 @@
-package user
+package auth
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 
 const refreshTokenSize = 32
 
-func (s *userService) generateTokens(ctx context.Context, userID string) (*entity.JWT, error) {
+func (s *authService) generateTokens(ctx context.Context, userID string) (*entity.JWT, error) {
 	accessToken, err := s.newAccessToken(userID)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ type accessTokenClaims struct {
 	Iat int64  `json:"iat"`
 }
 
-func (s *userService) newAccessToken(userID string) (string, error) {
+func (s *authService) newAccessToken(userID string) (string, error) {
 	now := time.Now().UTC()
 	header, err := json.Marshal(map[string]string{
 		"alg": "HS256",
@@ -70,7 +70,7 @@ func (s *userService) newAccessToken(userID string) (string, error) {
 	return signingInput + "." + signature, nil
 }
 
-func (s *userService) newRefreshToken() (token string, tokenHash string, expiresAt time.Time, err error) {
+func (s *authService) newRefreshToken() (token string, tokenHash string, expiresAt time.Time, err error) {
 	buf := make([]byte, refreshTokenSize)
 	if _, err = rand.Read(buf); err != nil {
 		return "", "", time.Time{}, fmt.Errorf("generate refresh token: %w", err)

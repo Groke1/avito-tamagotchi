@@ -1,39 +1,40 @@
-package user
+package auth
 
 import (
 	"errors"
 	"net/http"
 	"strings"
 
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/httpx"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 	"go.uber.org/zap"
 )
 
 func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
-	if err := decodeJSON(w, r, &req); err != nil {
-		writeError(w, http.StatusUnprocessableEntity, errValidationError)
+	if err := httpx.DecodeJSON(w, r, &req); err != nil {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, httpx.ErrValidation)
 		return
 	}
 
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	if !isValidEmail(req.Email) || req.Password == "" {
-		writeError(w, http.StatusUnprocessableEntity, errValidationError)
+		httpx.WriteError(w, http.StatusUnprocessableEntity, httpx.ErrValidation)
 		return
 	}
 
-	tokens, err := c.authService.Login(r.Context(), req.Email, req.Password)
+	tokens, err := c.service.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, entity.ErrInvalidCredentials) {
-			writeError(w, http.StatusUnauthorized, errInvalidCredentials)
+			httpx.WriteError(w, http.StatusUnauthorized, httpx.ErrInvalidCredentials)
 			return
 		}
 		c.logger.Error("Login", zap.Error(err), zap.String("email", req.Email))
-		writeError(w, http.StatusInternalServerError, errInternalError)
+		httpx.WriteError(w, http.StatusInternalServerError, httpx.ErrInternal)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, authResponse{
+	httpx.WriteJSON(w, http.StatusOK, response{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 	})

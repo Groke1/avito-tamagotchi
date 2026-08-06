@@ -1,5 +1,5 @@
 -- name: AddUser :one
-INSERT INTO account.users (
+INSERT INTO users.users (
     username,
     email,
     password_hash,
@@ -14,7 +14,7 @@ sqlc.arg(coins)
 
 -- name: GetUserByID :one
 SELECT id, username, email, coins
-FROM account.users WHERE id = sqlc.arg(id);
+FROM users.users WHERE id = sqlc.arg(id);
 
 -- name: GetUserByEmail :one
 SELECT
@@ -23,11 +23,11 @@ SELECT
     email,
     password_hash,
     coins
-FROM account.users
+FROM users.users
 WHERE email = sqlc.arg(email);
 
 -- name: UpdateCoins :one
-UPDATE account.users
+UPDATE users.users
 SET coins = coins + sqlc.arg(delta_coins)
 WHERE id = sqlc.arg(user_id)
   AND coins + sqlc.arg(delta_coins) >= 0
@@ -35,12 +35,12 @@ RETURNING coins;
 
 -- name: GetUsersByIDs :many
 SELECT id, username
-FROM account.users
+FROM users.users
 WHERE id = ANY(sqlc.arg(ids)::uuid[]);
 
 -- name: UserExists :one
 SELECT EXISTS (
     SELECT 1
-    FROM account.users
+    FROM users.users
     WHERE id = sqlc.arg(user_id)
 );

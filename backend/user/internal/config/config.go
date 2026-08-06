@@ -23,6 +23,11 @@ type (
 			MaxConns int32  `env:"POSTGRES_MAX_CONNS" envDefault:"8"`
 			MinConns int32  `env:"POSTGRES_MIN_CONNS" envDefault:"1"`
 		}
+
+		Clients struct {
+			PetsHTTPAddr string `env:"PETS_HTTP_ADDR" envDefault:"pets:8081"`
+		}
+
 		Settings struct {
 			RegistrationBonusCoins  uint64        `env:"REGISTRATION_BONUS_COINS" envDefault:"100"`
 			AccessTokenTTL          time.Duration `env:"ACCESS_TOKEN_TTL" envDefault:"15m"`
