@@ -207,3 +207,21 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 	writeJsonResponse(w, http.StatusOK, leaderboardResponse)
 }
+
+func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req BonusXpRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, ErrValidationError)
+		return
+	}
+
+	err := ph.service.ClaimDailyBonus(ctx, req.Streak, req.UserID)
+	if err != nil {
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

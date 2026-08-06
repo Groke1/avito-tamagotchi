@@ -14,10 +14,10 @@ type PetService struct {
 	client        *clients.UserClient
 }
 
-func NewPetService(petRepository *repository.PetRepository) *PetService {
+func NewPetService(petRepository *repository.PetRepository, userServiceURL string) *PetService {
 	return &PetService{
 		petRepository: petRepository,
-		client:        clients.NewUserClient("http://localhost:8080/internal"),
+		client:        clients.NewUserClient(fmt.Sprintf("%s/internal", userServiceURL)),
 	}
 }
 
@@ -143,4 +143,43 @@ func (ps *PetService) GetLeaderboard(ctx context.Context, limit int, userID stri
 	currentUserItem.UserName = userMap[currentUserItem.UserID]
 
 	return records, &currentUserItem, nil
+}
+
+func (ps *PetService) grantXP(ctx context.Context, amount int, userID string) error {
+	tx, err := ps.petRepository.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
+	if err != nil {
+		return domain.ErrPetNotFound
+	}
+
+	levelUp := pet.AddXP(amount)
+
+	if err = ps.petRepository.UpdatePet(ctx, tx, pet); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	if levelUp {
+		// TODO сообщить о награде
+	}
+
+	return nil
+}
+
+func (ps *PetService) ClaimDailyBonus(ctx context.Context, streak int, userID string) error {
+	amount := 15 * streak
+	err := ps.grantXP(ctx, amount, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

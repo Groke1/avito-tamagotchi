@@ -51,3 +51,14 @@ func (p *Pet) Stroke() (bool, error) {
 
 	return false, nil
 }
+
+func (p *Pet) AddXP(amount int) bool {
+	p.XP += amount
+	if p.XP >= p.NextLevelXP {
+		p.Level += 1
+		p.NextLevelXP *= p.Level * p.Level
+		return true
+	}
+
+	return false
+}
