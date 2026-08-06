@@ -62,7 +62,7 @@ func (r *streakRepository) UpdateStreak(ctx context.Context, streak *entity.Stre
 	})
 
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-		if pgErr.Code == "23503" && pgErr.ConstraintName == "user_streaks_user_id_key" {
+		if pgErr.Code == "23503" && pgErr.ConstraintName == "user_streaks_user_id_fkey" {
 			return entity.ErrUserNotFound
 		}
 	}
