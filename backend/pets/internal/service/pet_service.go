@@ -14,10 +14,14 @@ type PetService struct {
 	client        *clients.UserClient
 }
 
-func NewPetService(petRepository *repository.PetRepository) *PetService {
+func NewPetService(petRepository *repository.PetRepository, userServiceURL string) *PetService {
 	return &PetService{
 		petRepository: petRepository,
+<<<<<<< HEAD
+		client:        clients.NewUserClient(fmt.Sprintf("%s/internal", userServiceURL)),
+=======
 		client:        clients.NewUserClient("http://localhost:8080/internal"),
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 	}
 }
 
@@ -111,4 +115,78 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	}
 
 	return pet, nil
+<<<<<<< HEAD
+}
+
+func (ps *PetService) GetLeaderboard(ctx context.Context, limit int, userID string) ([]domain.LeaderboardItem, *domain.LeaderboardItem, error) {
+	records, err := ps.petRepository.GetLeaderboardWithUser(ctx, limit, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var currentUserItem domain.LeaderboardItem
+	var userIDs = make([]string, len(records))
+	for i := range records {
+		userIDs[i] = records[i].UserID
+		if records[i].UserID == userID {
+			currentUserItem = records[i]
+		}
+	}
+
+	userMap, err := ps.client.GetUsernamesByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for i := range records {
+		if name, ok := userMap[records[i].UserID]; ok {
+			records[i].UserName = name
+		} else {
+			return nil, nil, err
+		}
+	}
+	currentUserItem.UserName = userMap[currentUserItem.UserID]
+
+	return records, &currentUserItem, nil
+}
+
+func (ps *PetService) grantXP(ctx context.Context, amount int, userID string) error {
+	tx, err := ps.petRepository.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
+	if err != nil {
+		return domain.ErrPetNotFound
+	}
+
+	levelUp := pet.AddXP(amount)
+
+	if err = ps.petRepository.UpdatePet(ctx, tx, pet); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	if levelUp {
+		// TODO сообщить о награде
+	}
+
+	return nil
+}
+
+func (ps *PetService) ClaimDailyBonus(ctx context.Context, streak int, userID string) error {
+	amount := 15 * streak
+	err := ps.grantXP(ctx, amount, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+=======
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 }

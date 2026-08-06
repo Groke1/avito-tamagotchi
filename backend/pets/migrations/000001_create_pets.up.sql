@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS pets (
 
 CREATE INDEX IF NOT EXISTS idx_pets_user_id 
 ON pets(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_pets_leaderboard 
+ON pets (level DESC, xp DESC);

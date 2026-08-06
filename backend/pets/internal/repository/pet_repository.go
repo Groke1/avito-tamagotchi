@@ -21,6 +21,16 @@ type Pet struct {
 	Satiety     int       `db:"satiety"`
 	Happiness   int       `db:"happiness"`
 	CreatedAt   time.Time `db:"created_at"`
+<<<<<<< HEAD
+}
+
+type PetForLeaderboard struct {
+	UserID string `db:"user_id"`
+	Name   string `db:"name"`
+	Level  int    `db:"level"`
+	Rank   int    `db:"rank"`
+=======
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 }
 
 type PetRepository struct {
@@ -129,9 +139,55 @@ func (pr *PetRepository) UpdatePet(ctx context.Context, tx *sqlx.Tx, pet *domain
 
 	_, err := tx.ExecContext(ctx, query, pet.Satiety, pet.Happiness, pet.XP, pet.NextLevelXP, pet.Level, pet.ID)
 	if err != nil {
+<<<<<<< HEAD
+=======
 		fmt.Printf("%+v\n", err)
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 		return fmt.Errorf("failed to update pet: %v", err)
 	}
 
 	return nil
+<<<<<<< HEAD
+}
+
+func (pr *PetRepository) GetLeaderboardWithUser(ctx context.Context, limit int, userID string) ([]domain.LeaderboardItem, error) {
+	query := `
+				WITH ranked_pets AS (
+					SELECT name, user_id, level,
+							DENSE_RANK() OVER (ORDER BY level DESC, xp DESC, id ASC) as rank
+					FROM pets
+				)
+
+				SELECT *
+				FROM ranked_pets
+				WHERE rank <= $1
+
+				UNION ALL
+
+				SELECT *
+				FROM ranked_pets
+				WHERE user_id = $2 and rank > $1
+
+				ORDER BY rank
+	`
+
+	var dbPets []PetForLeaderboard
+	err := pr.db.SelectContext(ctx, &dbPets, query, limit, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	pets := make([]domain.LeaderboardItem, len(dbPets))
+	for i, dbPet := range dbPets {
+		pets[i] = domain.LeaderboardItem{
+			Rank:    dbPet.Rank,
+			Level:   dbPet.Level,
+			UserID:  dbPet.UserID,
+			PetName: dbPet.Name,
+		}
+	}
+
+	return pets, nil
+=======
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 }

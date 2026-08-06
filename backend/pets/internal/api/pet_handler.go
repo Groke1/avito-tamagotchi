@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
@@ -158,4 +159,72 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJsonResponse(w, http.StatusOK, petResponse)
+<<<<<<< HEAD
+}
+
+func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userID, ok := ctx.Value("user_id").(string)
+	if !ok {
+		writeError(w, ErrUnauthorized)
+		return
+	}
+
+	limit := 20
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err != nil {
+			if l >= 1 && l <= 100 {
+				limit = l
+			}
+		}
+	}
+
+	leaderboardItems, currentUser, err := ph.service.GetLeaderboard(ctx, limit, userID)
+	if err != nil {
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	leaderboard := make([]LeaderboardItemResponse, len(leaderboardItems))
+	for i, item := range leaderboardItems {
+		leaderboard[i] = LeaderboardItemResponse{
+			Rank:     item.Rank,
+			Level:    item.Level,
+			UserName: item.UserName,
+			PetName:  item.PetName,
+		}
+	}
+
+	leaderboardResponse := LeaderboardResponse{
+		Items: leaderboard,
+		CurrentUser: LeaderboardItemResponse{
+			Rank:     currentUser.Rank,
+			Level:    currentUser.Level,
+			UserName: currentUser.UserName,
+			PetName:  currentUser.PetName,
+		},
+	}
+
+	writeJsonResponse(w, http.StatusOK, leaderboardResponse)
+}
+
+func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req BonusXpRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, ErrValidationError)
+		return
+	}
+
+	err := ph.service.ClaimDailyBonus(ctx, req.Streak, req.UserID)
+	if err != nil {
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+=======
+>>>>>>> 9f0afb9c68d0604e731ec3d40cd30366c4e2a04f
 }
