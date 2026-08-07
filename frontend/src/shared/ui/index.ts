@@ -8,4 +8,6 @@ export * from './LazyImage'
 export * from './progress'
 export * from './ErrorState'
 export * from './EmptyState'
+export * from './tabs'
+
 
