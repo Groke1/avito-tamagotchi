@@ -39,7 +39,7 @@ jobs:
     needs: prepare
     timeout-minutes: 40
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - name: users

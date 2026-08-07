@@ -3,6 +3,7 @@ FROM golang:1.26 AS builder
 WORKDIR /app
 
 COPY backend/pets/go.mod backend/pets/go.sum ./
+COPY backend/pkg/go.mod backend/pkg/go.sum ./backend/pkg/
 
 RUN go mod download
 
