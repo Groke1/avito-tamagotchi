@@ -1,8 +1,8 @@
-import { useAppSelector } from '@/app/store/hooks'
+import { ROUTES_PATHS } from '@/shared/config'
+import { useAppSelector } from '@/shared/model'
 import { PageLoader } from '@/shared/ui'
 import type { FC } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { ROUTES_PATHS } from '../paths'
 
 export const ProtectedRoute: FC = () => {
   const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated)

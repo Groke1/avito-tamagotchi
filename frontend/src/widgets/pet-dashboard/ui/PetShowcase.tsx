@@ -1,4 +1,4 @@
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppSelector } from '@/shared/model'
 import { LazyImage } from '@/shared/ui'
 import { PetActionButtons } from './PetActionButtons'
 import { PetShowcaseSkeleton } from './PetShowcaseSkeleton'

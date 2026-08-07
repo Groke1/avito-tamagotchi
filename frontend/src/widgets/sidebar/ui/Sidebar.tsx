@@ -1,4 +1,4 @@
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppSelector } from '@/shared/model'
 import { Button, LazyImage } from '@/shared/ui'
 import { Utensils } from 'lucide-react'
 import { SidebarNavList } from './SidebarNavList'

@@ -1,5 +1,5 @@
-import { useAppSelector } from '@/app/store/hooks'
 import { useGetProfileQuery } from '@/entities/user'
+import { useAppSelector } from '@/shared/model'
 import { Button } from '@/shared/ui'
 import { Coins, LogOut, User as UserIcon } from 'lucide-react'
 import { useHandleLogout } from '../model/useHandleLogout'

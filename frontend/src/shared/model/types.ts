@@ -10,14 +10,8 @@ export type AuthErrorCode =
   | 'UNAUTHORIZED'
   | 'VALIDATION_ERROR'
 
-export type PetErrorCode =
-  | 'PET_NOT_FOUND'
-  | 'PET_ALREADY_EXISTS'
-  | 'PET_ACTION_UNAVAILABLE'
+export type PetErrorCode = 'PET_NOT_FOUND' | 'PET_ALREADY_EXISTS' | 'PET_ACTION_UNAVAILABLE'
 
-export type TaskErrorCode =
-  | 'TASK_NOT_FOUND'
-  | 'TASK_ALREADY_COMPLETED'
-  | 'TASK_EXPIRED'
+export type TaskErrorCode = 'TASK_NOT_FOUND' | 'TASK_ALREADY_COMPLETED' | 'TASK_EXPIRED'
 
 export type ApiErrorCode = AuthErrorCode | PetErrorCode | TaskErrorCode

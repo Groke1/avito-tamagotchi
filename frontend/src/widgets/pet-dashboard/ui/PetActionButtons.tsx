@@ -1,4 +1,4 @@
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppSelector } from '@/shared/model'
 import { Button } from '@/shared/ui'
 import { useHandleFeed } from '../model/useHandleFeed'
 import { useHandleStroke } from '../model/useHandleStroke'

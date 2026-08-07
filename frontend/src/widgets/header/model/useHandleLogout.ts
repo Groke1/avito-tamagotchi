@@ -1,6 +1,6 @@
-import { useAppDispatch } from '@/app/store/hooks'
 import { getStoredRefreshToken, logout, useLogoutMutation } from '@/entities/user'
 import { baseApi } from '@/shared/api/baseApi'
+import { useAppDispatch } from '@/shared/model'
 import { toast } from 'sonner'
 
 export const useHandleLogout = () => {

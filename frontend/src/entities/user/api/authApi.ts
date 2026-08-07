@@ -39,12 +39,8 @@ export const authApi = baseApi.injectEndpoints({
       }),
       providesTags: ['User'],
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled
-          dispatch(setUser(data))
-        } catch {
-          //
-        }
+        const { data } = await queryFulfilled
+        dispatch(setUser(data))
       },
     }),
   }),
