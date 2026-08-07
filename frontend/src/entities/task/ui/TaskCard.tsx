@@ -53,9 +53,9 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
           {category.label}
         </span>
         {isCompleted && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-avito-green/20 text-avito-green-dark text-xs font-extrabold">
-            <Check className="w-3.5 h-3.5 stroke-3" />
-          </span>
+          <div className="inline-flex items-center p-1.5 rounded-full bg-avito-green/20 text-surface-lowest">
+            <Check className="size-5 stroke-[2.5]" />
+          </div>
         )}
       </div>
       <div className="space-y-1.5">
@@ -76,7 +76,6 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
       </div>
       {isCompleted ? (
         <div className="w-full py-2.5 px-4 rounded-xl bg-avito-green/15 text-avito-green-dark font-bold text-xs flex items-center justify-center gap-1.5">
-          <Check className="w-4 h-4 stroke-[2.5]" />
           <span>Выполнено</span>
         </div>
       ) : (

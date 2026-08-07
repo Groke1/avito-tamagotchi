@@ -15,7 +15,7 @@ export const TaskMiniCard = ({ task }: TaskMiniCardProps) => {
   return (
     <li
       className={cn(
-        'p-4 rounded-xl border transition-all flex items-center justify-between gap-4 shadow-level-1',
+        'p-4 rounded-xl border transition-all flex items-center justify-between gap-4',
         isCompleted
           ? 'bg-avito-green/5 border-avito-green/40'
           : 'bg-surface-lowest border-surface-highest',
@@ -24,8 +24,10 @@ export const TaskMiniCard = ({ task }: TaskMiniCardProps) => {
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
         <div
           className={cn(
-            'w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-sm',
-            isCompleted ? 'bg-avito-green text-white' : 'bg-avito-blue/15 text-avito-blue-dark',
+            'w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-level-1',
+            isCompleted
+              ? 'bg-avito-green/20 text-surface-lowest'
+              : 'bg-avito-blue/15 text-avito-blue-dark',
           )}
         >
           <Icon className="w-5 h-5" />
@@ -47,7 +49,7 @@ export const TaskMiniCard = ({ task }: TaskMiniCardProps) => {
       </div>
       <div className="shrink-0">
         {isCompleted ? (
-          <div className="w-8 h-8 rounded-full bg-avito-green text-white shadow-sm flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-avito-green/20 text-surface-lowest shadow-level-1 flex items-center justify-center">
             <Check className="w-4 h-4 stroke-[2.5]" />
           </div>
         ) : (
