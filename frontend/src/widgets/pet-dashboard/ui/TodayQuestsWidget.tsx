@@ -9,7 +9,7 @@ export const TodayQuestsWidget = () => {
         <h4 className="text-on-surface font-bold text-2xl">Задания на сегодня</h4>
         <NavLink
           to={ROUTES_PATHS.TASKS}
-          className="font-bold text-xs text-avito-blue-dark hover:text-avito-blue-dark/80 cursor-pointer transition-all"
+          className="font-bold text-sm text-avito-blue-dark hover:text-avito-blue-dark/80 cursor-pointer transition-all"
         >
           Все задания
         </NavLink>

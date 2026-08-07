@@ -2,7 +2,7 @@ import { Skeleton } from '@/shared/ui'
 
 export const TaskMiniCardSkeleton = () => {
   return (
-    <li className="p-4 rounded-xl border border-outline-variant bg-surface-lowest flex items-center justify-between gap-4">
+    <li className="p-4 rounded-xl border border-surface-highest bg-surface-lowest flex items-center justify-between gap-4 shadow-level-1">
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
         <Skeleton className="w-10 h-10 rounded-full shrink-0" />
         <div className="min-w-0 flex-1 space-y-1.5">
