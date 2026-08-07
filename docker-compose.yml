@@ -102,7 +102,7 @@ services:
     volumes:
       - pets-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pg_user -d pet_db"]
+      test: ["CMD-SHELL", "pg_isready -U user -d pet_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -110,7 +110,7 @@ services:
   migrate-pets-postgres:
     image: migrate/migrate
     depends_on:
-      postgres:
+      pets-postgres:
         condition: service_healthy
     volumes:
       - ./backend/pets/migrations:/migrations
