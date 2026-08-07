@@ -8,7 +8,6 @@ import (
 )
 
 func (c *controller) GrantReward(w http.ResponseWriter, r *http.Request) {
-
 	var req grantRewardRequest
 	if err := httpx.DecodeJSON(w, r, &req); err != nil {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, httpx.ErrValidation)

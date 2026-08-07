@@ -12,6 +12,7 @@ type Querier interface {
 	AddToken(ctx context.Context, arg AddTokenParams) error
 	DeleteExpiredTokens(ctx context.Context) error
 	DeleteRefreshTokenByHash(ctx context.Context, tokenHash string) error
+	DeleteSession(ctx context.Context, arg DeleteSessionParams) error
 	GetRefreshTokenByHashForUpdate(ctx context.Context, tokenHash string) (UsersRefreshToken, error)
 }
 

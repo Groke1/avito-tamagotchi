@@ -164,9 +164,8 @@ func (r *rewardRepository) AddUserReward(ctx context.Context, userID, promoCode 
 	}
 
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-		switch {
-		case pgErr.Code == "23505" &&
-			pgErr.ConstraintName == "user_rewards_promo_code_key":
+		if pgErr.Code == "23505" &&
+			pgErr.ConstraintName == "user_rewards_promo_code_key" {
 			return nil, entity.ErrPromoCodeAlreadyExists
 		}
 	}

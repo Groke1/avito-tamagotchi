@@ -35,7 +35,6 @@ func (r *userRepository) AddUser(ctx context.Context, user entity.User) (userID 
 	})
 
 	if err != nil {
-
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
 			switch pgErr.ConstraintName {
 			case "users_username_unique", "users_username_key":

@@ -39,7 +39,7 @@ func (c *controller) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusCreated, response{
+	httpx.WriteJSON(w, http.StatusCreated, tokensResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 	})

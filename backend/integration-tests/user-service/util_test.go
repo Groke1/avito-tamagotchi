@@ -356,3 +356,18 @@ func cleanDB(ctx context.Context, db *sql.DB) error {
 	_, err = db.ExecContext(ctx, "TRUNCATE TABLE "+tables.String+" CASCADE")
 	return err
 }
+
+func expireReward(t *testing.T, cfg *config, rewardID string) {
+	t.Helper()
+
+	result, err := cfg.db.ExecContext(
+		t.Context(),
+		`UPDATE users.user_rewards SET expires_at = NOW() - INTERVAL '1 minute' WHERE id = $1`,
+		rewardID,
+	)
+	require.NoError(t, err)
+
+	affected, err := result.RowsAffected()
+	require.NoError(t, err)
+	require.Equal(t, int64(1), affected)
+}

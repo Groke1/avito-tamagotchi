@@ -24,6 +24,7 @@ type (
 		GetRefreshTokenByHashForUpdate(ctx context.Context, hash string) (*entity.RefreshToken, error)
 		DeleteRefreshTokenByHash(ctx context.Context, hash string) error
 		DeleteExpiredTokens(ctx context.Context) error
+		DeleteSession(ctx context.Context, userID, tokenHash string) error
 	}
 
 	transactor interface {
@@ -146,6 +147,15 @@ func (s *authService) Refresh(ctx context.Context, refreshToken string) (*entity
 	}
 
 	return tokens, nil
+}
+
+func (s *authService) Logout(ctx context.Context, userID, refreshToken string) error {
+	refreshTokenHash := hashToken(refreshToken)
+
+	if err := s.tokenRepository.DeleteSession(ctx, userID, refreshTokenHash); err != nil {
+		return fmt.Errorf("logout: revoke refresh token: %w", err)
+	}
+	return nil
 }
 
 func (s *authService) ValidateAccessToken(_ context.Context, token string) (string, error) {

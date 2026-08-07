@@ -41,7 +41,6 @@ func (r *tokenRepository) AddToken(ctx context.Context, userID string, token ent
 		},
 	})
 	if err != nil {
-
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505":
@@ -90,6 +89,21 @@ func (r *tokenRepository) DeleteRefreshTokenByHash(ctx context.Context, hash str
 func (r *tokenRepository) DeleteExpiredTokens(ctx context.Context) error {
 	if err := r.getQueries(ctx).DeleteExpiredTokens(ctx); err != nil {
 		return fmt.Errorf("delete expired tokens: %w", err)
+	}
+	return nil
+}
+
+func (r *tokenRepository) DeleteSession(ctx context.Context, userID, tokenHash string) error {
+	userUUID, err := converter.StringToUUID(userID)
+	if err != nil {
+		return fmt.Errorf("delete session: %w", err)
+	}
+
+	if err := r.getQueries(ctx).DeleteSession(ctx, sqlctoken.DeleteSessionParams{
+		UserID:    userUUID,
+		TokenHash: tokenHash,
+	}); err != nil {
+		return fmt.Errorf("delete session: %w", err)
 	}
 	return nil
 }

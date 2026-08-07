@@ -3,6 +3,7 @@ package reward
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/httpx"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/middleware"
@@ -11,7 +12,6 @@ import (
 )
 
 func (c *controller) RedeemReward(w http.ResponseWriter, r *http.Request) {
-
 	userID, ok := middleware.UserIDFromContext(r.Context())
 	if !ok {
 		httpx.WriteError(w, http.StatusUnauthorized, httpx.ErrUnauthorized)
@@ -20,6 +20,12 @@ func (c *controller) RedeemReward(w http.ResponseWriter, r *http.Request) {
 
 	var req redeemRewardRequest
 	if err := httpx.DecodeJSON(w, r, &req); err != nil {
+		httpx.WriteError(w, http.StatusUnprocessableEntity, httpx.ErrValidation)
+		return
+	}
+
+	req.PromoCode = strings.TrimSpace(req.PromoCode)
+	if req.PromoCode == "" {
 		httpx.WriteError(w, http.StatusUnprocessableEntity, httpx.ErrValidation)
 		return
 	}
