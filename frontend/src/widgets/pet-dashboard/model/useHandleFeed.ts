@@ -1,6 +1,6 @@
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { setPet, useFeedPetMutation } from '@/entities/pet'
 import { isApiError, isFetchBaseQueryError } from '@/shared/lib/guards'
+import { useAppDispatch, useAppSelector } from '@/shared/model'
 import { toast } from 'sonner'
 
 export const useHandleFeed = () => {

@@ -1,15 +1,15 @@
-import { useAppSelector } from '@/app/store/hooks'
 import { Button } from '@/shared/ui'
-import { useHandleFeed } from '../model/useHandleFeed'
-import { useHandleStroke } from '../model/useHandleStroke'
+import { usePetActionButtons } from '../model/usePetActionButtons'
 
 export const PetActionButtons = () => {
-  const { handleFeed, isFeedLoading } = useHandleFeed()
-  const { handleStroke, isStrokeLoading } = useHandleStroke()
-  const pet = useAppSelector((state) => state.pet.pet)
-
-  const isFullSatiety = (pet?.satiety ?? 0) >= 100
-  const isFullHappiness = (pet?.happiness ?? 0) >= 100
+  const {
+    handleFeed,
+    handleStroke,
+    isFeedLoading,
+    isFullHappiness,
+    isFullSatiety,
+    isStrokeLoading,
+  } = usePetActionButtons()
 
   return (
     <div className="grid grid-cols-2 gap-3 mt-4">

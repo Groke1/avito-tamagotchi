@@ -1,4 +1,4 @@
-import { ROUTES_PATHS } from '@/app/router/paths'
+import { ROUTES_PATHS } from '@/shared/config'
 import { cn } from '@/shared/lib/utils'
 import { Award, CalendarCheck, CheckSquare, Home, ShoppingBag } from 'lucide-react'
 import { NavLink } from 'react-router-dom'

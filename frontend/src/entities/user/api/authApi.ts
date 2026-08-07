@@ -18,6 +18,13 @@ export const authApi = baseApi.injectEndpoints({
         body: userData,
       }),
     }),
+    logout: builder.mutation<void, string | null>({
+      query: (token) => ({
+        url: '/auth/logout',
+        method: 'POST',
+        body: { refresh_token: token },
+      }),
+    }),
     refreshToken: builder.mutation<AuthTokens, string>({
       query: (token) => ({
         url: '/auth/refresh',
@@ -32,12 +39,8 @@ export const authApi = baseApi.injectEndpoints({
       }),
       providesTags: ['User'],
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled
-          dispatch(setUser(data))
-        } catch {
-          //
-        }
+        const { data } = await queryFulfilled
+        dispatch(setUser(data))
       },
     }),
   }),
@@ -46,6 +49,7 @@ export const authApi = baseApi.injectEndpoints({
 export const {
   useLoginMutation,
   useRegisterMutation,
+  useLogoutMutation,
   useRefreshTokenMutation,
   useGetProfileQuery,
   useLazyGetProfileQuery,

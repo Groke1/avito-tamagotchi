@@ -1,7 +1,7 @@
-import { useAppDispatch } from '@/app/store/hooks'
 import { setPet } from '@/entities/pet'
 import { login, setAccessToken, useLazyGetProfileQuery, useRegisterMutation } from '@/entities/user'
 import { isApiError, isFetchBaseQueryError } from '@/shared/lib/guards'
+import { useAppDispatch } from '@/shared/model'
 import type { AuthErrorCode } from '@/shared/model/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { type SubmitHandler, useForm, useWatch } from 'react-hook-form'

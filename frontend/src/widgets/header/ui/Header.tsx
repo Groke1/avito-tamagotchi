@@ -1,16 +1,13 @@
-import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { logout, useGetProfileQuery } from '@/entities/user'
+import { useGetProfileQuery } from '@/entities/user'
+import { useAppSelector } from '@/shared/model'
 import { Button } from '@/shared/ui'
 import { Coins, LogOut, User as UserIcon } from 'lucide-react'
+import { useHandleLogout } from '../model/useHandleLogout'
 
 export const Header = () => {
   useGetProfileQuery()
   const user = useAppSelector((state) => state.user.user)
-  const dispatch = useAppDispatch()
-
-  const handleLogout = () => {
-    dispatch(logout())
-  }
+  const { handleLogout, isLogoutLoading } = useHandleLogout()
 
   return (
     <header className="flex items-center justify-between pb-6 border-b border-surface-high">
@@ -29,7 +26,14 @@ export const Header = () => {
           <UserIcon className="size-4 text-on-surface-variant" />
           <span className="truncate max-w-32">{user?.username}</span>
         </div>
-        <Button variant="ghost" size="sm" className="group" onClick={handleLogout} title="Выйти">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="group"
+          disabled={isLogoutLoading}
+          onClick={handleLogout}
+          title="Выйти"
+        >
           <LogOut className="size-4 text-on-surface-variant group-hover:text-avito-red transition-colors" />
         </Button>
       </div>

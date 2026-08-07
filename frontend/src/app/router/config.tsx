@@ -1,10 +1,10 @@
 import { CreatePet, Dashboard, Login, Register } from '@/pages'
+import { ROUTES_PATHS } from '@/shared/config'
 import { PageLoader } from '@/shared/ui'
 import { createBrowserRouter } from 'react-router-dom'
 import { AuthLayout, RootLayout } from '../layouts'
 import { GuestRoute, ProtectedRoute } from './guards'
 import { rootLoader } from './loaders'
-import { ROUTES_PATHS } from './paths'
 
 export const router = createBrowserRouter([
   {
