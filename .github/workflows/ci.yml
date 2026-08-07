@@ -1,0 +1,84 @@
+name: CI
+
+#on:
+#  pull_request:
+#    branches:
+#      - main
+#    paths:
+#      - ".github/workflows/**"
+#      - "backend/**"
+#      - "docker-compose.test.yml"
+#      - "Makefile"
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - ".github/workflows/**"
+#      - "backend/**"
+#      - "docker-compose.test.yml"
+#      - "Makefile"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: "1.26.2"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run linter
+        run: make lint
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Generate mocks
+        run: make generate
+
+      - name: Run unit tests
+        run: make unit-tests
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run integration tests
+        run: make test

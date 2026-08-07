@@ -7,6 +7,11 @@
 make generate
 ```
 
+Запуск юнит-тестов:
+```bash
+make unit-tests
+```
+
 Запуск тестов:
 ```bash
 make test

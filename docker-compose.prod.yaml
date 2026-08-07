@@ -1,0 +1,116 @@
+services:
+  frontend:
+    image: ${IMAGE_PREFIX}-frontend:${IMAGE_TAG}
+    restart: unless-stopped
+    depends_on:
+      users:
+        condition: service_started
+      tasks:
+        condition: service_started
+      pets:
+        condition: service_started
+    ports:
+      - "80:80"
+
+  users:
+    image: ${IMAGE_PREFIX}-users:${IMAGE_TAG}
+    env_file:
+      - .env.prod
+    hostname: users
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  tasks:
+    image: ${IMAGE_PREFIX}-tasks:${IMAGE_TAG}
+    hostname: tasks
+    env_file:
+      - .env.prod
+    restart: unless-stopped
+    depends_on:
+      tasks-postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+
+  pets:
+    image: ${IMAGE_PREFIX}-pets:${IMAGE_TAG}
+    env_file:
+      - .env.prod
+    hostname: pets
+    restart: unless-stopped
+    depends_on:
+      pets-postgres:
+        condition: service_healthy
+      migrate-pets-postgres:
+        condition: service_completed_successfully
+    ports:
+      - "8082:8080"
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${USER_POSTGRES_DB}
+      POSTGRES_USER: ${USER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${USER_POSTGRES_USER} -d ${USER_POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  tasks-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${TASKS_POSTGRES_DB}
+      POSTGRES_USER: ${TASKS_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${TASKS_POSTGRES_PASSWORD}
+    volumes:
+      - tasks-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TASKS_POSTGRES_USER} -d ${TASKS_POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pets-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PETS_POSTGRES_DB}
+      POSTGRES_USER: ${PETS_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PETS_POSTGRES_PASSWORD}
+    volumes:
+      - pets-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PETS_POSTGRES_USER} -d ${PETS_POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate-pets-postgres:
+    image: migrate/migrate
+    restart: "no"
+    depends_on:
+      pets-postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/pets/migrations:/migrations:ro
+    command:
+      [
+        "-path=/migrations",
+        "-database=postgres://${PETS_POSTGRES_USER}:${PETS_POSTGRES_PASSWORD}@pets-postgres:5432/${PETS_POSTGRES_DB}?sslmode=disable",
+        "up"
+      ]
+
+volumes:
+  postgres-data:
+  tasks-postgres-data:
+  pets-postgres-data:
