@@ -9,6 +9,7 @@ export const useHandleStroke = () => {
   const pet = useAppSelector((state) => state.pet.pet)
 
   const handleStroke = async () => {
+    // TODO: remove the processing logic once the backend fix is in place
     if (pet && pet.happiness >= 100) {
       toast.info('Питомец уже максимально счастлив! (100/100)')
       return

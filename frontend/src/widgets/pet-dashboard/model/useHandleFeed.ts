@@ -9,6 +9,7 @@ export const useHandleFeed = () => {
   const pet = useAppSelector((state) => state.pet.pet)
 
   const handleFeed = async () => {
+    // TODO: remove the processing logic once the backend fix is in place
     if (pet && pet.satiety >= 100) {
       toast.info('Питомец полностью сыт! (100/100)')
       return
