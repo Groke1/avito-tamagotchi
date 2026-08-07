@@ -22,7 +22,7 @@ export const PetActionButtons = () => {
         title={isFullSatiety ? 'Питомец полностью сыт! (100/100)' : ''}
         className="hover:bg-avito-green/10 hover:border-avito-green/60 hover:text-avito-green-dark transition-all duration-200"
       >
-        🍎 Покормить (-5 монет, +2 XP)
+        🍎 Покормить (-5 монет)
       </Button>
       <Button
         variant="outline"
@@ -33,7 +33,7 @@ export const PetActionButtons = () => {
         title={isFullHappiness ? 'Питомец уже максимально счастлив! (100/100)' : ''}
         className="hover:bg-avito-blue/10 hover:border-avito-blue/60 hover:text-avito-blue-dark transition-all duration-200"
       >
-        🖐️ Погладить (-7 монет, +3 XP)
+        🖐️ Погладить (-7 монет)
       </Button>
     </div>
   )
