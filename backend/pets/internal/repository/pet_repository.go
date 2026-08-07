@@ -12,15 +12,16 @@ import (
 )
 
 type Pet struct {
-	ID          int64     `db:"id"`
-	UserID      string    `db:"user_id"`
-	Name        string    `db:"name"`
-	Level       int       `db:"level"`
-	XP          int       `db:"xp"`
-	NextLevelXP int       `db:"next_level_xp"`
-	Satiety     int       `db:"satiety"`
-	Happiness   int       `db:"happiness"`
-	CreatedAt   time.Time `db:"created_at"`
+	ID               int64     `db:"id"`
+	UserID           string    `db:"user_id"`
+	Name             string    `db:"name"`
+	Level            int       `db:"level"`
+	XP               int       `db:"xp"`
+	NextLevelXP      int       `db:"next_level_xp"`
+	Satiety          int       `db:"satiety"`
+	Happiness        int       `db:"happiness"`
+	CreatedAt        time.Time `db:"created_at"`
+	LastCalculatedAt time.Time `db:"last_calculated_at"`
 }
 
 type PetForLeaderboard struct {
@@ -56,15 +57,16 @@ func (pr *PetRepository) GetPet(ctx context.Context, userID string) (*domain.Pet
 	}
 
 	pet := domain.Pet{
-		ID:          dbPet.ID,
-		UserID:      dbPet.UserID,
-		Name:        dbPet.Name,
-		Level:       dbPet.Level,
-		XP:          dbPet.XP,
-		NextLevelXP: dbPet.NextLevelXP,
-		Satiety:     dbPet.Satiety,
-		Happiness:   dbPet.Happiness,
-		CreatedAt:   dbPet.CreatedAt,
+		ID:               dbPet.ID,
+		UserID:           dbPet.UserID,
+		Name:             dbPet.Name,
+		Level:            dbPet.Level,
+		XP:               dbPet.XP,
+		NextLevelXP:      dbPet.NextLevelXP,
+		Satiety:          dbPet.Satiety,
+		Happiness:        dbPet.Happiness,
+		CreatedAt:        dbPet.CreatedAt,
+		LastCalculatedAt: dbPet.LastCalculatedAt,
 	}
 
 	return &pet, nil
@@ -84,15 +86,16 @@ func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID s
 	}
 
 	pet := domain.Pet{
-		ID:          dbPet.ID,
-		UserID:      dbPet.UserID,
-		Name:        dbPet.Name,
-		Level:       dbPet.Level,
-		XP:          dbPet.XP,
-		NextLevelXP: dbPet.NextLevelXP,
-		Satiety:     dbPet.Satiety,
-		Happiness:   dbPet.Happiness,
-		CreatedAt:   dbPet.CreatedAt,
+		ID:               dbPet.ID,
+		UserID:           dbPet.UserID,
+		Name:             dbPet.Name,
+		Level:            dbPet.Level,
+		XP:               dbPet.XP,
+		NextLevelXP:      dbPet.NextLevelXP,
+		Satiety:          dbPet.Satiety,
+		Happiness:        dbPet.Happiness,
+		CreatedAt:        dbPet.CreatedAt,
+		LastCalculatedAt: dbPet.LastCalculatedAt,
 	}
 
 	return &pet, nil
@@ -113,15 +116,16 @@ func (pr *PetRepository) GetPetForUpdate(ctx context.Context, tx *sqlx.Tx, userI
 	}
 
 	pet := domain.Pet{
-		ID:          dbPet.ID,
-		UserID:      dbPet.UserID,
-		Name:        dbPet.Name,
-		Level:       dbPet.Level,
-		XP:          dbPet.XP,
-		NextLevelXP: dbPet.NextLevelXP,
-		Satiety:     dbPet.Satiety,
-		Happiness:   dbPet.Happiness,
-		CreatedAt:   dbPet.CreatedAt,
+		ID:               dbPet.ID,
+		UserID:           dbPet.UserID,
+		Name:             dbPet.Name,
+		Level:            dbPet.Level,
+		XP:               dbPet.XP,
+		NextLevelXP:      dbPet.NextLevelXP,
+		Satiety:          dbPet.Satiety,
+		Happiness:        dbPet.Happiness,
+		CreatedAt:        dbPet.CreatedAt,
+		LastCalculatedAt: dbPet.LastCalculatedAt,
 	}
 
 	return &pet, nil
