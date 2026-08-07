@@ -44,6 +44,10 @@ func main() {
 	if addr == "" {
 		addr = ":8080"
 	}
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is required")
+	}
 	if err := runMigrations(dsn); err != nil {
 		log.Fatalf("migration error: %v", err)
 	}
@@ -66,7 +70,7 @@ func main() {
 		controller.NewGetTodayTasksHandler(repo),
 		controller.NewCompleteTaskHandler(repo),
 	)
-	router := taskhttp.NewRouter(handlers)
+	router := taskhttp.NewRouter(handlers, []byte(jwtSecret))
 
 	server := &http.Server{
 		Addr:         addr,

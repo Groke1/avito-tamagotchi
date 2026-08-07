@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createUserTasksBatch = `-- name: CreateUserTasksBatch :exec
+INSERT INTO user_tasks (user_id, task_id)
+SELECT 
+    $1::uuid AS user_id, 
+    unnest($2::uuid[]) AS task_id
+`
+
+type CreateUserTasksBatchParams struct {
+	UserID  pgtype.UUID   `json:"user_id"`
+	TaskIds []pgtype.UUID `json:"task_ids"`
+}
+
+func (q *Queries) CreateUserTasksBatch(ctx context.Context, arg CreateUserTasksBatchParams) error {
+	_, err := q.db.Exec(ctx, createUserTasksBatch, arg.UserID, arg.TaskIds)
+	return err
+}
+
 const findByIDForUser = `-- name: FindByIDForUser :one
 SELECT
     t.id,
@@ -75,6 +92,7 @@ func (q *Queries) GetTaskByID(ctx context.Context, id pgtype.UUID) (Task, error)
 }
 
 const getUserTaskForUpdate = `-- name: GetUserTaskForUpdate :one
+
 SELECT status, completed_at
 FROM user_tasks
 WHERE user_id = $1 AND task_id = $2
@@ -91,6 +109,7 @@ type GetUserTaskForUpdateRow struct {
 	CompletedAt pgtype.Timestamptz `json:"completed_at"`
 }
 
+// RETURNING user_id, task_id, updated_at;
 func (q *Queries) GetUserTaskForUpdate(ctx context.Context, arg GetUserTaskForUpdateParams) (GetUserTaskForUpdateRow, error) {
 	row := q.db.QueryRow(ctx, getUserTaskForUpdate, arg.UserID, arg.TaskID)
 	var i GetUserTaskForUpdateRow
@@ -121,26 +140,23 @@ SELECT
     t.description,
     t.reward_coins,
     t.reward_xp,
-    COALESCE(ut.status, 'active')::text AS status,
-    ut.completed_at
+    'active' AS status
 FROM tasks t
-LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $1
 ORDER BY RANDOM()
-LIMIT 3
+LIMIT $1
 `
 
 type ListRandomTasksForUserRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	RewardCoins int32              `json:"reward_coins"`
-	RewardXp    int64              `json:"reward_xp"`
-	Status      string             `json:"status"`
-	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	ID          pgtype.UUID `json:"id"`
+	Title       string      `json:"title"`
+	Description string      `json:"description"`
+	RewardCoins int32       `json:"reward_coins"`
+	RewardXp    int64       `json:"reward_xp"`
+	Status      string      `json:"status"`
 }
 
-func (q *Queries) ListRandomTasksForUser(ctx context.Context, userID pgtype.UUID) ([]ListRandomTasksForUserRow, error) {
-	rows, err := q.db.Query(ctx, listRandomTasksForUser, userID)
+func (q *Queries) ListRandomTasksForUser(ctx context.Context, limit int32) ([]ListRandomTasksForUserRow, error) {
+	rows, err := q.db.Query(ctx, listRandomTasksForUser, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +171,6 @@ func (q *Queries) ListRandomTasksForUser(ctx context.Context, userID pgtype.UUID
 			&i.RewardCoins,
 			&i.RewardXp,
 			&i.Status,
-			&i.CompletedAt,
 		); err != nil {
 			return nil, err
 		}

@@ -23,12 +23,18 @@ SELECT
     t.description,
     t.reward_coins,
     t.reward_xp,
-    COALESCE(ut.status, 'active')::text AS status,
-    ut.completed_at
+    'active' AS status
 FROM tasks t
-LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $1
 ORDER BY RANDOM()
-LIMIT 3;
+LIMIT $1;
+
+-- name: CreateUserTasksBatch :exec
+INSERT INTO user_tasks (user_id, task_id)
+SELECT 
+    sqlc.arg(user_id)::uuid AS user_id, 
+    unnest(sqlc.arg(task_ids)::uuid[]) AS task_id
+;
+-- RETURNING user_id, task_id, updated_at;
 
 -- name: GetUserTaskForUpdate :one
 SELECT status, completed_at

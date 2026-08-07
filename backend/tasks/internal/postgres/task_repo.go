@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	sqlctask "github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres/sqlc"
@@ -62,24 +63,21 @@ func (r *TaskRepository) FindByIDForUser(ctx context.Context, userID, taskID str
 	}, nil
 }
 func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]entity.UserTask, error) {
-	userID, err := uuid.Parse(userIDStr)
+	var pgUserID pgtype.UUID
+	err := pgUserID.Scan(userIDStr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
 	q := sqlctask.New(r.pool)
-	rows, err := q.ListRandomTasksForUser(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	rows, err := q.ListRandomTasksForUser(ctx, int32(rand.Intn(3)+5))
 	if err != nil {
 		return nil, err
 	}
-
+	tasksIds := make([]pgtype.UUID, 0, len(rows))
 	tasks := make([]entity.UserTask, 0, len(rows))
 	for _, row := range rows {
-		var completedAt *time.Time
-		if row.CompletedAt.Valid {
-			completedAt = &row.CompletedAt.Time
-		}
-
+		tasksIds = append(tasksIds, row.ID)
 		tasks = append(tasks, entity.UserTask{
 			Task: entity.Task{
 				ID:          row.ID.String(),
@@ -89,10 +87,16 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 				RewardXP:    row.RewardXp,
 			},
 			Status:      entity.Status(row.Status),
-			CompletedAt: completedAt,
+			CompletedAt: nil,
 		})
 	}
-
+	err = q.CreateUserTasksBatch(ctx, sqlctask.CreateUserTasksBatchParams{
+		UserID:  pgUserID,
+		TaskIds: tasksIds,
+	})
+	if err != nil {
+		return nil, err
+	}
 	return tasks, nil
 }
 

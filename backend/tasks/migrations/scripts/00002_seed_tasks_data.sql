@@ -28,34 +28,19 @@ VALUES
   )
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO user_tasks (user_id, task_id, status) 
+INSERT INTO user_tasks (user_id, task_id, status, completed_at) 
 VALUES 
   (
     '8c9c6123-289e-4e42-a89d-7db1387d81a9',
     'a3e0b214-411a-463e-908c-94df1ba4e321',
-    'active'
-  )
-ON CONFLICT (user_id, task_id) DO NOTHING;
-
-INSERT INTO user_tasks (user_id, task_id, status, completed_at) 
-VALUES 
+    'active',
+    null
+  ), 
   (
     '8c9c6123-289e-4e42-a89d-7db1387d81a9', 
     'e9b11c75-392c-473d-815a-52ef389d3110',
     'completed', 
     NOW()
   )
-ON CONFLICT (user_id, task_id) DO NOTHING;
--- +goose StatementEnd
-
--- +goose Down
--- +goose StatementBegin
-DELETE FROM user_tasks 
-WHERE user_id = '8c9c6123-289e-4e42-a89d-7db1387d81a9';
-
-DELETE FROM tasks 
-WHERE id IN (
-  'e9b11c75-392c-473d-815a-52ef389d3110',
-  'a3e0b214-411a-463e-908c-94df1ba4e321'
-);
+;
 -- +goose StatementEnd

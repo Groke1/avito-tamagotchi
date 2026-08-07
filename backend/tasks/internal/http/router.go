@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(handlers *Handlers) *gin.Engine {
+func NewRouter(handlers *Handlers, jwtSecret []byte) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -14,8 +14,7 @@ func NewRouter(handlers *Handlers) *gin.Engine {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 	api := r.Group("/api/v1")
-	// protect API routes with auth middleware
-	api.Use(AuthMiddleware())
+	api.Use(AuthMiddleware(jwtSecret))
 	{
 		tasks := api.Group("/tasks")
 		{
