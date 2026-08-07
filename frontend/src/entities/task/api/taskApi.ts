@@ -3,7 +3,7 @@ import type { CompleteTaskResponse, TaskResponse, TasksResponse } from '../model
 
 const TASKS_URL = import.meta.env.VITE_API_TASKS_URL || 'http://localhost:8081/api/v1/tasks'
 
-export const petApi = baseApi.injectEndpoints({
+export const taskApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTasks: builder.query<TasksResponse, void>({
       query: () => ({ url: TASKS_URL }),
@@ -13,11 +13,11 @@ export const petApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `${TASKS_URL}/${id}` }),
       providesTags: ['Tasks'],
     }),
-    createPet: builder.mutation<CompleteTaskResponse, string>({
+    completeTask: builder.mutation<CompleteTaskResponse, string>({
       query: (id) => ({ url: `${TASKS_URL}/${id}/complete`, method: 'POST' }),
-      invalidatesTags: ['Tasks'],
+      invalidatesTags: ['Tasks', 'User', 'Pet'],
     }),
   }),
 })
 
-export const { useGetTasksQuery, useGetTaskQuery, useCreatePetMutation } = petApi
+export const { useGetTasksQuery, useGetTaskQuery, useCompleteTaskMutation } = taskApi
