@@ -32,13 +32,11 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
         >
           {isCompleted ? <Check className="w-6 h-6 stroke-[2.5]" /> : <Icon className="w-6 h-6" />}
         </div>
-
         <div className="space-y-1.5 flex-1 min-w-0">
           <h4 className="font-extrabold text-base md:text-lg text-on-surface truncate">{title}</h4>
           <p className="text-xs md:text-sm text-on-surface-variant leading-relaxed">
             {description}
           </p>
-
           <div className="flex items-center gap-2.5 pt-1 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-avito-yellow/15 text-yellow-800">
               <Coins className="w-3.5 h-3.5 text-yellow-600" />+{reward_coins} 🪙

@@ -3,6 +3,7 @@ import { Tabs } from '@/shared/ui'
 import { TABS } from '../model/consts'
 import { useCompleteTask } from '../model/useCompleteTask'
 import { useTasksListTabs } from '../model/useTasksListTabs'
+import { PetCard } from './PetCard'
 import { TasksContentList } from './TasksContentList'
 import { TasksTabList } from './TasksTabList'
 
@@ -21,18 +22,25 @@ export const TasksListWidget = () => {
           completedCount={completedCount}
           showCounts={!isLoading && !isError}
         />
-        {TABS.map(({ id }) => (
-          <TasksContentList
-            key={id}
-            tabId={id}
-            tasks={getFilteredTasks(id)}
-            isLoading={isLoading}
-            isError={isError}
-            completingTaskId={completingTaskId}
-            onComplete={handleComplete}
-            onRetry={refetch}
-          />
-        ))}
+        <div className="grid grid-cols-1 lg:grid-cols-12 mt-6 gap-8">
+          <div className="lg:col-span-8">
+            {TABS.map(({ id }) => (
+              <TasksContentList
+                key={id}
+                tabId={id}
+                tasks={getFilteredTasks(id)}
+                isLoading={isLoading}
+                isError={isError}
+                completingTaskId={completingTaskId}
+                onComplete={handleComplete}
+                onRetry={refetch}
+              />
+            ))}
+          </div>
+          <div className="lg:col-span-4">
+            <PetCard />
+          </div>
+        </div>
       </Tabs>
     </section>
   )
