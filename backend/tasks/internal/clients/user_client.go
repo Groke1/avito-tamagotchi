@@ -58,7 +58,6 @@ func (c *UserServiceClient) UpdateCoins(ctx context.Context, userID string, delt
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		// Здесь можно распарсить ErrorBody из OpenAPI, если сервис вернул ошибку
 		return nil, fmt.Errorf("user-service returned bad status: %d", resp.StatusCode)
 	}
 

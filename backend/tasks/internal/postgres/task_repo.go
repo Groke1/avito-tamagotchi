@@ -9,7 +9,6 @@ import (
 
 	sqlctask "github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres/sqlc"
 
-	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -189,13 +188,4 @@ func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr 
 		Status:      entity.StatusCompleted,
 		CompletedAt: &now,
 	}, nil
-}
-
-func (r *TaskRepository) getQueries(ctx context.Context) *sqlctask.Queries {
-	tx, err := db.ExtractTx(ctx)
-	if err == nil {
-		return sqlctask.New(tx)
-	}
-
-	return sqlctask.New(r.pool)
 }
