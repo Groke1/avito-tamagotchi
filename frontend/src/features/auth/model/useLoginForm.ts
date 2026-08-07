@@ -1,12 +1,10 @@
-import { ROUTES_PATHS } from '@/app/router/paths'
 import { useAppDispatch } from '@/app/store/hooks'
-import { setHasPet, setPet, useLazyGetPetQuery } from '@/entities/pet'
+import { setPet, useLazyGetPetQuery } from '@/entities/pet'
 import { login, setAccessToken, useLazyGetProfileQuery, useLoginMutation } from '@/entities/user'
 import { isApiError, isFetchBaseQueryError } from '@/shared/lib/guards'
 import type { AuthErrorCode } from '@/shared/model/types'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { type SubmitHandler, useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { type LoginFormData, loginSchema } from './login.schema'
 
@@ -15,7 +13,6 @@ export const useLoginForm = () => {
   const [fetchProfile] = useLazyGetProfileQuery()
   const [fetchPet] = useLazyGetPetQuery()
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
 
   const {
     register,
@@ -42,23 +39,15 @@ export const useLoginForm = () => {
         }),
       )
 
-      let userHasPet = false
       try {
         const pet = await fetchPet().unwrap()
         dispatch(setPet(pet))
-        userHasPet = true
       } catch {
-        dispatch(setHasPet(false))
+        dispatch(setPet(null))
       }
 
       toast.success('Успешный вход!')
       reset()
-
-      if (userHasPet) {
-        navigate(ROUTES_PATHS.MAIN)
-      } else {
-        navigate(ROUTES_PATHS.CREATE_PET)
-      }
     } catch (error: unknown) {
       if (isFetchBaseQueryError(error) && isApiError<AuthErrorCode>(error.data)) {
         toast.error(error.data.message)

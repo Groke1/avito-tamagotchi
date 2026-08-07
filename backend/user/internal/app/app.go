@@ -10,9 +10,13 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/config"
-	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/user"
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller"
+	rewardrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/reward"
+	streakrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/streak"
 	tokenrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/token"
 	userrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/user"
+	authserv "github.com/cayman444/avito-gamification-hackathon.user/internal/usecase/auth"
+	rewardserv "github.com/cayman444/avito-gamification-hackathon.user/internal/usecase/reward"
 	userserv "github.com/cayman444/avito-gamification-hackathon.user/internal/usecase/user"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/worker"
 	"github.com/cayman444/avito-gamification-hackathon.user/migrations"
@@ -50,21 +54,23 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 
 	userRepo := userrepo.NewUserRepository(dbPool)
 	tokenRepo := tokenrepo.NewTokenRepository(dbPool)
+	streakRepo := streakrepo.NewStreakRepository(dbPool)
+	rewardRepo := rewardrepo.NewRewardRepository(dbPool)
 	transactor := db.NewTransactor(dbPool)
 
-	userService := userserv.NewUserService(userRepo, tokenRepo, transactor, userserv.Config{
+	authService := authserv.NewAuthService(userRepo, tokenRepo, transactor, authserv.Config{
 		JWTSecret:              []byte(cfg.Settings.JWTSecret),
 		AccessTokenTTL:         cfg.Settings.AccessTokenTTL,
 		RefreshTokenTTL:        cfg.Settings.RefreshTokenTTL,
 		RegistrationBonusCoins: cfg.Settings.RegistrationBonusCoins,
 	})
+	userService := userserv.NewUserService(userRepo, streakRepo, transactor)
+	rewardService := rewardserv.NewRewardService(rewardRepo)
 
 	router := mux.NewRouter()
-	controller := user.NewController(logger, userService, userService)
-	controller.InitRoutes(
-		router,
-		user.RequireAccessToken(userService),
-	)
+	contr := controller.NewController(logger, authService,
+		userService, rewardService, authService)
+	contr.InitRoutes(router)
 
 	handler := middleware.CorsHandler(router)
 	server := &http.Server{

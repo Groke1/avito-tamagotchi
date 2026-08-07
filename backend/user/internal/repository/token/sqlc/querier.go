@@ -12,7 +12,8 @@ type Querier interface {
 	AddToken(ctx context.Context, arg AddTokenParams) error
 	DeleteExpiredTokens(ctx context.Context) error
 	DeleteRefreshTokenByHash(ctx context.Context, tokenHash string) error
-	GetRefreshTokenByHashForUpdate(ctx context.Context, tokenHash string) (AccountRefreshToken, error)
+	DeleteSession(ctx context.Context, arg DeleteSessionParams) error
+	GetRefreshTokenByHashForUpdate(ctx context.Context, tokenHash string) (UsersRefreshToken, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -7,8 +7,8 @@ import (
 
 	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/repository/converter"
 	sqlctoken "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/token/sqlc"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -27,16 +27,13 @@ func NewTokenRepository(qdb sqlctoken.DBTX) *tokenRepository {
 }
 
 func (r *tokenRepository) AddToken(ctx context.Context, userID string, token entity.RefreshToken) error {
-	parsedUserID, err := uuid.Parse(userID)
+	userUUID, err := converter.StringToUUID(userID)
 	if err != nil {
 		return fmt.Errorf("add refresh token: parse user id: %w", err)
 	}
 
 	err = r.getQueries(ctx).AddToken(ctx, sqlctoken.AddTokenParams{
-		UserID: pgtype.UUID{
-			Bytes: parsedUserID,
-			Valid: true,
-		},
+		UserID:    userUUID,
 		TokenHash: token.TokenHash,
 		ExpiresAt: pgtype.Timestamptz{
 			Time:  token.ExpiresAt,
@@ -44,9 +41,7 @@ func (r *tokenRepository) AddToken(ctx context.Context, userID string, token ent
 		},
 	})
 	if err != nil {
-		var pgErr *pgconn.PgError
-
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505":
 				return fmt.Errorf("add refresh token: token hash already exists: %w", err)
@@ -94,6 +89,21 @@ func (r *tokenRepository) DeleteRefreshTokenByHash(ctx context.Context, hash str
 func (r *tokenRepository) DeleteExpiredTokens(ctx context.Context) error {
 	if err := r.getQueries(ctx).DeleteExpiredTokens(ctx); err != nil {
 		return fmt.Errorf("delete expired tokens: %w", err)
+	}
+	return nil
+}
+
+func (r *tokenRepository) DeleteSession(ctx context.Context, userID, tokenHash string) error {
+	userUUID, err := converter.StringToUUID(userID)
+	if err != nil {
+		return fmt.Errorf("delete session: %w", err)
+	}
+
+	if err := r.getQueries(ctx).DeleteSession(ctx, sqlctoken.DeleteSessionParams{
+		UserID:    userUUID,
+		TokenHash: tokenHash,
+	}); err != nil {
+		return fmt.Errorf("delete session: %w", err)
 	}
 	return nil
 }

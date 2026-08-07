@@ -250,3 +250,139 @@ func TestProfileRejectsMalformedAuthorization(t *testing.T) {
 		})
 	}
 }
+
+func TestLogoutInvalidatesRefreshToken(t *testing.T) {
+	cfg := setup(t)
+
+	suffix := uniqueSuffix(t)
+	auth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("logout-user-%s", suffix),
+		fmt.Sprintf("logout-%s@example.com", suffix),
+		testPassword,
+	)
+
+	logoutResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/logout", map[string]any{
+		"refresh_token": auth.RefreshToken,
+	}, auth.AccessToken)
+	require.Equal(t, http.StatusNoContent, logoutResp.StatusCode)
+	requireEmptyBody(t, logoutResp)
+
+	refreshResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/refresh", map[string]any{
+		"refresh_token": auth.RefreshToken,
+	}, "")
+	require.Equal(t, http.StatusUnauthorized, refreshResp.StatusCode)
+
+	apiErr := decodeBody[apiError](t, refreshResp)
+	require.Equal(t, "INVALID_REFRESH_TOKEN", apiErr.Code)
+}
+
+func TestLogoutIsIdempotent(t *testing.T) {
+	cfg := setup(t)
+
+	suffix := uniqueSuffix(t)
+	auth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("logout-idempotent-%s", suffix),
+		fmt.Sprintf("logout-idempotent-%s@example.com", suffix),
+		testPassword,
+	)
+
+	for attempt := 0; attempt < 2; attempt++ {
+		resp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/logout", map[string]any{
+			"refresh_token": auth.RefreshToken,
+		}, auth.AccessToken)
+		require.Equalf(t, http.StatusNoContent, resp.StatusCode, "attempt=%d", attempt+1)
+		requireEmptyBody(t, resp)
+	}
+}
+
+func TestLogoutDoesNotRevokeAnotherUsersSession(t *testing.T) {
+	cfg := setup(t)
+
+	firstSuffix := uniqueSuffix(t)
+	firstAuth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("logout-owner-%s", firstSuffix),
+		fmt.Sprintf("logout-owner-%s@example.com", firstSuffix),
+		testPassword,
+	)
+
+	secondSuffix := uniqueSuffix(t)
+	secondAuth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("logout-attacker-%s", secondSuffix),
+		fmt.Sprintf("logout-attacker-%s@example.com", secondSuffix),
+		testPassword,
+	)
+
+	logoutResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/logout", map[string]any{
+		"refresh_token": firstAuth.RefreshToken,
+	}, secondAuth.AccessToken)
+	require.Equal(t, http.StatusNoContent, logoutResp.StatusCode)
+	requireEmptyBody(t, logoutResp)
+
+	refreshResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/refresh", map[string]any{
+		"refresh_token": firstAuth.RefreshToken,
+	}, "")
+	require.Equal(t, http.StatusOK, refreshResp.StatusCode)
+	_ = decodeBody[authResponse](t, refreshResp)
+}
+
+func TestLogoutRequiresAccessToken(t *testing.T) {
+	cfg := setup(t)
+
+	suffix := uniqueSuffix(t)
+	auth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("logout-no-auth-%s", suffix),
+		fmt.Sprintf("logout-no-auth-%s@example.com", suffix),
+		testPassword,
+	)
+
+	resp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/logout", map[string]any{
+		"refresh_token": auth.RefreshToken,
+	}, "")
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	apiErr := decodeBody[apiError](t, resp)
+	require.Equal(t, "UNAUTHORIZED", apiErr.Code)
+}
+
+func TestLogoutValidationCases(t *testing.T) {
+	cfg := setup(t)
+
+	suffix := uniqueSuffix(t)
+	auth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("logout-validation-%s", suffix),
+		fmt.Sprintf("logout-validation-%s@example.com", suffix),
+		testPassword,
+	)
+
+	testCases := []struct {
+		name string
+		body string
+	}{
+		{name: "empty body", body: `{}`},
+		{name: "blank refresh token", body: `{"refresh_token":"   "}`},
+		{name: "unknown field", body: `{"refresh_token":"token","extra":1}`},
+		{name: "multiple json objects", body: `{"refresh_token":"token"}{"refresh_token":"another"}`},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := rawReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/logout", tc.body, auth.AccessToken)
+			require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+
+			apiErr := decodeBody[apiError](t, resp)
+			require.Equal(t, "VALIDATION_ERROR", apiErr.Code)
+		})
+	}
+}

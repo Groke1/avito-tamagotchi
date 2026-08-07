@@ -7,8 +7,8 @@ import (
 
 	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/repository/converter"
 	sqlcuser "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/user/sqlc"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -35,9 +35,7 @@ func (r *userRepository) AddUser(ctx context.Context, user entity.User) (userID 
 	})
 
 	if err != nil {
-		var pgErr *pgconn.PgError
-
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
 			switch pgErr.ConstraintName {
 			case "users_username_unique", "users_username_key":
 				return "", entity.ErrUsernameAlreadyExists
@@ -57,7 +55,7 @@ func (r *userRepository) AddUser(ctx context.Context, user entity.User) (userID 
 }
 
 func (r *userRepository) GetUserByID(ctx context.Context, userID string) (*entity.User, error) {
-	userUUID, err := getUUID(userID)
+	userUUID, err := converter.StringToUUID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("get user by id: parse user id: %w", err)
 	}
@@ -110,7 +108,7 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*ent
 func (r *userRepository) GetUsersByIDs(ctx context.Context, ids []string) ([]entity.User, error) {
 	uuids := make([]pgtype.UUID, len(ids))
 	for i, id := range ids {
-		userUUID, err := getUUID(id)
+		userUUID, err := converter.StringToUUID(id)
 		if err != nil {
 			return nil, fmt.Errorf("get users by ids: %w", err)
 		}
@@ -137,7 +135,7 @@ func (r *userRepository) UpdateCoins(
 	userID string,
 	deltaCoins int64,
 ) (*entity.User, error) {
-	userUUID, err := getUUID(userID)
+	userUUID, err := converter.StringToUUID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("update coins: parse user id: %w", err)
 	}
@@ -178,15 +176,4 @@ func (r *userRepository) getQueries(ctx context.Context) *sqlcuser.Queries {
 	}
 
 	return sqlcuser.New(tx)
-}
-
-func getUUID(userID string) (pgtype.UUID, error) {
-	parsedUserID, err := uuid.Parse(userID)
-	if err != nil {
-		return pgtype.UUID{}, fmt.Errorf("get uuid: %w", err)
-	}
-	return pgtype.UUID{
-		Bytes: parsedUserID,
-		Valid: true,
-	}, nil
 }
