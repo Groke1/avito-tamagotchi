@@ -20,7 +20,7 @@ export const TaskMiniCard = ({ task }: TaskMiniCardProps) => {
         'p-4 rounded-xl border transition-all flex items-center justify-between gap-4',
         isCompleted
           ? 'bg-avito-green/5 border-avito-green/30'
-          : 'bg-surface-lowest border-outline-variant ',
+          : 'bg-surface-lowest border-outline-variant',
       )}
     >
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -56,7 +56,7 @@ export const TaskMiniCard = ({ task }: TaskMiniCardProps) => {
         ) : (
           <NavLink
             to={ROUTES_PATHS.TASKS}
-            className="inline-flex items-center gap-1 px-3.5 py-2 bg-avito-blue hover:bg-avito-blue-dark active:scale-95 text-white font-bold text-xs rounded-xl  transition-all cursor-pointer"
+            className="inline-flex items-center gap-1 px-3.5 py-2 bg-avito-blue hover:bg-avito-blue/90 text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
           >
             <span>Перейти</span>
             <ChevronRight className="w-4 h-4" />

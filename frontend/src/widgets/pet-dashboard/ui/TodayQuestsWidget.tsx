@@ -18,6 +18,15 @@ const tasksData: TasksResponse = {
       status: 'active',
       completed_at: null,
     },
+    {
+      id: '3fa85f64-5717-4562-b3fc-2c963f66afa6s',
+      title: 'Лояльный продавец',
+      description: 'Открой три разных объявления в выбранной категории',
+      reward_coins: 20,
+      reward_xp: 50,
+      status: 'active',
+      completed_at: null,
+    },
   ],
 }
 export const TodayQuestsWidget = () => {
@@ -29,7 +38,7 @@ export const TodayQuestsWidget = () => {
         <h4 className="text-on-surface font-bold text-2xl">Задания на сегодня</h4>
         <NavLink
           to={ROUTES_PATHS.TASKS}
-          className="font-bold text-xs text-avito-blue-dark hover:underline cursor-pointer"
+          className="font-bold text-xs text-avito-blue-dark hover:text-avito-blue-dark/80 cursor-pointer transition-all"
         >
           Все задания
         </NavLink>
