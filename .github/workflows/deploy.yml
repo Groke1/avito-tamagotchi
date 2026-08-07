@@ -55,7 +55,7 @@ jobs:
             dockerfile: ./frontend/Dockerfile
             build_args: |
               VITE_API_URL=/api/v1
-              VITE_API_PET_URL=/api/v1/pet
+              VITE_API_PET_URL=/pet
 
     steps:
       - name: Checkout
