@@ -2,7 +2,8 @@ import { TaskCardSkeleton } from '@/entities/task'
 
 export const TasksListSkeleton = () => {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <TaskCardSkeleton />
       <TaskCardSkeleton />
       <TaskCardSkeleton />
       <TaskCardSkeleton />
