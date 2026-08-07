@@ -19,7 +19,7 @@ export const petApi = baseApi.injectEndpoints({
     }),
     strokePet: builder.mutation<PetResponse, void>({
       query: () => ({ url: `${PET_URL}/stroke`, method: 'POST' }),
-      invalidatesTags: ['Pet'],
+      invalidatesTags: ['Pet', 'User'],
     }),
   }),
 })
