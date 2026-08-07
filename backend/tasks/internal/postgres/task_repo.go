@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	sqlctask "github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres/sqlc"
@@ -61,25 +62,27 @@ func (r *TaskRepository) FindByIDForUser(ctx context.Context, userID, taskID str
 		CompletedAt: completedAt,
 	}, nil
 }
+
 func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]entity.UserTask, error) {
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
+	var pgUserID pgtype.UUID
+	if err := pgUserID.Scan(userIDStr); err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
 	q := sqlctask.New(r.pool)
-	rows, err := q.ListRandomTasksForUser(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	limit := int32(rand.Intn(3) + 3)
+	rows, err := q.GetOrGenerateTasksForUser(ctx, sqlctask.GetOrGenerateTasksForUserParams{
+		UserID:      pgUserID,
+		RandomLimit: limit,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	tasks := make([]entity.UserTask, 0, len(rows))
-	for _, row := range rows {
-		var completedAt *time.Time
-		if row.CompletedAt.Valid {
-			completedAt = &row.CompletedAt.Time
-		}
+	var newTasksIds []pgtype.UUID
 
+	for _, row := range rows {
 		tasks = append(tasks, entity.UserTask{
 			Task: entity.Task{
 				ID:          row.ID.String(),
@@ -89,10 +92,21 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 				RewardXP:    row.RewardXp,
 			},
 			Status:      entity.Status(row.Status),
-			CompletedAt: completedAt,
+			CompletedAt: nil,
 		})
+		if row.IsNew {
+			newTasksIds = append(newTasksIds, row.ID)
+		}
 	}
-
+	if len(newTasksIds) > 0 {
+		err = q.CreateUserTasksBatch(ctx, sqlctask.CreateUserTasksBatchParams{
+			UserID:  pgUserID,
+			TaskIds: newTasksIds,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to save generated tasks: %w", err)
+		}
+	}
 	return tasks, nil
 }
 

@@ -7,21 +7,11 @@ interface PetVitalityBarsProps {
   satiety: number
   happiness: number
   totalLevelXp: number
-  xp?: number
+  xp: number
 }
 
-export const PetVitalityBars: FC<PetVitalityBarsProps> = ({
-  satiety,
-  happiness,
-  totalLevelXp,
-  xp = 0,
-}) => {
-  const { satietyClamped, happinessClamped, xpPercentage } = usePetVitalityBars({
-    satiety,
-    happiness,
-    xp,
-    totalLevelXp,
-  })
+export const PetVitalityBars: FC<PetVitalityBarsProps> = (petState) => {
+  const { satietyClamped, happinessClamped, xpPercentage } = usePetVitalityBars(petState)
 
   return (
     <div className="flex flex-col gap-4">

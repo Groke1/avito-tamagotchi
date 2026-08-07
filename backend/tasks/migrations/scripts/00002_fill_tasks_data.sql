@@ -15,47 +15,32 @@ VALUES
     150, 300
   ),
   (
-    gen_random_uuid(), 
+    'c1aa015e-c7f4-4ecb-807d-c05489c1a460', 
     'Мастер описания', 
     'Добавьте в активное объявление в категории "Электроника" видеообзор товара или подробные характеристики.', 
     100, 200
   ),
   (
-    gen_random_uuid(), 
+    'cd51eda4-c593-4037-a0c1-c5bf3e7da86f', 
     'Лояльный продавец', 
     'Получите новый отзыв с оценкой 5 звезд от верифицированного покупателя.', 
     300, 500
   )
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO user_tasks (user_id, task_id, status) 
+INSERT INTO user_tasks (user_id, task_id, status, completed_at) 
 VALUES 
   (
     '8c9c6123-289e-4e42-a89d-7db1387d81a9',
     'a3e0b214-411a-463e-908c-94df1ba4e321',
-    'active'
-  )
-ON CONFLICT (user_id, task_id) DO NOTHING;
-
-INSERT INTO user_tasks (user_id, task_id, status, completed_at) 
-VALUES 
+    'active',
+    null
+  ), 
   (
     '8c9c6123-289e-4e42-a89d-7db1387d81a9', 
     'e9b11c75-392c-473d-815a-52ef389d3110',
     'completed', 
     NOW()
   )
-ON CONFLICT (user_id, task_id) DO NOTHING;
--- +goose StatementEnd
-
--- +goose Down
--- +goose StatementBegin
-DELETE FROM user_tasks 
-WHERE user_id = '8c9c6123-289e-4e42-a89d-7db1387d81a9';
-
-DELETE FROM tasks 
-WHERE id IN (
-  'e9b11c75-392c-473d-815a-52ef389d3110',
-  'a3e0b214-411a-463e-908c-94df1ba4e321'
-);
+;
 -- +goose StatementEnd

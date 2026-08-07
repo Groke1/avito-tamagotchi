@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/controller"
 	taskhttp "github.com/cayman444/avito-gamification-hackathon.tasks/internal/http"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres"
@@ -44,6 +45,10 @@ func main() {
 	if addr == "" {
 		addr = ":8080"
 	}
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is required")
+	}
 	if err := runMigrations(dsn); err != nil {
 		log.Fatalf("migration error: %v", err)
 	}
@@ -66,11 +71,11 @@ func main() {
 		controller.NewGetTodayTasksHandler(repo),
 		controller.NewCompleteTaskHandler(repo),
 	)
-	router := taskhttp.NewRouter(handlers)
-
+	router := taskhttp.NewRouter(handlers, []byte(jwtSecret))
+	handler := middleware.CorsHandler(router)
 	server := &http.Server{
 		Addr:         addr,
-		Handler:      router,
+		Handler:      handler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}

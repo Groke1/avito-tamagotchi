@@ -31,6 +31,8 @@ services:
   tasks:
     image: tasks
     hostname: tasks
+    env_file:
+      - .env.example
     build:
       context: .
       dockerfile: ./backend/tasks/Dockerfile

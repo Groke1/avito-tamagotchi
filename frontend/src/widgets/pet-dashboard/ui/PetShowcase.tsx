@@ -1,12 +1,13 @@
-import { useAppSelector } from '@/app/store/hooks'
+import { useAppSelector } from '@/shared/model'
 import { LazyImage } from '@/shared/ui'
 import { PetActionButtons } from './PetActionButtons'
+import { PetShowcaseSkeleton } from './PetShowcaseSkeleton'
 import { PetVitalityBars } from './PetVitalityBars'
 
 export const PetShowcase = () => {
   const pet = useAppSelector((state) => state.pet.pet)
 
-  if (!pet) return null
+  if (!pet) return <PetShowcaseSkeleton />
 
   const { name, level, happiness, satiety, xp, next_level_xp } = pet
   const totalLevelXp = xp + next_level_xp

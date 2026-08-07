@@ -14,6 +14,13 @@ var (
 	ErrTaskAlreadyCompleted = errors.New("task already completed")
 )
 
+type Status string
+
+const (
+	StatusInProgress Status = "active"
+	StatusCompleted  Status = "completed"
+)
+
 type Task struct {
 	ID          string
 	Title       string

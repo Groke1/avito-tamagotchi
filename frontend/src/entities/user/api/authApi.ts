@@ -1,5 +1,6 @@
 import { baseApi } from '@/shared/api/baseApi'
 import type { AuthTokens, LoginDto, RegisterDto, UserResponse } from '../model/types'
+import { setUser } from '../model/userSlice'
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -17,6 +18,13 @@ export const authApi = baseApi.injectEndpoints({
         body: userData,
       }),
     }),
+    logout: builder.mutation<void, string | null>({
+      query: (token) => ({
+        url: '/auth/logout',
+        method: 'POST',
+        body: { refresh_token: token },
+      }),
+    }),
     refreshToken: builder.mutation<AuthTokens, string>({
       query: (token) => ({
         url: '/auth/refresh',
@@ -30,6 +38,10 @@ export const authApi = baseApi.injectEndpoints({
         method: 'GET',
       }),
       providesTags: ['User'],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        const { data } = await queryFulfilled
+        dispatch(setUser(data))
+      },
     }),
   }),
 })
@@ -37,6 +49,8 @@ export const authApi = baseApi.injectEndpoints({
 export const {
   useLoginMutation,
   useRegisterMutation,
+  useLogoutMutation,
   useRefreshTokenMutation,
+  useGetProfileQuery,
   useLazyGetProfileQuery,
 } = authApi
