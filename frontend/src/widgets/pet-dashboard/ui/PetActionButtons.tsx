@@ -16,7 +16,7 @@ export const PetActionButtons = () => {
         onClick={handleFeed}
         className="hover:bg-avito-green/10 hover:border-avito-green/60 hover:text-avito-green-dark transition-all duration-200"
       >
-        🍎 Покормить (-5 монет)
+        🍎 Покормить (-5 монет, +2 XP)
       </Button>
       <Button
         variant="outline"
@@ -26,7 +26,7 @@ export const PetActionButtons = () => {
         onClick={handleStroke}
         className="hover:bg-avito-blue/10 hover:border-avito-blue/60 hover:text-avito-blue-dark transition-all duration-200"
       >
-        🖐️ Погладить (-7 монет)
+        🖐️ Погладить (-7 монет, +3 XP)
       </Button>
     </div>
   )

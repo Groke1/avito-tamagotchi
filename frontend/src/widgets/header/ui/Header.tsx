@@ -1,9 +1,10 @@
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
-import { logout } from '@/entities/user'
+import { logout, useGetProfileQuery } from '@/entities/user'
 import { Button } from '@/shared/ui'
 import { Coins, LogOut, User as UserIcon } from 'lucide-react'
 
 export const Header = () => {
+  useGetProfileQuery()
   const user = useAppSelector((state) => state.user.user)
   const dispatch = useAppDispatch()
 
