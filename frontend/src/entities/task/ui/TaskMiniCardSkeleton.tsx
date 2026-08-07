@@ -1,18 +1,23 @@
+import { Skeleton } from '@/shared/ui'
+
 export const TaskMiniCardSkeleton = () => {
   return (
-    <li className="p-4 rounded-xl border border-outline-variant bg-surface-lowest flex items-center justify-between gap-4 animate-pulse">
-      <div className="flex items-center gap-3.5 flex-1">
-        <div className="w-10 h-10 rounded-full bg-surface-high shrink-0" />
-        <div className="flex-1 space-y-2">
-          <div className="h-4 bg-surface-high rounded w-3/5" />
-          <div className="h-3 bg-surface-high rounded w-4/5" />
-          <div className="flex gap-2 pt-1">
-            <div className="h-4 w-16 bg-surface-high rounded-full" />
-            <div className="h-4 w-16 bg-surface-high rounded-full" />
+    <li className="p-4 rounded-xl border border-outline-variant bg-surface-lowest flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <Skeleton className="h-5 w-2/5 rounded-md" />
+          <Skeleton className="h-3 w-4/5 rounded-md" />
+          <Skeleton className="h-3 rounded-md" />
+          <div className="flex items-center gap-2 pt-0.5">
+            <Skeleton className="h-4.5 w-16 rounded-full" />
+            <Skeleton className="h-4.5 w-16 rounded-full" />
           </div>
         </div>
       </div>
-      <div className="w-20 h-8 bg-surface-high rounded-xl shrink-0" />
+      <div className="shrink-0">
+        <Skeleton className="w-24 h-8 rounded-xl" />
+      </div>
     </li>
   )
 }
