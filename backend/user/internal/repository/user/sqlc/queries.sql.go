@@ -12,7 +12,7 @@ import (
 )
 
 const addUser = `-- name: AddUser :one
-INSERT INTO account.users (
+INSERT INTO users.users (
     username,
     email,
     password_hash,
@@ -52,7 +52,7 @@ SELECT
     email,
     password_hash,
     coins
-FROM account.users
+FROM users.users
 WHERE email = $1
 `
 
@@ -79,7 +79,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT id, username, email, coins
-FROM account.users WHERE id = $1
+FROM users.users WHERE id = $1
 `
 
 type GetUserByIDRow struct {
@@ -103,7 +103,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDR
 
 const getUsersByIDs = `-- name: GetUsersByIDs :many
 SELECT id, username
-FROM account.users
+FROM users.users
 WHERE id = ANY($1::uuid[])
 `
 
@@ -133,7 +133,7 @@ func (q *Queries) GetUsersByIDs(ctx context.Context, ids []pgtype.UUID) ([]GetUs
 }
 
 const updateCoins = `-- name: UpdateCoins :one
-UPDATE account.users
+UPDATE users.users
 SET coins = coins + $1
 WHERE id = $2
   AND coins + $1 >= 0
@@ -155,7 +155,7 @@ func (q *Queries) UpdateCoins(ctx context.Context, arg UpdateCoinsParams) (int64
 const userExists = `-- name: UserExists :one
 SELECT EXISTS (
     SELECT 1
-    FROM account.users
+    FROM users.users
     WHERE id = $1
 )
 `
