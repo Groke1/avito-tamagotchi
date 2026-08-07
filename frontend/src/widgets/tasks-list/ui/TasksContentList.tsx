@@ -32,13 +32,10 @@ export const TasksContentList = ({
   return (
     <TabsContent value={tabId} className="mt-6 space-y-4">
       {isLoading && <TasksListSkeleton />}
-
       {isError && <ErrorState message="Не удалось загрузить список заданий" onRetry={onRetry} />}
-
       {!isLoading && !isError && tasks.length === 0 && (
         <EmptyState message={getEmptyMessage(tabId)} />
       )}
-
       {!isLoading && !isError && tasks.length > 0 && (
         <div className="flex flex-col gap-4">
           {tasks.map((task) => (

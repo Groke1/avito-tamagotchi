@@ -13,7 +13,7 @@ export const TasksListWidget = () => {
     useTasksListTabs(tasksData)
 
   return (
-    <section className="space-y-6">
+    <section>
       <Tabs value={activeTab} onValueChange={handleSetTab} className="w-full">
         <TasksTabList
           itemsCount={items.length}
@@ -21,11 +21,11 @@ export const TasksListWidget = () => {
           completedCount={completedCount}
           showCounts={!isLoading && !isError}
         />
-        {TABS.map((tab) => (
+        {TABS.map(({ id }) => (
           <TasksContentList
-            key={tab.id}
-            tabId={tab.id}
-            tasks={getFilteredTasks(tab.id)}
+            key={id}
+            tabId={id}
+            tasks={getFilteredTasks(id)}
             isLoading={isLoading}
             isError={isError}
             completingTaskId={completingTaskId}

@@ -23,13 +23,13 @@ export const TasksTabList = ({
   }
 
   return (
-    <TabsList className="bg-surface-lowest border border-outline-variant p-1.5 rounded-2xl h-auto gap-1.5 shadow-sm">
-      {TABS.map((tab) => (
+    <TabsList className="gap-2">
+      {TABS.map(({ id, label }) => (
         <TasksTabItem
-          key={tab.id}
-          id={tab.id}
-          label={tab.label}
-          count={getTabCount(tab.id)}
+          key={id}
+          id={id}
+          label={label}
+          count={getTabCount(id)}
           showCount={showCounts}
         />
       ))}
