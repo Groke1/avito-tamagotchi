@@ -1,10 +1,9 @@
-import { AuthLayout } from '@/app/layouts/AuthLayout'
 import { CreatePetForm } from '@/features/auth'
 import { LazyImage } from '@/shared/ui'
 
 export const CreatePet = () => {
   return (
-    <AuthLayout>
+    <>
       <div className="flex flex-col items-center mb-6 text-center max-w-md">
         <div className="flex items-center gap-1.5 mb-2">
           <span className="text-2xl font-black tracking-tight text-avito-green">Авито</span>
@@ -31,6 +30,6 @@ export const CreatePet = () => {
         </div>
       </div>
       <CreatePetForm />
-    </AuthLayout>
+    </>
   )
 }

@@ -1,0 +1,86 @@
+openapi: 3.0.3
+info:
+  title: User Service API
+  version: 1.0.0
+  description: |
+    API микросервиса пользователей.
+
+tags:
+  - name: Internal
+    description: Внутренние методы межсервисного взаимодействия
+
+paths:
+  /internal/daily-bonus:
+    post:
+      summary: Начисление ежедневного бонуса
+      description: Начисляет ежедневный бонус пользователю на основе текущей серии дней
+      tags:
+        - Internal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyBonusRequest'
+      responses:
+        '204':
+          description: Бонус успешно начислен
+
+        '422':
+          description: Ошибка валидации входных данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: VALIDATION_ERROR
+                message: Проверьте переданные данные
+
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервер
+  /internal/update-xp:
+    put:
+      tags: 
+        - Internal
+      summary: Начисление опыта за задание
+      responses: 
+        '200':
+          description: Бонус успешно начислен
+components:
+  schemas:
+    DailyBonusRequest:
+      type: object
+      required:
+        - user_id
+        - streak
+      properties:
+        user_id:
+          type: string
+          description: Идентификатор пользователя
+          example: "12345"
+        streak:
+          type: integer
+          description: Текущая серия дней
+          example: 7
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Код ошибки
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Сообщение об ошибке
+          example: Проверьте переданные данные

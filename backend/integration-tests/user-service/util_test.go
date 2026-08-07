@@ -55,6 +55,31 @@ type updateCoinsResponse struct {
 	Coins  uint64 `json:"coins"`
 }
 
+type rewardDefinitionResponse struct {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type userRewardResponse struct {
+	RewardID    string     `json:"reward_id"`
+	PromoCode   string     `json:"promo_code"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Status      string     `json:"status"`
+	ExpiresAt   *time.Time `json:"expires_at"`
+	RedeemedAt  *time.Time `json:"redeemed_at"`
+}
+
+type userRewardsResponse struct {
+	Items []userRewardResponse `json:"items"`
+}
+
+type streakRecord struct {
+	CurrentStreak  int
+	LastActiveDate time.Time
+}
+
 type apiError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -258,6 +283,56 @@ func getProfile(t *testing.T, cfg *config, accessToken string) profileResponse {
 	return decodeBody[profileResponse](t, resp)
 }
 
+func requireEmptyBody(t *testing.T, resp *http.Response) {
+	t.Helper()
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Empty(t, body)
+}
+
+func grantReward(t *testing.T, cfg *config, userID string, code string) userRewardResponse {
+	t.Helper()
+
+	resp := jsonReq(t, http.MethodPost, cfg.Users.InternalURL+"/rewards", map[string]any{
+		"user_id": userID,
+		"code":    code,
+	}, "")
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	return decodeBody[userRewardResponse](t, resp)
+}
+
+func getStreak(t *testing.T, cfg *config, userID string) streakRecord {
+	t.Helper()
+
+	var streak streakRecord
+	err := cfg.db.QueryRowContext(
+		t.Context(),
+		`SELECT current_streak, last_active_date FROM users.user_streaks WHERE user_id = $1`,
+		userID,
+	).Scan(&streak.CurrentStreak, &streak.LastActiveDate)
+	require.NoError(t, err)
+
+	return streak
+}
+
+func seedRewardDefinitions(t *testing.T, cfg *config) {
+	t.Helper()
+
+	_, err := cfg.db.ExecContext(t.Context(), `
+		INSERT INTO users.reward_definitions (code, name, description)
+		VALUES
+			('DELIVERY_DISCOUNT_10', 'Скидка 10% на доставку', 'Скидка 10% на одну покупку с Авито Доставкой'),
+			('FREE_LISTING_PROMOTION', 'Бесплатное продвижение', 'Одно бесплатное продвижение выбранного объявления'),
+			('AUTOTEKA_DISCOUNT_20', 'Скидка 20% на Автотеку', 'Скидка 20% на один отчёт об истории автомобиля'),
+			('FREE_LISTING_HIGHLIGHT', 'Выделение объявления', 'Бесплатное визуальное выделение одного объявления на ограниченный срок'),
+			('LISTING_DISCOUNT_15', 'Скидка 15% на размещение', 'Скидка 15% на одно платное размещение объявления')
+	`)
+	require.NoError(t, err)
+}
+
 func cleanDB(ctx context.Context, db *sql.DB) error {
 	var tables sql.NullString
 
@@ -280,4 +355,19 @@ func cleanDB(ctx context.Context, db *sql.DB) error {
 
 	_, err = db.ExecContext(ctx, "TRUNCATE TABLE "+tables.String+" CASCADE")
 	return err
+}
+
+func expireReward(t *testing.T, cfg *config, rewardID string) {
+	t.Helper()
+
+	result, err := cfg.db.ExecContext(
+		t.Context(),
+		`UPDATE users.user_rewards SET expires_at = NOW() - INTERVAL '1 minute' WHERE id = $1`,
+		rewardID,
+	)
+	require.NoError(t, err)
+
+	affected, err := result.RowsAffected()
+	require.NoError(t, err)
+	require.Equal(t, int64(1), affected)
 }

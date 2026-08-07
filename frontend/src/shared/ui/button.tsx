@@ -12,7 +12,7 @@ const buttonVariants = cva(
         primary: 'bg-avito-blue text-white hover:bg-avito-blue/90 shadow-md',
         avitoGreen: 'bg-avito-green text-white hover:bg-avito-green/90 shadow-md',
         outline:
-          'border-2 border-surface-container bg-surface-lowest text-on-surface hover:bg-surface-low',
+          'border-2 border-surface-container bg-surface-lowest text-on-surface hover:bg-surface-high hover:border-outline-variant transition-all duration-200',
         secondary: 'bg-surface-container text-on-surface hover:bg-surface-container-high',
         ghost: 'hover:bg-surface-container-low text-on-surface',
         destructive: 'bg-red-500 text-white hover:bg-red-600',

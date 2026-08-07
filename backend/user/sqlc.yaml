@@ -22,3 +22,25 @@ sql:
         emit_json_tags: true
         emit_interface: true
         omit_unused_structs: true
+  - engine: "postgresql"
+    queries: "internal/repository/streak/queries.sql"
+    schema: "migrations/migrations"
+    gen:
+      go:
+        package: "streak"
+        sql_package: "pgx/v5"
+        out: "internal/repository/streak/sqlc"
+        emit_json_tags: true
+        emit_interface: true
+        omit_unused_structs: true
+  - engine: "postgresql"
+    queries: "internal/repository/reward/queries.sql"
+    schema: "migrations/migrations"
+    gen:
+      go:
+        package: "reward"
+        sql_package: "pgx/v5"
+        out: "internal/repository/reward/sqlc"
+        emit_json_tags: true
+        emit_interface: true
+        omit_unused_structs: true

@@ -1,4 +1,18 @@
 services:
+  pets:
+    image: pets
+    env_file:
+      - ./backend/pets/.env.example
+    build:
+      context: .
+      dockerfile: ./backend/pets/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      pets-postgres:
+        condition: service_healthy
+    ports:
+      - "8082:8080"
+    
   users:
     image: users
     env_file:
@@ -76,6 +90,38 @@ services:
     ports:
       - "5432:5432"
 
+  pets-postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: "pet_db"
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "password"
+    ports:
+      - "5434:5432"
+    volumes:
+      - pets-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pg_user -d pet_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate-pets-postgres:
+    image: migrate/migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/pets/migrations:/migrations
+    command:
+      [
+        "-path=/migrations",
+        "-database=postgres://user:password@pets-postgres:5432/pet_db?sslmode=disable",
+        "up"
+      ]
+
 volumes:
   postgres-data:
   tasks-postgres-data:
+  pets-postgres-data:

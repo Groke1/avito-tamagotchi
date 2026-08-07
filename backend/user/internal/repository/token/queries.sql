@@ -1,5 +1,5 @@
 -- name: AddToken :exec
-INSERT INTO account.refresh_tokens (
+INSERT INTO users.refresh_tokens (
     user_id,
     token_hash,
     expires_at
@@ -17,13 +17,18 @@ SELECT
     token_hash,
     expires_at,
     created_at
-FROM account.refresh_tokens
+FROM users.refresh_tokens
 WHERE token_hash = sqlc.arg(token_hash)
 FOR UPDATE ;
 
 -- name: DeleteRefreshTokenByHash :exec
-DELETE FROM account.refresh_tokens
+DELETE FROM users.refresh_tokens
 WHERE token_hash = sqlc.arg(token_hash);
 
 -- name: DeleteExpiredTokens :exec
-DELETE FROM account.refresh_tokens WHERE expires_at < NOW();
+DELETE FROM users.refresh_tokens WHERE expires_at < NOW();
+
+-- name: DeleteSession :exec
+DELETE FROM users.refresh_tokens
+WHERE user_id = sqlc.arg(user_id)
+  AND token_hash = sqlc.arg(token_hash);
