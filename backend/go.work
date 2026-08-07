@@ -4,5 +4,6 @@ use (
 	./pets
 	./user
 	./pkg
+	./tasks
 	./integration-tests
 )
