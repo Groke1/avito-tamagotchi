@@ -18,7 +18,7 @@ export const TaskMiniCard = ({ task }: TaskMiniCardProps) => {
         'p-4 rounded-xl border transition-all flex items-center justify-between gap-4',
         isCompleted
           ? 'bg-avito-green/5 border-avito-green/40'
-          : 'bg-surface-lowest border-outline-variant',
+          : 'bg-surface-lowest border-surface-highest',
       )}
     >
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
