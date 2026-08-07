@@ -1,13 +1,31 @@
 ## Тестирование
 
 ### GET /api/v1/tasks
+
+**Как работает?** Берется рандомное кол-во задач (3-5) и добавляется в user_task. 
+При повторном запросе возвращаются уже сгенерированные задачи. Задачи обновляются каждый день
+
 ```
-curl.exe -X GET http://localhost:8081/api/v1/tasks -H "Authorization: Bearer $token" -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
+$body = @{
+ username = "kot_master"
+ email    = "kot@avito.ru"
+    password = "supersecret123"
+ } | ConvertTo-Json
+
+$response = Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/v1/auth/register" -ContentType "application/json" -Body $body
+
+$accessToken= $response.access_token
+
+Invoke-RestMethod     -Method GET `
+-Uri "http://localhost:8081/api/v1/tasks" `
+-Headers @{
+Authorization = "Bearer $accessToken"}
 
 {"date":"2026-08-05","items":[{"id":"9b3541db-9942-4625-ba51-b6afcb23754a","title":"Лояльный продавец","description":"Получите новый отзыв с оценкой 5 звезд от верифицированного покупателя.","reward_coins":300,"reward_xp":500,"status":"active","completed_at":null},{"id":"4c202322-726f-4ec6-9896-62bc8b49d5ee","title":"Мастер описания","description":"Добавьте в активное объявление в категории \"Электроника\" видеообзор товара или подробные характеристики.","reward_coins":100,"reward_xp":200,"status":"active","completed_at":null},{"id":"e9b11c75-392c-473d-815a-52ef389d3110","title":"Первая продажа месяца","description":"Успешно завершите сделку по любому объявлению с подключенной Авито Доставкой.","reward_coins":500,"reward_xp":1000,"status":"active","completed_at":null}]}
 
 ```
 ### GET /api/v1/tasks/{task_id}
+
 ```
 curl.exe -X GET http://localhost:8081/api/v1/tasks/9b3541db-9942-4625-ba51-b6afcb23754a -H "Authorization: Bearer $token" -H "X-User-ID: f8db7bab-1456-4061-a123-1bb3fad1abc3"
 

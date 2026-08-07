@@ -9,6 +9,7 @@ import (
 
 	sqlctask "github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres/sqlc"
 
+	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -62,22 +63,27 @@ func (r *TaskRepository) FindByIDForUser(ctx context.Context, userID, taskID str
 		CompletedAt: completedAt,
 	}, nil
 }
+
 func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]entity.UserTask, error) {
 	var pgUserID pgtype.UUID
-	err := pgUserID.Scan(userIDStr)
-	if err != nil {
+	if err := pgUserID.Scan(userIDStr); err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
 	q := sqlctask.New(r.pool)
-	rows, err := q.ListRandomTasksForUser(ctx, int32(rand.Intn(3)+5))
+	limit := int32(rand.Intn(3) + 3)
+	rows, err := q.GetOrGenerateTasksForUser(ctx, sqlctask.GetOrGenerateTasksForUserParams{
+		UserID:      pgUserID,
+		RandomLimit: limit,
+	})
 	if err != nil {
 		return nil, err
 	}
-	tasksIds := make([]pgtype.UUID, 0, len(rows))
+
 	tasks := make([]entity.UserTask, 0, len(rows))
+	var newTasksIds []pgtype.UUID
+
 	for _, row := range rows {
-		tasksIds = append(tasksIds, row.ID)
 		tasks = append(tasks, entity.UserTask{
 			Task: entity.Task{
 				ID:          row.ID.String(),
@@ -89,13 +95,18 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 			Status:      entity.Status(row.Status),
 			CompletedAt: nil,
 		})
+		if row.IsNew {
+			newTasksIds = append(newTasksIds, row.ID)
+		}
 	}
-	err = q.CreateUserTasksBatch(ctx, sqlctask.CreateUserTasksBatchParams{
-		UserID:  pgUserID,
-		TaskIds: tasksIds,
-	})
-	if err != nil {
-		return nil, err
+	if len(newTasksIds) > 0 {
+		err = q.CreateUserTasksBatch(ctx, sqlctask.CreateUserTasksBatchParams{
+			UserID:  pgUserID,
+			TaskIds: newTasksIds,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to save generated tasks: %w", err)
+		}
 	}
 	return tasks, nil
 }
@@ -178,4 +189,13 @@ func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr 
 		Status:      entity.StatusCompleted,
 		CompletedAt: &now,
 	}, nil
+}
+
+func (r *TaskRepository) getQueries(ctx context.Context) *sqlctask.Queries {
+	tx, err := db.ExtractTx(ctx)
+	if err == nil {
+		return sqlctask.New(tx)
+	}
+
+	return sqlctask.New(r.pool)
 }

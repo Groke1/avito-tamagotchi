@@ -16,25 +16,34 @@ FROM tasks t
 LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $1
 WHERE t.id = $2;
 
--- name: ListRandomTasksForUser :many
-SELECT
-    t.id,
-    t.title,
-    t.description,
-    t.reward_coins,
-    t.reward_xp,
-    'active' AS status
-FROM tasks t
-ORDER BY RANDOM()
-LIMIT $1;
-
 -- name: CreateUserTasksBatch :exec
 INSERT INTO user_tasks (user_id, task_id)
 SELECT 
     sqlc.arg(user_id)::uuid AS user_id, 
     unnest(sqlc.arg(task_ids)::uuid[]) AS task_id
 ;
--- RETURNING user_id, task_id, updated_at;
+
+-- name: GetOrGenerateTasksForUser :many
+WITH existing_tasks AS (
+    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, ut.status
+    FROM user_tasks ut
+    JOIN tasks t ON t.id = ut.task_id 
+    WHERE ut.user_id = sqlc.arg(user_id)::uuid
+      AND ut.updated_at >= CURRENT_DATE 
+      AND ut.updated_at < CURRENT_DATE + INTERVAL '1 day'
+),
+random_tasks AS (
+    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, 'active'::text AS status
+    FROM tasks t
+    WHERE NOT EXISTS (SELECT 1 FROM existing_tasks) -- Выполнять только если сегодня пусто
+    ORDER BY RANDOM()
+    LIMIT sqlc.arg(random_limit)::int
+)
+SELECT id, title, description, reward_coins, reward_xp, status, (NOT EXISTS (SELECT 1 FROM existing_tasks))::bool AS is_new
+FROM existing_tasks
+UNION ALL
+SELECT id, title, description, reward_coins, reward_xp, status, true AS is_new
+FROM random_tasks;
 
 -- name: GetUserTaskForUpdate :one
 SELECT status, completed_at

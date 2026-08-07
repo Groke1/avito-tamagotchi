@@ -13,11 +13,10 @@ import (
 type Querier interface {
 	CreateUserTasksBatch(ctx context.Context, arg CreateUserTasksBatchParams) error
 	FindByIDForUser(ctx context.Context, arg FindByIDForUserParams) (FindByIDForUserRow, error)
+	GetOrGenerateTasksForUser(ctx context.Context, arg GetOrGenerateTasksForUserParams) ([]GetOrGenerateTasksForUserRow, error)
 	GetTaskByID(ctx context.Context, id pgtype.UUID) (Task, error)
-	// RETURNING user_id, task_id, updated_at;
 	GetUserTaskForUpdate(ctx context.Context, arg GetUserTaskForUpdateParams) (GetUserTaskForUpdateRow, error)
 	InsertUserTaskCompleted(ctx context.Context, arg InsertUserTaskCompletedParams) error
-	ListRandomTasksForUser(ctx context.Context, limit int32) ([]ListRandomTasksForUserRow, error)
 	UpdateUserTaskCompleted(ctx context.Context, arg UpdateUserTaskCompletedParams) error
 }
 
