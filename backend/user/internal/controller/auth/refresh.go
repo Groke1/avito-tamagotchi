@@ -28,7 +28,7 @@ func (c *controller) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, response{
+	httpx.WriteJSON(w, http.StatusOK, tokensResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 	})

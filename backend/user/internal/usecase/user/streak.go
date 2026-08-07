@@ -23,7 +23,7 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 	var isStreakChanged bool
 	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
 		var streak *entity.Streak
-		streak, err := s.streakRepository.GetStreakByUserIDForUpdate(ctx, userID)
+		streak, err = s.streakRepository.GetStreakByUserIDForUpdate(ctx, userID)
 
 		if err != nil {
 			if !errors.Is(err, entity.ErrUserNotFound) {
@@ -58,7 +58,6 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 }
 
 func dateOnly(t time.Time, loc *time.Location) time.Time {
-
 	localTime := t.In(loc)
 
 	return time.Date(

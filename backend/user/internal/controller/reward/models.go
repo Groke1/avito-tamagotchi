@@ -7,7 +7,7 @@ import (
 )
 
 type userRewardResponse struct {
-	RewardId    string     `json:"reward_id"`
+	RewardID    string     `json:"reward_id"`
 	PromoCode   string     `json:"promo_code"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
@@ -37,7 +37,7 @@ type grantRewardRequest struct {
 
 func toUserRewardResponse(userReward entity.UserReward) userRewardResponse {
 	return userRewardResponse{
-		RewardId:    userReward.ID,
+		RewardID:    userReward.ID,
 		PromoCode:   userReward.PromoCode,
 		Name:        userReward.Definition.Name,
 		Description: userReward.Definition.Description,
@@ -45,12 +45,4 @@ func toUserRewardResponse(userReward entity.UserReward) userRewardResponse {
 		ExpiresAt:   userReward.ExpiresAt,
 		RedeemedAt:  userReward.RedeemedAt,
 	}
-}
-
-func parseTime(t *time.Time) string {
-	tString := "null"
-	if t != nil {
-		tString = t.Format(time.RFC3339)
-	}
-	return tString
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -202,4 +203,165 @@ func TestRewardStatuses(t *testing.T) {
 		apiErr := decodeBody[apiError](t, secondRedeemResp)
 		require.Equal(t, "REWARD_UNAVAILABLE", apiErr.Code)
 	})
+}
+
+func TestCannotRedeemAnotherUsersReward(t *testing.T) {
+	cfg := setup(t)
+	seedRewardDefinitions(t, cfg)
+
+	ownerSuffix := uniqueSuffix(t)
+	ownerAuth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("reward-redeem-owner-%s", ownerSuffix),
+		fmt.Sprintf("reward-redeem-owner-%s@example.com", ownerSuffix),
+		testPassword,
+	)
+	ownerProfile := getProfile(t, cfg, ownerAuth.AccessToken)
+	granted := grantReward(t, cfg, ownerProfile.UserID, rewardCodeDelivery)
+
+	otherSuffix := uniqueSuffix(t)
+	otherAuth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("reward-redeem-other-%s", otherSuffix),
+		fmt.Sprintf("reward-redeem-other-%s@example.com", otherSuffix),
+		testPassword,
+	)
+
+	resp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/rewards/redeem", map[string]any{
+		"promo_code": granted.PromoCode,
+	}, otherAuth.AccessToken)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	apiErr := decodeBody[apiError](t, resp)
+	require.Equal(t, "REWARD_UNAVAILABLE", apiErr.Code)
+
+	ownerRewardResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/"+granted.RewardID, nil, ownerAuth.AccessToken)
+	require.Equal(t, http.StatusOK, ownerRewardResp.StatusCode)
+	ownerReward := decodeBody[userRewardResponse](t, ownerRewardResp)
+	require.Equal(t, "active", ownerReward.Status)
+	require.Nil(t, ownerReward.RedeemedAt)
+}
+
+func TestExpiredRewardCannotBeRedeemed(t *testing.T) {
+	cfg := setup(t)
+	seedRewardDefinitions(t, cfg)
+
+	suffix := uniqueSuffix(t)
+	auth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("reward-expired-%s", suffix),
+		fmt.Sprintf("reward-expired-%s@example.com", suffix),
+		testPassword,
+	)
+	profile := getProfile(t, cfg, auth.AccessToken)
+	granted := grantReward(t, cfg, profile.UserID, rewardCodeDelivery)
+	expireReward(t, cfg, granted.RewardID)
+
+	resp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/rewards/redeem", map[string]any{
+		"promo_code": granted.PromoCode,
+	}, auth.AccessToken)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	apiErr := decodeBody[apiError](t, resp)
+	require.Equal(t, "REWARD_UNAVAILABLE", apiErr.Code)
+
+	rewardResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/"+granted.RewardID, nil, auth.AccessToken)
+	require.Equal(t, http.StatusOK, rewardResp.StatusCode)
+	reward := decodeBody[userRewardResponse](t, rewardResp)
+	require.Equal(t, "expired", reward.Status)
+	require.NotNil(t, reward.ExpiresAt)
+	require.True(t, reward.ExpiresAt.Before(time.Now()))
+	require.Nil(t, reward.RedeemedAt)
+
+	activeResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/active", nil, auth.AccessToken)
+	require.Equal(t, http.StatusOK, activeResp.StatusCode)
+	active := decodeBody[userRewardsResponse](t, activeResp)
+	require.Empty(t, active.Items)
+
+	allResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards", nil, auth.AccessToken)
+	require.Equal(t, http.StatusOK, allResp.StatusCode)
+	all := decodeBody[userRewardsResponse](t, allResp)
+	require.Len(t, all.Items, 1)
+	require.Equal(t, "expired", all.Items[0].Status)
+}
+
+func TestGetUnknownReward(t *testing.T) {
+	cfg := setup(t)
+
+	suffix := uniqueSuffix(t)
+	auth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("reward-unknown-%s", suffix),
+		fmt.Sprintf("reward-unknown-%s@example.com", suffix),
+		testPassword,
+	)
+
+	resp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/00000000-0000-0000-0000-000000000000", nil, auth.AccessToken)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	apiErr := decodeBody[apiError](t, resp)
+	require.Equal(t, "REWARD_NOT_FOUND", apiErr.Code)
+}
+
+func TestRewardsRequireAccessToken(t *testing.T) {
+	cfg := setup(t)
+
+	testCases := []struct {
+		name   string
+		method string
+		path   string
+		body   any
+	}{
+		{name: "all rewards", method: http.MethodGet, path: "/rewards"},
+		{name: "active rewards", method: http.MethodGet, path: "/rewards/active"},
+		{name: "single reward", method: http.MethodGet, path: "/rewards/00000000-0000-0000-0000-000000000000"},
+		{name: "redeem reward", method: http.MethodPost, path: "/rewards/redeem", body: map[string]any{"promo_code": "PROMO"}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := jsonReq(t, tc.method, cfg.Users.APIURL+tc.path, tc.body, "")
+			require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+			apiErr := decodeBody[apiError](t, resp)
+			require.Equal(t, "UNAUTHORIZED", apiErr.Code)
+		})
+	}
+}
+
+func TestRedeemRewardValidationCases(t *testing.T) {
+	cfg := setup(t)
+
+	suffix := uniqueSuffix(t)
+	auth := registerUser(
+		t,
+		cfg,
+		fmt.Sprintf("reward-validation-%s", suffix),
+		fmt.Sprintf("reward-validation-%s@example.com", suffix),
+		testPassword,
+	)
+
+	testCases := []struct {
+		name string
+		body string
+	}{
+		{name: "empty body", body: `{}`},
+		{name: "blank promo code", body: `{"promo_code":"   "}`},
+		{name: "unknown field", body: `{"promo_code":"PROMO","extra":1}`},
+		{name: "multiple json objects", body: `{"promo_code":"PROMO"}{"promo_code":"OTHER"}`},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := rawReq(t, http.MethodPost, cfg.Users.APIURL+"/rewards/redeem", tc.body, auth.AccessToken)
+			require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+
+			apiErr := decodeBody[apiError](t, resp)
+			require.Equal(t, "VALIDATION_ERROR", apiErr.Code)
+		})
+	}
 }

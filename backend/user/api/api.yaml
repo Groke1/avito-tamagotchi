@@ -98,6 +98,31 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/auth/logout:
+    post:
+      tags: [ Auth ]
+      operationId: logoutUser
+      summary: Завершить текущую сессию
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+            example:
+              refresh_token: eyJhbGciOiJIUzI1NiJ9...
+      responses:
+        '204':
+          description: Сессия завершена или уже была завершена
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /api/v1/profile:
     get:
       tags: [Profile]
@@ -440,6 +465,16 @@ components:
       type: object
       additionalProperties: false
       required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          minLength: 1
+          writeOnly: true
+
+    LogoutRequest:
+      type: object
+      additionalProperties: false
+      required: [ refresh_token ]
       properties:
         refresh_token:
           type: string

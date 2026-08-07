@@ -70,7 +70,6 @@ func (s *rewardService) GetReward(ctx context.Context, userID string, rewardID s
 }
 
 func (s *rewardService) RedeemReward(ctx context.Context, userID string, promoCode string) error {
-
 	if err := s.rewardRepository.RedeemUserReward(ctx, userID, promoCode); err != nil {
 		return fmt.Errorf("redeem reward: %w", err)
 	}
@@ -94,12 +93,14 @@ func (s *rewardService) GrantReward(ctx context.Context, userID string, code str
 	}
 
 	for attempt := 0; attempt < maxPromoCodeGenerationAttempts; attempt++ {
-		promoCode, err := generatePromoCode(definition.Code)
+		var promoCode string
+		promoCode, err = generatePromoCode(definition.Code)
 		if err != nil {
 			return nil, fmt.Errorf("grant reward: generate promo code: %w", err)
 		}
 
-		reward, err := s.rewardRepository.AddUserReward(ctx, userID, promoCode, definition.ID, nil)
+		var reward *entity.UserReward
+		reward, err = s.rewardRepository.AddUserReward(ctx, userID, promoCode, definition.ID, nil)
 		if err == nil {
 			reward.Definition = *definition
 			return reward, nil

@@ -9,7 +9,6 @@ const promoCodeRandomLength = 10
 const promoCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 func generatePromoCode(prefix string) (string, error) {
-
 	randomPart := make([]byte, promoCodeRandomLength)
 	buffer := make([]byte, promoCodeRandomLength)
 

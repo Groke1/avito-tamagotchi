@@ -27,3 +27,8 @@ WHERE token_hash = sqlc.arg(token_hash);
 
 -- name: DeleteExpiredTokens :exec
 DELETE FROM users.refresh_tokens WHERE expires_at < NOW();
+
+-- name: DeleteSession :exec
+DELETE FROM users.refresh_tokens
+WHERE user_id = sqlc.arg(user_id)
+  AND token_hash = sqlc.arg(token_hash);

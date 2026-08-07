@@ -54,6 +54,22 @@ func (q *Queries) DeleteRefreshTokenByHash(ctx context.Context, tokenHash string
 	return err
 }
 
+const deleteSession = `-- name: DeleteSession :exec
+DELETE FROM users.refresh_tokens
+WHERE user_id = $1
+  AND token_hash = $2
+`
+
+type DeleteSessionParams struct {
+	UserID    pgtype.UUID `json:"user_id"`
+	TokenHash string      `json:"token_hash"`
+}
+
+func (q *Queries) DeleteSession(ctx context.Context, arg DeleteSessionParams) error {
+	_, err := q.db.Exec(ctx, deleteSession, arg.UserID, arg.TokenHash)
+	return err
+}
+
 const getRefreshTokenByHashForUpdate = `-- name: GetRefreshTokenByHashForUpdate :one
 SELECT
     id,

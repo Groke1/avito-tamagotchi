@@ -41,12 +41,10 @@ func (e ErrorCode) Message() string {
 		return "Пользователь не найден"
 	case ErrInsufficientCoins:
 		return "Недостаточно монет"
-	case ErrRewardNotFound:
+	case ErrRewardNotFound, ErrNotFoundDefinition:
 		return "Награда не найдена"
 	case ErrRewardUnavailable:
 		return "Награда недоступна"
-	case ErrNotFoundDefinition:
-		return "Награда не найдена"
 
 	default:
 		return "Unknown error"
