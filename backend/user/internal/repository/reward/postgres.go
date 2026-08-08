@@ -86,6 +86,47 @@ func (r *rewardRepository) GetActiveRewardsByUserID(ctx context.Context, userID 
 	return result, nil
 }
 
+func (r *rewardRepository) GetRewardsByUserIDAndPeriod(
+	ctx context.Context, userID string, from, to time.Time,
+) ([]entity.UserReward, error) {
+	userUUID, err := converter.StringToUUID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("convert user id to uuid: %w", err)
+	}
+
+	rows, err := r.queries.GetRewardsByUserIDAndPeriod(
+		ctx, sqlcreward.GetRewardsByUserIDAndPeriodParams{
+			UserID:   userUUID,
+			FromTime: converter.TimeToTimestamptz(&from),
+			ToTime:   converter.TimeToTimestamptz(&to),
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get rewards by user id and period: %w", err)
+	}
+
+	rewards := make([]entity.UserReward, 0, len(rows))
+
+	for _, row := range rows {
+		rewards = append(rewards, entity.UserReward{
+			ID:        row.ID.String(),
+			UserID:    row.UserID.String(),
+			PromoCode: row.PromoCode,
+			Status:    entity.Status(row.Status),
+
+			Definition: entity.RewardDefinition{
+				Name:        row.Name,
+				Description: row.Description,
+			},
+
+			RedeemedAt: converter.TimestamptzToTime(row.RedeemedAt),
+			ExpiresAt:  converter.TimestamptzToTime(row.ExpiresAt),
+		})
+	}
+
+	return rewards, nil
+}
+
 func (r *rewardRepository) GetRewardByUserIDAndRewardID(ctx context.Context, userID, rewardID string) (*entity.UserReward, error) {
 	userUUID, err := converter.StringToUUID(userID)
 	if err != nil {

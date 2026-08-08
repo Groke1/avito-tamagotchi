@@ -26,10 +26,31 @@ func NewStreakRepository(qdb sqlcstreak.DBTX) *streakRepository {
 	}
 }
 
+func (r *streakRepository) GetStreakByUserID(ctx context.Context, userID string) (*entity.Streak, error) {
+	userUUID, err := converter.StringToUUID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("get streak by user id: parse user id: %w", err)
+	}
+	userStreak, err := r.getQueries(ctx).GetStreakByUserID(ctx, userUUID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, entity.ErrUserNotFound
+		}
+
+		return nil, fmt.Errorf("get streak token by user_id: %w", err)
+	}
+
+	return &entity.Streak{
+		UserID:         userStreak.UserID.String(),
+		CurrentStreak:  userStreak.CurrentStreak,
+		LastActiveDate: userStreak.LastActiveDate.Time,
+	}, nil
+}
+
 func (r *streakRepository) GetStreakByUserIDForUpdate(ctx context.Context, userID string) (*entity.Streak, error) {
 	userUUID, err := converter.StringToUUID(userID)
 	if err != nil {
-		return &entity.Streak{}, fmt.Errorf("get streak by user id: parse user id: %w", err)
+		return nil, fmt.Errorf("get streak for update by user id: parse user id: %w", err)
 	}
 	userStreak, err := r.getQueries(ctx).GetStreakByUserIDForUpdate(ctx, userUUID)
 	if err != nil {
@@ -37,7 +58,7 @@ func (r *streakRepository) GetStreakByUserIDForUpdate(ctx context.Context, userI
 			return nil, entity.ErrUserNotFound
 		}
 
-		return nil, fmt.Errorf("get streak token by user_id: %w", err)
+		return nil, fmt.Errorf("get streak token by user_id for update: %w", err)
 	}
 
 	return &entity.Streak{
