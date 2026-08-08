@@ -55,6 +55,7 @@ jobs:
             build_args: |
               VITE_API_URL=/api/v1
               VITE_API_PET_URL=/pet
+              VITE_API_TASKS_URL=/tasks
 
     steps:
       - name: Checkout
