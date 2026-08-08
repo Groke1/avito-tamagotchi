@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	GetStreakByUserID(ctx context.Context, userID pgtype.UUID) (GetStreakByUserIDRow, error)
 	GetStreakByUserIDForUpdate(ctx context.Context, userID pgtype.UUID) (GetStreakByUserIDForUpdateRow, error)
 	UpdateStreak(ctx context.Context, arg UpdateStreakParams) error
 }

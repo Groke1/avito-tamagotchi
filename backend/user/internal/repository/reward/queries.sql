@@ -22,7 +22,22 @@ WHERE user_id = sqlc.arg(user_id)
   AND (
         ur.expires_at IS NULL OR ur.expires_at > NOW()
     )
-ORDER BY ur.created_at DESC;;
+ORDER BY ur.created_at DESC;
+
+
+-- name: GetRewardsByUserIDAndPeriod :many
+SELECT
+    ur.id, ur.user_id,
+    ur.promo_code, rd.name,
+    rd.description, ur.status,
+    ur.redeemed_at, ur.expires_at
+FROM users.user_rewards AS ur
+    JOIN users.reward_definitions AS rd
+    ON rd.id = ur.reward_id
+WHERE ur.user_id = sqlc.arg(user_id)
+  AND ur.created_at >= sqlc.arg(from_time)
+  AND ur.created_at < sqlc.arg(to_time)
+ORDER BY ur.created_at DESC;
 
 -- name: GetRewardByUserIDAndRewardID :one
 SELECT ur.id, ur.user_id, ur.promo_code,

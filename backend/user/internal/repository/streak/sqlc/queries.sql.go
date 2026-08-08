@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getStreakByUserID = `-- name: GetStreakByUserID :one
+SELECT user_id, current_streak, last_active_date
+FROM users.user_streaks
+WHERE user_id = $1
+`
+
+type GetStreakByUserIDRow struct {
+	UserID         pgtype.UUID `json:"user_id"`
+	CurrentStreak  int32       `json:"current_streak"`
+	LastActiveDate pgtype.Date `json:"last_active_date"`
+}
+
+func (q *Queries) GetStreakByUserID(ctx context.Context, userID pgtype.UUID) (GetStreakByUserIDRow, error) {
+	row := q.db.QueryRow(ctx, getStreakByUserID, userID)
+	var i GetStreakByUserIDRow
+	err := row.Scan(&i.UserID, &i.CurrentStreak, &i.LastActiveDate)
+	return i, err
+}
+
 const getStreakByUserIDForUpdate = `-- name: GetStreakByUserIDForUpdate :one
 SELECT user_id, current_streak, last_active_date
 FROM users.user_streaks
