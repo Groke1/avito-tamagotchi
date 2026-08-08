@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	cors "github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/api"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/config"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
@@ -44,7 +45,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Use(api.CorsMiddleware)
+		r.Use(cors.CorsHandler)
 
 		r.Get("/ws", wsHandler.OpenWSConn)
 
