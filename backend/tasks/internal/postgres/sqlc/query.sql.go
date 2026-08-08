@@ -13,7 +13,7 @@ import (
 
 const createUserTasksBatch = `-- name: CreateUserTasksBatch :many
 WITH existing_tasks AS (
-    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, ut.status, ut.completed_at
+    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, t.task_type, ut.status, ut.completed_at
     FROM user_tasks ut
     JOIN tasks t ON t.id = ut.task_id 
     WHERE ut.user_id = $1::uuid
@@ -21,16 +21,16 @@ WITH existing_tasks AS (
       AND ut.updated_at < CURRENT_DATE + INTERVAL '1 day'
 ),
 random_tasks AS (
-    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, 'active'::text AS status, null::timestamptz as completed_at
+    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, t.task_type, 'active'::text AS status, null::timestamptz as completed_at
     FROM tasks t
     WHERE NOT EXISTS (SELECT 1 FROM existing_tasks)
     ORDER BY RANDOM()
     LIMIT $2::int
 )
-SELECT id, title, description, reward_coins, reward_xp, status, completed_at, (NOT EXISTS (SELECT 1 FROM existing_tasks))::bool AS is_new
+SELECT id, title, description, reward_coins, reward_xp, task_type, status, completed_at, (NOT EXISTS (SELECT 1 FROM existing_tasks))::bool AS is_new
 FROM existing_tasks
 UNION ALL
-SELECT id, title, description, reward_coins, reward_xp, status, completed_at, true AS is_new
+SELECT id, title, description, reward_coins, reward_xp, task_type, status, completed_at, true AS is_new
 FROM random_tasks
 `
 
@@ -45,6 +45,7 @@ type CreateUserTasksBatchRow struct {
 	Description string             `json:"description"`
 	RewardCoins int32              `json:"reward_coins"`
 	RewardXp    int64              `json:"reward_xp"`
+	TaskType    pgtype.Text        `json:"task_type"`
 	Status      string             `json:"status"`
 	CompletedAt pgtype.Timestamptz `json:"completed_at"`
 	IsNew       bool               `json:"is_new"`
@@ -65,6 +66,7 @@ func (q *Queries) CreateUserTasksBatch(ctx context.Context, arg CreateUserTasksB
 			&i.Description,
 			&i.RewardCoins,
 			&i.RewardXp,
+			&i.TaskType,
 			&i.Status,
 			&i.CompletedAt,
 			&i.IsNew,
@@ -86,6 +88,7 @@ SELECT
     t.description,
     t.reward_coins,
     t.reward_xp,
+    t.task_type,
     COALESCE(ut.status, 'active')::text AS status,
     ut.completed_at
 FROM tasks t
@@ -104,6 +107,7 @@ type FindByIDForUserRow struct {
 	Description string             `json:"description"`
 	RewardCoins int32              `json:"reward_coins"`
 	RewardXp    int64              `json:"reward_xp"`
+	TaskType    pgtype.Text        `json:"task_type"`
 	Status      string             `json:"status"`
 	CompletedAt pgtype.Timestamptz `json:"completed_at"`
 }
@@ -117,6 +121,7 @@ func (q *Queries) FindByIDForUser(ctx context.Context, arg FindByIDForUserParams
 		&i.Description,
 		&i.RewardCoins,
 		&i.RewardXp,
+		&i.TaskType,
 		&i.Status,
 		&i.CompletedAt,
 	)
@@ -124,20 +129,30 @@ func (q *Queries) FindByIDForUser(ctx context.Context, arg FindByIDForUserParams
 }
 
 const getTaskByID = `-- name: GetTaskByID :one
-SELECT id, title, description, reward_coins, reward_xp
+SELECT id, title, description, reward_coins, reward_xp, task_type
 FROM tasks
 WHERE id = $1::uuid
 `
 
-func (q *Queries) GetTaskByID(ctx context.Context, dollar_1 pgtype.UUID) (Task, error) {
+type GetTaskByIDRow struct {
+	ID          pgtype.UUID `json:"id"`
+	Title       string      `json:"title"`
+	Description string      `json:"description"`
+	RewardCoins int32       `json:"reward_coins"`
+	RewardXp    int64       `json:"reward_xp"`
+	TaskType    pgtype.Text `json:"task_type"`
+}
+
+func (q *Queries) GetTaskByID(ctx context.Context, dollar_1 pgtype.UUID) (GetTaskByIDRow, error) {
 	row := q.db.QueryRow(ctx, getTaskByID, dollar_1)
-	var i Task
+	var i GetTaskByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
 		&i.Description,
 		&i.RewardCoins,
 		&i.RewardXp,
+		&i.TaskType,
 	)
 	return i, err
 }

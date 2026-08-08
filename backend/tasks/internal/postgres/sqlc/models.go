@@ -4,14 +4,4 @@
 
 package sqlctask
 
-import (
-	"github.com/jackc/pgx/v5/pgtype"
-)
-
-type Task struct {
-	ID          pgtype.UUID `json:"id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	RewardCoins int32       `json:"reward_coins"`
-	RewardXp    int64       `json:"reward_xp"`
-}
+import ()

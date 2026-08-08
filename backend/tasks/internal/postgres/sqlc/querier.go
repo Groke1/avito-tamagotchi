@@ -13,7 +13,7 @@ import (
 type Querier interface {
 	CreateUserTasksBatch(ctx context.Context, arg CreateUserTasksBatchParams) ([]CreateUserTasksBatchRow, error)
 	FindByIDForUser(ctx context.Context, arg FindByIDForUserParams) (FindByIDForUserRow, error)
-	GetTaskByID(ctx context.Context, dollar_1 pgtype.UUID) (Task, error)
+	GetTaskByID(ctx context.Context, dollar_1 pgtype.UUID) (GetTaskByIDRow, error)
 	GetUserTaskForUpdate(ctx context.Context, arg GetUserTaskForUpdateParams) (GetUserTaskForUpdateRow, error)
 	InsertUserTaskCompleted(ctx context.Context, arg InsertUserTaskCompletedParams) error
 	InsertUserTasksBatch(ctx context.Context, arg InsertUserTasksBatchParams) error

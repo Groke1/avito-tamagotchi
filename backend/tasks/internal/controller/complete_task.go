@@ -99,6 +99,7 @@ func (h *CompleteTaskHandler) Handle(ctx context.Context, query CompleteTaskQuer
 				RewardXP:    completedTask.Task.RewardXP,
 				Status:      entity.StatusCompleted,
 				CompletedAt: completedAt,
+				TaskType:    completedTask.Task.Type,
 			},
 			Awarded: AwardedDTO{
 				Coins: completedTask.Task.RewardCoins,

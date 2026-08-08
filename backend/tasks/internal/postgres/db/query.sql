@@ -1,5 +1,5 @@
 -- name: GetTaskByID :one
-SELECT id, title, description, reward_coins, reward_xp
+SELECT id, title, description, reward_coins, reward_xp, task_type
 FROM tasks
 WHERE id = $1::uuid;
 
@@ -10,6 +10,7 @@ SELECT
     t.description,
     t.reward_coins,
     t.reward_xp,
+    t.task_type,
     COALESCE(ut.status, 'active')::text AS status,
     ut.completed_at
 FROM tasks t
@@ -25,7 +26,7 @@ SELECT
 
 -- name: CreateUserTasksBatch :many
 WITH existing_tasks AS (
-    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, ut.status, ut.completed_at
+    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, t.task_type, ut.status, ut.completed_at
     FROM user_tasks ut
     JOIN tasks t ON t.id = ut.task_id 
     WHERE ut.user_id = sqlc.arg(user_id)::uuid
@@ -33,16 +34,16 @@ WITH existing_tasks AS (
       AND ut.updated_at < CURRENT_DATE + INTERVAL '1 day'
 ),
 random_tasks AS (
-    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, 'active'::text AS status, null::timestamptz as completed_at
+    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, t.task_type, 'active'::text AS status, null::timestamptz as completed_at
     FROM tasks t
     WHERE NOT EXISTS (SELECT 1 FROM existing_tasks)
     ORDER BY RANDOM()
     LIMIT sqlc.arg(random_limit)::int
 )
-SELECT id, title, description, reward_coins, reward_xp, status, completed_at, (NOT EXISTS (SELECT 1 FROM existing_tasks))::bool AS is_new
+SELECT id, title, description, reward_coins, reward_xp, task_type, status, completed_at, (NOT EXISTS (SELECT 1 FROM existing_tasks))::bool AS is_new
 FROM existing_tasks
 UNION ALL
-SELECT id, title, description, reward_coins, reward_xp, status, completed_at, true AS is_new
+SELECT id, title, description, reward_coins, reward_xp, task_type, status, completed_at, true AS is_new
 FROM random_tasks;
 
 -- name: GetUserTaskForUpdate :one
