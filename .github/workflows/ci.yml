@@ -9,6 +9,7 @@ on:
       - "backend/**"
       - "docker-compose.test.yml"
       - "Makefile"
+
   push:
     branches:
       - main
@@ -25,42 +26,8 @@ env:
   GO_VERSION: "1.26.2"
 
 jobs:
-  lint:
-    runs-on: self-hosted
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Run linter
-        run: make lint
-
-  unit-tests:
-    runs-on: self-hosted
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Generate mocks
-        run: make generate
-
-      - name: Run unit tests
-        run: make unit-tests
-
-  integration-tests:
+  ci:
+    name: Lint and tests
     runs-on: self-hosted
     timeout-minutes: 25
 
@@ -72,6 +39,16 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Run linter
+        run: make lint
+
+      - name: Generate mocks
+        run: make generate
+
+      - name: Run unit tests
+        run: make unit-tests
 
       - name: Run integration tests
         run: make test
