@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/adapter/httpclient"
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 )
 
 type client struct {
@@ -25,12 +25,6 @@ func NewPetClient(addr string, httpClient *http.Client) (*client, error) {
 	baseURL, err := url.Parse(addr)
 	if err != nil {
 		return nil, fmt.Errorf("parse pet service address: %w", err)
-	}
-
-	if httpClient == nil {
-		httpClient = &http.Client{
-			Timeout: 2 * time.Second,
-		}
 	}
 
 	return &client{
@@ -58,4 +52,8 @@ func (c *client) SendDailyBonus(ctx context.Context, userID string, streak int32
 	}
 
 	return nil
+}
+
+func (c *client) GetPetDailyStat(ctx context.Context, userID string) (*entity.PetStat, error) {
+	panic("implement me")
 }

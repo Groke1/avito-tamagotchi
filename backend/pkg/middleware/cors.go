@@ -4,8 +4,8 @@ import "net/http"
 
 func CorsHandler(next http.Handler) http.Handler {
 	allowedOrigins := map[string]bool{
-		"http://localhost:5173":  true,
-		"http://176.124.219.144": true,
+		"http://localhost:5173": true,
+		"http://avitotam.ru":    true,
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

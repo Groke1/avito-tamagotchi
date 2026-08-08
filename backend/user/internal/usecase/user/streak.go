@@ -14,11 +14,8 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 	if err != nil {
 		return fmt.Errorf("parse occurredAt: %w", err)
 	}
-	loc, err := time.LoadLocation("Europe/Moscow")
-	if err != nil {
-		return fmt.Errorf("time.LoadLocation: %w", err)
-	}
-	businessDate := dateOnly(eventTime, loc)
+
+	businessDate := dateOnly(eventTime)
 
 	var isStreakChanged bool
 	var streak *entity.Streak
@@ -52,19 +49,19 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 	}
 
 	if isStreakChanged {
-		if err = s.petService.SendDailyBonus(ctx, streak.UserID, streak.CurrentStreak); err != nil {
+		if err = s.petClient.SendDailyBonus(ctx, streak.UserID, streak.CurrentStreak); err != nil {
 			return fmt.Errorf("send daily bonus: %w", err)
 		}
 	}
 	return nil
 }
 
-func dateOnly(t time.Time, loc *time.Location) time.Time {
-	localTime := t.In(loc)
+func dateOnly(t time.Time) time.Time {
+	t = t.UTC()
 
 	return time.Date(
-		localTime.Year(), localTime.Month(), localTime.Day(),
-		0, 0, 0, 0, loc,
+		t.Year(), t.Month(), t.Day(),
+		0, 0, 0, 0, time.UTC,
 	)
 }
 

@@ -31,8 +31,13 @@ type (
 		WithTx(ctx context.Context, f func(ctx context.Context) error) error
 	}
 
-	petService interface {
+	petClient interface {
 		SendDailyBonus(ctx context.Context, userID string, streak int32) error
+		GetPetDailyStat(ctx context.Context, userID string) (*entity.PetStat, error)
+	}
+
+	tasksClient interface {
+		GetCompletedTasks(ctx context.Context, userID string) (*entity.TasksStat, error)
 	}
 )
 
@@ -41,7 +46,8 @@ type userService struct {
 	streakRepository streakRepository
 	rewardRepository rewardRepository
 	transactor       transactor
-	petService       petService
+	petClient        petClient
+	tasksClient      tasksClient
 }
 
 func NewUserService(
@@ -49,14 +55,16 @@ func NewUserService(
 	streakRepository streakRepository,
 	rewardRepository rewardRepository,
 	transactor transactor,
-	petService petService,
+	petClient petClient,
+	tasksClient tasksClient,
 ) *userService {
 	return &userService{
 		userRepository:   userRepository,
 		streakRepository: streakRepository,
 		rewardRepository: rewardRepository,
 		transactor:       transactor,
-		petService:       petService,
+		petClient:        petClient,
+		tasksClient:      tasksClient,
 	}
 }
 
@@ -88,18 +96,25 @@ func (s *userService) UpdateCoins(ctx context.Context, userID string, deltaCoins
 }
 
 func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.DailyStat, error) {
-	_, err := s.streakRepository.GetStreakByUserID(ctx, userID)
+	streak, err := s.streakRepository.GetStreakByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
-	loc, err := time.LoadLocation("Europe/Moscow")
+
+	from, to := dayBounds(time.Now())
+
+	rewards, err := s.rewardRepository.GetRewardsByUserIDAndPeriod(ctx, userID, from, to)
+
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
-	from, to := dayBounds(time.Now(), loc)
 
-	_, err = s.rewardRepository.GetRewardsByUserIDAndPeriod(ctx, userID, from, to)
+	tasks, err := s.tasksClient.GetCompletedTasks(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get daily stat: %w", err)
+	}
 
+	pet, err := s.petClient.GetPetDailyStat(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
@@ -108,10 +123,10 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 	panic("implement me")
 }
 
-func dayBounds(now time.Time, loc *time.Location) (time.Time, time.Time) {
-	localNow := now.In(loc)
+func dayBounds(t time.Time) (time.Time, time.Time) {
+	t = t.UTC()
 
-	from := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, loc)
+	from := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 
 	to := from.AddDate(0, 0, 1)
 
