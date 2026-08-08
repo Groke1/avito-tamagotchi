@@ -21,8 +21,8 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 	businessDate := dateOnly(eventTime, loc)
 
 	var isStreakChanged bool
+	var streak *entity.Streak
 	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
-		var streak *entity.Streak
 		streak, err = s.streakRepository.GetStreakByUserIDForUpdate(ctx, userID)
 
 		if err != nil {
@@ -52,7 +52,9 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 	}
 
 	if isStreakChanged {
-		// TODO: Send to pet
+		if err = s.petService.SendDailyBonus(ctx, streak.UserID, streak.CurrentStreak); err != nil {
+			return fmt.Errorf("send daily bonus: %w", err)
+		}
 	}
 	return nil
 }

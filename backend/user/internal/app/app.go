@@ -9,6 +9,7 @@ import (
 
 	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
+	httppets "github.com/cayman444/avito-gamification-hackathon.user/internal/adapter/pets/http"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/config"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller"
 	rewardrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/reward"
@@ -52,6 +53,15 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 
 	migrations.SetupPostgres(dbPool, logger)
 
+	httpClient := &http.Client{
+		Timeout: cfg.Settings.HTTPClientTimeout,
+	}
+
+	petClient, err := httppets.NewPetClient(cfg.Clients.PetsHTTPAddr, httpClient)
+	if err != nil {
+		logger.Error("can not create pet client", zap.Error(err))
+	}
+
 	userRepo := userrepo.NewUserRepository(dbPool)
 	tokenRepo := tokenrepo.NewTokenRepository(dbPool)
 	streakRepo := streakrepo.NewStreakRepository(dbPool)
@@ -64,7 +74,7 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 		RefreshTokenTTL:        cfg.Settings.RefreshTokenTTL,
 		RegistrationBonusCoins: cfg.Settings.RegistrationBonusCoins,
 	})
-	userService := userserv.NewUserService(userRepo, streakRepo, transactor)
+	userService := userserv.NewUserService(userRepo, streakRepo, rewardRepo, transactor, petClient)
 	rewardService := rewardserv.NewRewardService(rewardRepo)
 
 	router := mux.NewRouter()

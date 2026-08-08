@@ -15,6 +15,7 @@ type Querier interface {
 	GetActiveRewardsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetActiveRewardsByUserIDRow, error)
 	GetRewardByUserIDAndRewardID(ctx context.Context, arg GetRewardByUserIDAndRewardIDParams) (GetRewardByUserIDAndRewardIDRow, error)
 	GetRewardDefinitionByCode(ctx context.Context, code string) (UsersRewardDefinition, error)
+	GetRewardsByUserIDAndPeriod(ctx context.Context, arg GetRewardsByUserIDAndPeriodParams) ([]GetRewardsByUserIDAndPeriodRow, error)
 	GetUserRewardsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetUserRewardsByUserIDRow, error)
 	RedeemUserReward(ctx context.Context, arg RedeemUserRewardParams) (pgtype.UUID, error)
 }

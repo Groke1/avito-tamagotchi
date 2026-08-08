@@ -1,3 +1,8 @@
+-- name: GetStreakByUserID :one
+SELECT user_id, current_streak, last_active_date
+FROM users.user_streaks
+WHERE user_id = sqlc.arg(user_id);
+
 -- name: GetStreakByUserIDForUpdate :one
 SELECT user_id, current_streak, last_active_date
 FROM users.user_streaks
