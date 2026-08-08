@@ -87,9 +87,9 @@ func (cm *ClientManager) startUpdates(ctx context.Context, userID string, client
 				Happiness:   pet.Happiness,
 			}
 
-			event := map[string]any{
-				"event_type": "pet.updated",
-				"payload":    petResponse,
+			event := Event{
+				EventType: "pet.updated",
+				Payload:   petResponse,
 			}
 
 			if err := client.WriteJSON(event); err != nil {
@@ -142,8 +142,8 @@ func (cm *ClientManager) leaderboadDebounce() {
 		log.Println("[WS DEBOUNCER] Received signal from channel, waiting ticker")
 		<-ticker.C
 
-		event := map[string]any{
-			"event_type": "leaderboard.position_updated",
+		event := Event{
+			EventType: "leaderboard.position_updated",
 		}
 
 		cm.mu.RLock()
@@ -165,9 +165,9 @@ func (cm *ClientManager) leaderboadDebounce() {
 func (cm *ClientManager) SendToClient(userID string, eventType string, v any) {
 	log.Println("[WS CLIENT] sender started")
 
-	event := map[string]any{
-		"event_type": eventType,
-		"payload":    v,
+	event := Event{
+		EventType: eventType,
+		Payload:   v,
 	}
 
 	cm.mu.RLock()

@@ -32,15 +32,24 @@ const (
 	StrokeCooldown = 2 * time.Minute
 
 	FeedSatietyIncrease     = 5
-	StrokeHappinessIncrease = 5
+	StrokeHappinessIncrease = 3
 
-	FeedXPAmount   = 2
-	StrokeXPAmount = 3
+	FeedXPAmount   = 4
+	StrokeXPAmount = 10
 
 	FeedCost = 5
 
 	HungrySatietyThreshold  = 20
-	SadnessSatietyThreshold = 40
+	SadnessSatietyThreshold = 50
+
+	HappinessHighThreshold   = 60
+	HappinessMediumThreshold = 45
+	HappinessLowThreshold    = 20
+
+	XPHighMultiplier     = 1.0
+	XPMediumMultiplier   = 0.8
+	XPLowMultiplier      = 0.6
+	XPCriticalMultiplier = 0.5
 )
 
 func (p *Pet) Feed() (bool, int, error) {
@@ -80,7 +89,29 @@ func (p *Pet) Stroke() (bool, error) {
 	return levelUp, nil
 }
 
-func (p *Pet) AddXP(amount int) bool {
+func (p *Pet) xpMultiplier() float64 {
+	switch {
+	case p.Happiness >= HappinessHighThreshold:
+		return XPHighMultiplier
+
+	case p.Happiness >= HappinessMediumThreshold:
+		return XPMediumMultiplier
+
+	case p.Happiness >= HappinessLowThreshold:
+		return XPLowMultiplier
+
+	default:
+		return XPCriticalMultiplier
+	}
+}
+
+func (p *Pet) computeXP(amount int) int {
+	return int(float64(amount) * p.xpMultiplier())
+}
+
+func (p *Pet) AddXP(baseAmount int) bool {
+	amount := p.computeXP(baseAmount)
+
 	p.XP += amount
 	p.LastGainedXP = amount
 	if p.XP >= p.NextLevelXP {

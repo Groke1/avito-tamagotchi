@@ -28,8 +28,8 @@ func NewPetHandler(service *service.PetService) *PetHandler {
 func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -56,8 +56,8 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -93,8 +93,8 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -126,8 +126,8 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -159,8 +159,8 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}

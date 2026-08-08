@@ -3,56 +3,56 @@ package api
 import "net/http"
 
 // пока такое название, в будущем может поменяться
-type APIError struct {
+type HTTPError struct {
 	StatusCode int
 	Code       string
 	Message    string
 }
 
 var (
-	ErrUnauthorized = APIError{
+	ErrUnauthorized = HTTPError{
 		StatusCode: http.StatusUnauthorized,
 		Code:       "UNAUTHORIZED",
 		Message:    "Требуется повторная авторизация",
 	}
 
-	ErrPetNotFound = APIError{
+	ErrPetNotFound = HTTPError{
 		StatusCode: http.StatusConflict,
 		Code:       "PET_NOT_FOUND",
 		Message:    "Сначала создайте питомца",
 	}
 
-	ErrUnavailableAction = APIError{
+	ErrUnavailableAction = HTTPError{
 		StatusCode: http.StatusConflict,
 		Code:       "PET_ACTION_UNAVAILABLE",
 		Message:    "Это действие пока недоступно",
 	}
 
-	ErrPetAlreadyExists = APIError{
+	ErrPetAlreadyExists = HTTPError{
 		StatusCode: http.StatusNotFound,
 		Code:       "PET_ALREADY_EXISTS",
 		Message:    "У пользователя уже есть питомец",
 	}
 
-	ErrValidationError = APIError{
+	ErrValidationError = HTTPError{
 		StatusCode: http.StatusUnprocessableEntity,
 		Code:       "VALIDATION_ERROR",
 		Message:    "Проверьте переданные данные",
 	}
 
-	ErrUserNotFound = APIError{
+	ErrUserNotFound = HTTPError{
 		StatusCode: http.StatusNotFound,
 		Code:       "USER_NOT_FOUND",
 		Message:    "Пользователь не найден",
 	}
 
-	ErrNotEnoughCoins = APIError{
+	ErrNotEnoughCoins = HTTPError{
 		StatusCode: http.StatusConflict,
 		Code:       "INSUFFICIENT_COINS",
 		Message:    "Недостаточно монет",
 	}
 
-	ErrInternalError = APIError{
+	ErrInternalError = HTTPError{
 		StatusCode: http.StatusInternalServerError,
 		Code:       "INTERNAL_ERROR",
 		Message:    "Внутренняя ошибка сервер",

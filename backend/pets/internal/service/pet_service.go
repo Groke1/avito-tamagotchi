@@ -29,7 +29,7 @@ type PetService struct {
 func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier) *PetService {
 	return &PetService{
 		petRepository: petRepository,
-		client:        clients.NewUserClient(userServiceURL + "internal"),
+		client:        clients.NewUserClient(userServiceURL + "/internal"),
 		eventNotifier: eventNotifier,
 	}
 }

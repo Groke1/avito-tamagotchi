@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -56,4 +57,12 @@ func JwtMiddleware(secret string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func UserIDFromContext(ctx context.Context) (string, error) {
+	userID, ok := ctx.Value(userIDKey).(string)
+	if !ok {
+		return "", errors.New("bad context")
+	}
+	return userID, nil
 }

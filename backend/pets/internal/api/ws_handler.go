@@ -18,8 +18,8 @@ func NewWSHandler(client *websocket.ClientManager, ticketManager *websocket.Tick
 }
 
 func (wsh *WSHandler) CreateTicket(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(r.Context())
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
