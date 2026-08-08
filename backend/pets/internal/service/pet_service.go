@@ -170,7 +170,7 @@ func (ps *PetService) GetLeaderboard(ctx context.Context, limit int, userID stri
 	return records, &currentUserItem, nil
 }
 
-func (ps *PetService) grantXP(ctx context.Context, amount int, userID string) (*domain.Pet, error) {
+func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*domain.Pet, error) {
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %v", err)
@@ -206,7 +206,7 @@ func (ps *PetService) grantXP(ctx context.Context, amount int, userID string) (*
 
 func (ps *PetService) ClaimDailyBonus(ctx context.Context, streak int, userID string) error {
 	amount := 15 * streak
-	_, err := ps.grantXP(ctx, amount, userID)
+	_, err := ps.GrantXP(ctx, amount, userID)
 	if err != nil {
 		return err
 	}
