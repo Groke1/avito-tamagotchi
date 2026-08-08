@@ -5,6 +5,16 @@ import (
 	"net/http"
 )
 
+type PetResponse struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Level       int    `json:"level"`
+	XP          int    `json:"xp"`
+	NextLevelXP int    `json:"next_level_xp"`
+	Satiety     int    `json:"satiety"`
+	Happiness   int    `json:"happiness"`
+}
+
 type LeaderboardItemResponse struct {
 	Rank     int    `json:"rank"`
 	UserName string `json:"user_name"`
@@ -18,8 +28,9 @@ type LeaderboardResponse struct {
 }
 
 type ErrorResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code       string `json:"code"`
+	Message    string `json:"message"`
+	RetryAfter *int   `json:"retry_after,omitempty"`
 }
 
 func writeError(w http.ResponseWriter, err APIError) {
@@ -28,8 +39,18 @@ func writeError(w http.ResponseWriter, err APIError) {
 	json.NewEncoder(w).Encode(ErrorResponse{Code: err.Code, Message: err.Message})
 }
 
-func writeJsonResponse(w http.ResponseWriter, status_code int, resp interface{}) {
+func writeJsonResponse(w http.ResponseWriter, status_code int, resp any) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(status_code)
 	json.NewEncoder(w).Encode(resp)
+}
+
+func writeErrorWithRetryAfter(w http.ResponseWriter, err APIError, retryAfter int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(err.StatusCode)
+	json.NewEncoder(w).Encode(ErrorResponse{
+		Code:       err.Code,
+		Message:    err.Message,
+		RetryAfter: &retryAfter,
+	})
 }

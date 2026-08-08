@@ -9,6 +9,9 @@ export interface Pet {
 }
 
 export type PetResponse = Pet
+export interface PetTicketResponse {
+  ticket: string
+}
 
 export interface PetDto {
   name: string

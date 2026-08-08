@@ -3,28 +3,47 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/clients"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
-	repository "github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 )
+
+type EventNotifier interface {
+	SendToClient(string, string, any)
+	BroadcastLeaderboard()
+}
 
 type PetService struct {
 	petRepository *repository.PetRepository
 	client        *clients.UserClient
+	eventNotifier EventNotifier
 }
 
-func NewPetService(petRepository *repository.PetRepository, userServiceURL string) *PetService {
+func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier) *PetService {
 	return &PetService{
 		petRepository: petRepository,
 		client:        clients.NewUserClient(fmt.Sprintf("%s/internal", userServiceURL)),
+		eventNotifier: eventNotifier,
 	}
 }
 
 func (ps *PetService) GetPet(ctx context.Context, userID string) (*domain.Pet, error) {
 	pet, err := ps.petRepository.GetPet(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, domain.ErrPetNotFound
+	}
+
+	changed := pet.RecalculateState(time.Now())
+	if changed {
+		updatedPet, _, err := ps.RecalculateState(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+
+		return updatedPet, nil
 	}
 
 	return pet, nil
@@ -40,16 +59,10 @@ func (ps *PetService) CreatePet(ctx context.Context, petName string, userID stri
 }
 
 func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, error) {
-	err := ps.client.WithdrawCoins(ctx, userID, 5)
-	if err != nil {
-		return nil, fmt.Errorf("failed to withdraw coins: %v", err)
-	}
-
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %v", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-
 	defer tx.Rollback()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
@@ -57,45 +70,50 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 		return nil, domain.ErrPetNotFound
 	}
 
-	levelUp, err := pet.Feed()
+	pet.RecalculateState(time.Now())
+	levelUp, cost, err := pet.Feed()
 	if err != nil {
-		return nil, domain.ErrUnavailableAction
+		return nil, err
 	}
 
 	if err = ps.petRepository.UpdatePet(ctx, tx, pet); err != nil {
 		return nil, domain.ErrUnavailableAction
 	}
 
+	err = ps.client.WithdrawCoins(ctx, userID, cost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to withdraw coins: %w", err)
+	}
+
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	if levelUp {
 		// TODO сообщить о награде
 	}
 
+	ps.eventNotifier.BroadcastLeaderboard()
+
 	return pet, nil
 }
 
 func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet, error) {
-	err := ps.client.WithdrawCoins(ctx, userID, 7)
-	if err != nil {
-		return nil, fmt.Errorf("failed to withdraw coins: %v", err)
-	}
-
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %v", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
+	defer tx.Rollback()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
 		return nil, domain.ErrPetNotFound
 	}
 
+	pet.RecalculateState(time.Now())
 	levelUp, err := pet.Stroke()
 	if err != nil {
-		return nil, domain.ErrUnavailableAction
+		return nil, err
 	}
 
 	if err = ps.petRepository.UpdatePet(ctx, tx, pet); err != nil {
@@ -103,12 +121,19 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	err = ps.client.WithdrawCoins(ctx, userID, 7)
+	if err != nil {
+		return nil, fmt.Errorf("failed to withdraw coins: %w", err)
 	}
 
 	if levelUp {
 		// TODO сообщить о награде
 	}
+
+	ps.eventNotifier.BroadcastLeaderboard()
 
 	return pet, nil
 }
@@ -145,41 +170,72 @@ func (ps *PetService) GetLeaderboard(ctx context.Context, limit int, userID stri
 	return records, &currentUserItem, nil
 }
 
-func (ps *PetService) grantXP(ctx context.Context, amount int, userID string) error {
+func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*domain.Pet, error) {
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %v", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
-		return domain.ErrPetNotFound
+		return nil, domain.ErrPetNotFound
 	}
 
+	pet.RecalculateState(time.Now())
 	levelUp := pet.AddXP(amount)
 
 	if err = ps.petRepository.UpdatePet(ctx, tx, pet); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %v", err)
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
+
+	ps.eventNotifier.SendToClient(userID, "pet.updated", pet)
 
 	if levelUp {
 		// TODO сообщить о награде
 	}
 
-	return nil
+	ps.eventNotifier.BroadcastLeaderboard()
+
+	return pet, nil
 }
 
 func (ps *PetService) ClaimDailyBonus(ctx context.Context, streak int, userID string) error {
 	amount := 15 * streak
-	err := ps.grantXP(ctx, amount, userID)
+	_, err := ps.GrantXP(ctx, amount, userID)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (ps *PetService) RecalculateState(ctx context.Context, userID string) (*domain.Pet, bool, error) {
+	tx, err := ps.petRepository.BeginTx(ctx)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
+	if err != nil {
+		return nil, false, domain.ErrPetNotFound
+	}
+
+	changed := pet.RecalculateState(time.Now())
+	if changed {
+		ps.petRepository.UpdatePet(ctx, tx, pet)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, false, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	log.Printf("[PET SERVICE] Pet retrieved. Changed=%t for userID: '%s'", changed, userID)
+
+	return pet, changed, nil
 }

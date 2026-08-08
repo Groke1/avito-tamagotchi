@@ -3,11 +3,18 @@ package middleware
 import "net/http"
 
 func CorsHandler(next http.Handler) http.Handler {
+	allowedOrigins := map[string]bool{
+		"http://localhost:5173":  true,
+		"http://176.124.219.144": true,
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set(
-			"Access-Control-Allow-Origin",
-			"http://localhost:5173",
-		)
+		origin := r.Header.Get("Origin")
+
+		if allowedOrigins[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+
 		w.Header().Set(
 			"Access-Control-Allow-Methods",
 			"GET, POST, OPTIONS",

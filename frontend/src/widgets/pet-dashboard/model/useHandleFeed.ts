@@ -9,7 +9,6 @@ export const useHandleFeed = () => {
   const pet = useAppSelector((state) => state.pet.pet)
 
   const handleFeed = async () => {
-    // TODO: remove the processing logic once the backend fix is in place
     if (pet && pet.satiety >= 100) {
       toast.info('Питомец полностью сыт! (100/100)')
       return
@@ -21,11 +20,7 @@ export const useHandleFeed = () => {
       toast.success('Вы покормили питомца! 🍎 (+5 сытости, +2 XP)')
     } catch (error: unknown) {
       if (isFetchBaseQueryError(error) && isApiError(error.data)) {
-        if (error.data.code === 'PET_ACTION_UNAVAILABLE') {
-          toast.info('Питомец полностью сыт!')
-        } else {
-          toast.error(error.data.message || 'Это действие пока недоступно')
-        }
+        toast.error(error.data.message)
       } else {
         toast.error('Это действие пока недоступно')
       }

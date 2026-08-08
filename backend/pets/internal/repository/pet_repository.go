@@ -12,15 +12,18 @@ import (
 )
 
 type Pet struct {
-	ID          int64     `db:"id"`
-	UserID      string    `db:"user_id"`
-	Name        string    `db:"name"`
-	Level       int       `db:"level"`
-	XP          int       `db:"xp"`
-	NextLevelXP int       `db:"next_level_xp"`
-	Satiety     int       `db:"satiety"`
-	Happiness   int       `db:"happiness"`
-	CreatedAt   time.Time `db:"created_at"`
+	ID               int64     `db:"id"`
+	UserID           string    `db:"user_id"`
+	Name             string    `db:"name"`
+	Level            int       `db:"level"`
+	XP               int       `db:"xp"`
+	NextLevelXP      int       `db:"next_level_xp"`
+	Satiety          int       `db:"satiety"`
+	Happiness        int       `db:"happiness"`
+	CreatedAt        time.Time `db:"created_at"`
+	LastCalculatedAt time.Time `db:"last_calculated_at"`
+	LastFeedAt       time.Time `db:"last_feed_at"`
+	LastStrokeAt     time.Time `db:"last_stroke_at"`
 }
 
 type PetForLeaderboard struct {
@@ -56,15 +59,18 @@ func (pr *PetRepository) GetPet(ctx context.Context, userID string) (*domain.Pet
 	}
 
 	pet := domain.Pet{
-		ID:          dbPet.ID,
-		UserID:      dbPet.UserID,
-		Name:        dbPet.Name,
-		Level:       dbPet.Level,
-		XP:          dbPet.XP,
-		NextLevelXP: dbPet.NextLevelXP,
-		Satiety:     dbPet.Satiety,
-		Happiness:   dbPet.Happiness,
-		CreatedAt:   dbPet.CreatedAt,
+		ID:               dbPet.ID,
+		UserID:           dbPet.UserID,
+		Name:             dbPet.Name,
+		Level:            dbPet.Level,
+		XP:               dbPet.XP,
+		NextLevelXP:      dbPet.NextLevelXP,
+		Satiety:          dbPet.Satiety,
+		Happiness:        dbPet.Happiness,
+		CreatedAt:        dbPet.CreatedAt,
+		LastCalculatedAt: dbPet.LastCalculatedAt,
+		LastFeedAt:       dbPet.LastFeedAt,
+		LastStrokeAt:     dbPet.LastStrokeAt,
 	}
 
 	return &pet, nil
@@ -84,15 +90,18 @@ func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID s
 	}
 
 	pet := domain.Pet{
-		ID:          dbPet.ID,
-		UserID:      dbPet.UserID,
-		Name:        dbPet.Name,
-		Level:       dbPet.Level,
-		XP:          dbPet.XP,
-		NextLevelXP: dbPet.NextLevelXP,
-		Satiety:     dbPet.Satiety,
-		Happiness:   dbPet.Happiness,
-		CreatedAt:   dbPet.CreatedAt,
+		ID:               dbPet.ID,
+		UserID:           dbPet.UserID,
+		Name:             dbPet.Name,
+		Level:            dbPet.Level,
+		XP:               dbPet.XP,
+		NextLevelXP:      dbPet.NextLevelXP,
+		Satiety:          dbPet.Satiety,
+		Happiness:        dbPet.Happiness,
+		CreatedAt:        dbPet.CreatedAt,
+		LastCalculatedAt: dbPet.LastCalculatedAt,
+		LastFeedAt:       dbPet.LastFeedAt,
+		LastStrokeAt:     dbPet.LastStrokeAt,
 	}
 
 	return &pet, nil
@@ -113,15 +122,18 @@ func (pr *PetRepository) GetPetForUpdate(ctx context.Context, tx *sqlx.Tx, userI
 	}
 
 	pet := domain.Pet{
-		ID:          dbPet.ID,
-		UserID:      dbPet.UserID,
-		Name:        dbPet.Name,
-		Level:       dbPet.Level,
-		XP:          dbPet.XP,
-		NextLevelXP: dbPet.NextLevelXP,
-		Satiety:     dbPet.Satiety,
-		Happiness:   dbPet.Happiness,
-		CreatedAt:   dbPet.CreatedAt,
+		ID:               dbPet.ID,
+		UserID:           dbPet.UserID,
+		Name:             dbPet.Name,
+		Level:            dbPet.Level,
+		XP:               dbPet.XP,
+		NextLevelXP:      dbPet.NextLevelXP,
+		Satiety:          dbPet.Satiety,
+		Happiness:        dbPet.Happiness,
+		CreatedAt:        dbPet.CreatedAt,
+		LastCalculatedAt: dbPet.LastCalculatedAt,
+		LastFeedAt:       dbPet.LastFeedAt,
+		LastStrokeAt:     dbPet.LastStrokeAt,
 	}
 
 	return &pet, nil
@@ -130,13 +142,32 @@ func (pr *PetRepository) GetPetForUpdate(ctx context.Context, tx *sqlx.Tx, userI
 func (pr *PetRepository) UpdatePet(ctx context.Context, tx *sqlx.Tx, pet *domain.Pet) error {
 	query := `
 				UPDATE pets
-				SET satiety = $1, happiness = $2, xp = $3, next_level_xp = $4, level = $5
-				WHERE id = $6
+				SET satiety = $1, 
+					happiness = $2, 
+					xp = $3, 
+					next_level_xp = $4, 
+					level = $5,
+					last_calculated_at = $6,
+					last_feed_at = $7,
+					last_stroke_at = $8
+				WHERE id = $9
 	`
 
-	_, err := tx.ExecContext(ctx, query, pet.Satiety, pet.Happiness, pet.XP, pet.NextLevelXP, pet.Level, pet.ID)
+	_, err := tx.ExecContext(
+		ctx,
+		query,
+		pet.Satiety,
+		pet.Happiness,
+		pet.XP,
+		pet.NextLevelXP,
+		pet.Level,
+		pet.LastCalculatedAt,
+		pet.LastFeedAt,
+		pet.LastStrokeAt,
+		pet.ID,
+	)
 	if err != nil {
-		return fmt.Errorf("failed to update pet: %v", err)
+		return fmt.Errorf("failed to update pet: %w", err)
 	}
 
 	return nil

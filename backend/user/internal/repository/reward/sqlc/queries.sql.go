@@ -176,6 +176,67 @@ func (q *Queries) GetRewardDefinitionByCode(ctx context.Context, code string) (U
 	return i, err
 }
 
+const getRewardsByUserIDAndPeriod = `-- name: GetRewardsByUserIDAndPeriod :many
+SELECT
+    ur.id, ur.user_id,
+    ur.promo_code, rd.name,
+    rd.description, ur.status,
+    ur.redeemed_at, ur.expires_at
+FROM users.user_rewards AS ur
+    JOIN users.reward_definitions AS rd
+    ON rd.id = ur.reward_id
+WHERE ur.user_id = $1
+  AND ur.created_at >= $2
+  AND ur.created_at < $3
+ORDER BY ur.created_at DESC
+`
+
+type GetRewardsByUserIDAndPeriodParams struct {
+	UserID   pgtype.UUID        `json:"user_id"`
+	FromTime pgtype.Timestamptz `json:"from_time"`
+	ToTime   pgtype.Timestamptz `json:"to_time"`
+}
+
+type GetRewardsByUserIDAndPeriodRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	PromoCode   string             `json:"promo_code"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Status      UsersRewardStatus  `json:"status"`
+	RedeemedAt  pgtype.Timestamptz `json:"redeemed_at"`
+	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+}
+
+func (q *Queries) GetRewardsByUserIDAndPeriod(ctx context.Context, arg GetRewardsByUserIDAndPeriodParams) ([]GetRewardsByUserIDAndPeriodRow, error) {
+	rows, err := q.db.Query(ctx, getRewardsByUserIDAndPeriod, arg.UserID, arg.FromTime, arg.ToTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRewardsByUserIDAndPeriodRow
+	for rows.Next() {
+		var i GetRewardsByUserIDAndPeriodRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.PromoCode,
+			&i.Name,
+			&i.Description,
+			&i.Status,
+			&i.RedeemedAt,
+			&i.ExpiresAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserRewardsByUserID = `-- name: GetUserRewardsByUserID :many
 SELECT
     ur.id, ur.user_id, ur.promo_code,

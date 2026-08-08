@@ -8,3 +8,8 @@ type BonusXpRequest struct {
 	UserID string `json:"user_id"`
 	Streak int    `json:"streak"`
 }
+
+type UpdateXPRequest struct {
+	UserID string `json:"user_id"`
+	XP     int    `json:"xp"`
+}

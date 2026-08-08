@@ -39,6 +39,7 @@ type (
 			PGMaxConnLifetime       time.Duration `env:"POSTGRES_MAX_CONN_LIFETIME" envDefault:"1h"`
 			PGMaxConnIdleTime       time.Duration `env:"POSTGRES_MAX_CONN_IDLE_TIME" envDefault:"5m"`
 			ServerReadHeaderTimeout time.Duration `env:"SERVER_READ_HEADER_TIMEOUT" envDefault:"5s"`
+			HTTPClientTimeout       time.Duration `env:"HTTP_CLIENT_TIMEOUT" envDefault:"5s"`
 		}
 	}
 )

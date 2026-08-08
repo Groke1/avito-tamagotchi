@@ -14,7 +14,8 @@ import {
   fetchBaseQuery,
 } from '@reduxjs/toolkit/query/react'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'
+export const SOCKET_URL = import.meta.env.VITE_API_SOCKET_URL || 'ws://localhost:8082/api/v1/ws'
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: BASE_URL,
@@ -72,6 +73,6 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Pet'],
+  tagTypes: ['User', 'Pet', 'Tasks', 'Rewards'],
   endpoints: () => ({}),
 })

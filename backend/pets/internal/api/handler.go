@@ -12,16 +12,6 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type PetResponse struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Level       int    `json:"level"`
-	XP          int    `json:"xp"`
-	NextLevelXP int    `json:"next_level_xp"`
-	Satiety     int    `json:"satiety"`
-	Happiness   int    `json:"happiness"`
-}
-
 type PetHandler struct {
 	service   *service.PetService
 	validator *validator.Validate
@@ -108,12 +98,14 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var actionUnavailableError *domain.ActionUnavailableError
+
 	pet, err := ph.service.FeedPet(ctx, userID)
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
-	} else if err != nil {
-		writeError(w, ErrUnavailableAction)
+	} else if errors.As(err, &actionUnavailableError) {
+		writeErrorWithRetryAfter(w, ErrUnavailableAction, int(actionUnavailableError.RetryAfter.Seconds()))
 		return
 	}
 
@@ -139,12 +131,14 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var actionUnavailableError *domain.ActionUnavailableError
+
 	pet, err := ph.service.StrokePet(ctx, userID)
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
-	} else if errors.Is(err, domain.ErrUnavailableAction) {
-		writeError(w, ErrUnavailableAction)
+	} else if errors.As(err, &actionUnavailableError) {
+		writeErrorWithRetryAfter(w, ErrUnavailableAction, int(actionUnavailableError.RetryAfter.Seconds()))
 		return
 	}
 
@@ -218,6 +212,24 @@ func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := ph.service.ClaimDailyBonus(ctx, req.Streak, req.UserID)
+	if err != nil {
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (ph *PetHandler) UpdateXP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req UpdateXPRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, ErrValidationError)
+		return
+	}
+
+	_, err := ph.service.GrantXP(ctx, req.XP, req.UserID)
 	if err != nil {
 		writeError(w, ErrInternalError)
 		return

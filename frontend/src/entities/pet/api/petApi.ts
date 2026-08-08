@@ -1,5 +1,5 @@
 import { baseApi } from '@/shared/api/baseApi'
-import type { PetDto, PetResponse } from '../model/types'
+import type { PetDto, PetResponse, PetTicketResponse } from '../model/types'
 
 const PET_URL = import.meta.env.VITE_API_PET_URL || 'http://localhost:8082/api/v1/pet'
 
@@ -21,6 +21,9 @@ export const petApi = baseApi.injectEndpoints({
       query: () => ({ url: `${PET_URL}/stroke`, method: 'POST' }),
       invalidatesTags: ['Pet', 'User'],
     }),
+    getWsTicket: builder.mutation<PetTicketResponse, void>({
+      query: () => ({ url: `${PET_URL}/ws-ticket`, method: 'POST' }),
+    }),
   }),
 })
 
@@ -29,4 +32,5 @@ export const {
   useCreatePetMutation,
   useFeedPetMutation,
   useStrokePetMutation,
+  useGetWsTicketMutation,
 } = petApi
