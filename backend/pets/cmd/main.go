@@ -67,6 +67,7 @@ func main() {
 
 	r.Route("/internal", func(r chi.Router) {
 		r.Post("/daily-bonus", petHandler.DailyBonus)
+		r.Put("/update-xp", petHandler.UpdateXP)
 	})
 
 	log.Printf("[MAIN] Service starting on port %s", ":"+cfg.HttpPort)

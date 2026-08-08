@@ -215,3 +215,21 @@ func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (ph *PetHandler) UpdateXP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req UpdateXPRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, ErrValidationError)
+		return
+	}
+
+	_, err := ph.service.GrantXP(ctx, req.XP, req.UserID)
+	if err != nil {
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
