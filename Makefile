@@ -79,7 +79,7 @@ lint-install: $(GOLANGCI_LINT_BIN)
 lint-clean:
 	@rm -f "$(GOLANGCI_LINT_BIN)"
 
-.PHONY: integration-test
+.PHONY: test
 
 test:
 	@set -eu; \
@@ -101,3 +101,10 @@ test:
 		down -v --remove-orphans; \
 	\
 	exit $$status
+
+.PHONY: unit-tests
+
+unit-tests:
+	cd "$(SERVICES_DIR)/user" && go test -v -count=1 ./...
+	cd "$(SERVICES_DIR)/pets" && go test -v -count=1 ./...
+	cd "$(SERVICES_DIR)/tasks" && go test -v -count=1 ./...
