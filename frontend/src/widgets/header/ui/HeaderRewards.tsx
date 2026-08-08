@@ -1,15 +1,8 @@
-import { useGetRewardsQuery } from '@/entities/reward'
-import { useGetProfileQuery } from '@/entities/user'
-import { useAppSelector } from '@/shared/model'
 import { Coins, Gift } from 'lucide-react'
+import { useHeaderRewards } from '../model/useHeaderRewards'
 
 export const HeaderRewards = () => {
-  useGetProfileQuery()
-  const user = useAppSelector((state) => state.user.user)
-  const { data: rewardsData } = useGetRewardsQuery()
-
-  const totalCount = rewardsData?.items.length ?? 0
-  const activeCount = rewardsData?.items.filter((r) => r.status === 'active').length ?? 0
+  const { coins, activeCount, totalCount } = useHeaderRewards()
 
   return (
     <header className="flex items-center justify-between pb-6 border-b border-surface-high flex-wrap gap-4">
@@ -18,7 +11,7 @@ export const HeaderRewards = () => {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-on-surface font-bold text-sm">
             <Coins className="size-5 text-avito-yellow shrink-0" />
-            <span>{user?.coins ?? 0} монет</span>
+            <span>{coins} монет</span>
           </div>
           <span className="w-px bg-outline-variant h-4" />
           <div className="flex items-center gap-2 text-on-surface-variant font-semibold text-sm">

@@ -1,15 +1,8 @@
-import { useGetTasksQuery } from '@/entities/task/api/taskApi'
-import { useGetProfileQuery } from '@/entities/user'
-import { useAppSelector } from '@/shared/model'
 import { CheckCircle2, Coins } from 'lucide-react'
+import { useHeaderTasks } from '../model/useHeaderTasks'
 
 export const HeaderTasks = () => {
-  useGetProfileQuery()
-  const user = useAppSelector((state) => state.user.user)
-  const { data: tasksData } = useGetTasksQuery()
-
-  const totalCount = tasksData?.items.length ?? 0
-  const completedCount = tasksData?.items.filter((t) => t.status === 'completed').length ?? 0
+  const { coins, completedCount, totalCount } = useHeaderTasks()
 
   return (
     <header className="flex items-center justify-between pb-6 border-b border-surface-high flex-wrap gap-4">
@@ -18,7 +11,7 @@ export const HeaderTasks = () => {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-on-surface font-bold text-sm">
             <Coins className="size-5 text-avito-yellow shrink-0" />
-            <span>{user?.coins ?? 0} монет</span>
+            <span>{coins} монет</span>
           </div>
           <span className="w-px bg-outline-variant h-4" />
           <div className="flex items-center gap-2 text-on-surface-variant font-semibold text-sm">
