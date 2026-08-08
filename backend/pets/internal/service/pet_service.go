@@ -31,7 +31,7 @@ func NewPetService(petRepository *repository.PetRepository, userServiceURL strin
 }
 
 func (ps *PetService) GetPet(ctx context.Context, userID string) (*domain.Pet, error) {
-	pet, err := ps.GetPet(ctx, userID)
+	pet, err := ps.petRepository.GetPet(ctx, userID)
 	if err != nil {
 		return nil, domain.ErrPetNotFound
 	}
