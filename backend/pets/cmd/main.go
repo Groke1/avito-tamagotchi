@@ -11,7 +11,6 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/websocket"
 
-	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/websocket"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
