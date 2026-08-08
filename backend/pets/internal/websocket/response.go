@@ -9,3 +9,8 @@ type PetResponse struct {
 	Satiety     int    `json:"satiety"`
 	Happiness   int    `json:"happiness"`
 }
+
+type Event struct {
+	EventType string `json:"event_type"`
+	Payload   any    `json:"payload"`
+}

@@ -33,16 +33,26 @@ type ErrorResponse struct {
 	RetryAfter *int   `json:"retry_after,omitempty"`
 }
 
-func writeError(w http.ResponseWriter, err APIError) {
+func writeError(w http.ResponseWriter, err HTTPError) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(err.StatusCode)
-	json.NewEncoder(w).Encode(ErrorResponse{Code: err.Code, Message: err.Message})
+	_ = json.NewEncoder(w).Encode(ErrorResponse{Code: err.Code, Message: err.Message})
 }
 
-func writeJsonResponse(w http.ResponseWriter, status_code int, resp any) {
+func writeJSONResponse(w http.ResponseWriter, statusCode int, resp any) {
 	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(status_code)
-	json.NewEncoder(w).Encode(resp)
+	w.WriteHeader(statusCode)
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+func writeErrorWithRetryAfter(w http.ResponseWriter, err HTTPError, retryAfter int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(err.StatusCode)
+	_ = json.NewEncoder(w).Encode(ErrorResponse{
+		Code:       err.Code,
+		Message:    err.Message,
+		RetryAfter: &retryAfter,
+	})
 }
 
 func writeErrorWithRetryAfter(w http.ResponseWriter, err APIError, retryAfter int) {

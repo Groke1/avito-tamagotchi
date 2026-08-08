@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -27,8 +28,8 @@ func NewPetHandler(service *service.PetService) *PetHandler {
 func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -49,14 +50,14 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	writeJsonResponse(w, http.StatusOK, petResponse)
+	writeJSONResponse(w, http.StatusOK, petResponse)
 }
 
 func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -86,14 +87,14 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	writeJsonResponse(w, http.StatusCreated, petResponse)
+	writeJSONResponse(w, http.StatusCreated, petResponse)
 }
 
 func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -119,14 +120,14 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	writeJsonResponse(w, http.StatusOK, petResponse)
+	writeJSONResponse(w, http.StatusOK, petResponse)
 }
 
 func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -152,14 +153,14 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	writeJsonResponse(w, http.StatusOK, petResponse)
+	writeJSONResponse(w, http.StatusOK, petResponse)
 }
 
 func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -175,6 +176,7 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 	leaderboardItems, currentUser, err := ph.service.GetLeaderboard(ctx, limit, userID)
 	if err != nil {
+		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
@@ -199,7 +201,7 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	writeJsonResponse(w, http.StatusOK, leaderboardResponse)
+	writeJSONResponse(w, http.StatusOK, leaderboardResponse)
 }
 
 func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
@@ -213,6 +215,7 @@ func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
 
 	err := ph.service.ClaimDailyBonus(ctx, req.Streak, req.UserID)
 	if err != nil {
+		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
@@ -225,15 +228,44 @@ func (ph *PetHandler) UpdateXP(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateXPRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrValidationError)
 		return
 	}
 
 	_, err := ph.service.GrantXP(ctx, req.XP, req.UserID)
 	if err != nil {
+		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (ph *PetHandler) DailyGainedXP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req struct {
+		UserID string `json:"user_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, ErrValidationError)
+		return
+	}
+
+	gainedXP, err := ph.service.ClaimDailyGainedXP(ctx, req.UserID)
+	if err != nil {
+		log.Printf("[UPDATED XP] %v", err)
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	resp := struct {
+		DailyGainedXP int `json:"daily_gained_xp"`
+	}{
+		DailyGainedXP: gainedXP,
+	}
+	writeJSONResponse(w, http.StatusOK, resp)
 }
