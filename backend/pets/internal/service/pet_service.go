@@ -11,6 +11,10 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 )
 
+var (
+	XPperStreak = 7
+)
+
 type EventNotifier interface {
 	SendToClient(string, string, any)
 	BroadcastLeaderboard()
@@ -124,11 +128,6 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	err = ps.client.WithdrawCoins(ctx, userID, 7)
-	if err != nil {
-		return nil, fmt.Errorf("failed to withdraw coins: %w", err)
-	}
-
 	if levelUp {
 		// TODO сообщить о награде
 	}
@@ -205,7 +204,7 @@ func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*
 }
 
 func (ps *PetService) ClaimDailyBonus(ctx context.Context, streak int, userID string) error {
-	amount := 15 * streak
+	amount := XPperStreak * streak
 	_, err := ps.GrantXP(ctx, amount, userID)
 	if err != nil {
 		return err
@@ -238,4 +237,13 @@ func (ps *PetService) RecalculateState(ctx context.Context, userID string) (*dom
 	log.Printf("[PET SERVICE] Pet retrieved. Changed=%t for userID: '%s'", changed, userID)
 
 	return pet, changed, nil
+}
+
+func (ps *PetService) ClaimDailyGainedXP(ctx context.Context, userID string) (int, error) {
+	gainedXP, err := ps.petRepository.GetDailyGainedXPByUserID(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return gainedXP, nil
 }

@@ -66,6 +66,7 @@ func main() {
 
 	r.Route("/internal", func(r chi.Router) {
 		r.Post("/daily-bonus", petHandler.DailyBonus)
+		r.Get("/daily-gained-xp", petHandler.DailyGainedXP)
 		r.Put("/update-xp", petHandler.UpdateXP)
 	})
 

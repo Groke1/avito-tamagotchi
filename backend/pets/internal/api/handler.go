@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -175,6 +176,7 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 	leaderboardItems, currentUser, err := ph.service.GetLeaderboard(ctx, limit, userID)
 	if err != nil {
+		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
@@ -213,6 +215,7 @@ func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
 
 	err := ph.service.ClaimDailyBonus(ctx, req.Streak, req.UserID)
 	if err != nil {
+		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
@@ -225,15 +228,44 @@ func (ph *PetHandler) UpdateXP(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateXPRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrValidationError)
 		return
 	}
 
 	_, err := ph.service.GrantXP(ctx, req.XP, req.UserID)
 	if err != nil {
+		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (ph *PetHandler) DailyGainedXP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req struct {
+		UserID string `json:"user_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, ErrValidationError)
+		return
+	}
+
+	gainedXP, err := ph.service.ClaimDailyGainedXP(ctx, req.UserID)
+	if err != nil {
+		log.Printf("[UPDATED XP] %v", err)
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	resp := struct {
+		DailyGainedXP int `json:"daily_gained_xp"`
+	}{
+		DailyGainedXP: gainedXP,
+	}
+	writeJsonResponse(w, http.StatusOK, resp)
 }

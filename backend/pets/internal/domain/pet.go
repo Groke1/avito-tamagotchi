@@ -18,6 +18,7 @@ type Pet struct {
 	LastCalculatedAt time.Time
 	LastFeedAt       time.Time
 	LastStrokeAt     time.Time
+	LastGainedXP     int
 }
 
 const (
@@ -78,6 +79,7 @@ func (p *Pet) Stroke() (bool, error) {
 
 func (p *Pet) AddXP(amount int) bool {
 	p.XP += amount
+	p.LastGainedXP = amount
 	if p.XP >= p.NextLevelXP {
 		p.Level += 1
 		p.NextLevelXP *= p.Level * p.Level
