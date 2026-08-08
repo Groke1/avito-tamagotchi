@@ -7,4 +7,5 @@ export const ROUTES_PATHS = {
   SHOP: '/shop',
   LEADERBOARD: '/leaderboard',
   DAILY_REPORT: '/daily-report',
+  REWARDS: '/rewards',
 } as const

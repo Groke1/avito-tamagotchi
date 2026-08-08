@@ -54,3 +54,13 @@ func writeErrorWithRetryAfter(w http.ResponseWriter, err HTTPError, retryAfter i
 		RetryAfter: &retryAfter,
 	})
 }
+
+func writeErrorWithRetryAfter(w http.ResponseWriter, err APIError, retryAfter int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(err.StatusCode)
+	json.NewEncoder(w).Encode(ErrorResponse{
+		Code:       err.Code,
+		Message:    err.Message,
+		RetryAfter: &retryAfter,
+	})
+}

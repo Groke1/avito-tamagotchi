@@ -1,2 +1,3 @@
-export { Header } from './ui/Header'
+export { HeaderDashboard } from './ui/HeaderDashboard'
 export { HeaderTasks } from './ui/HeaderTasks'
+export { HeaderRewards } from './ui/HeaderRewards'
