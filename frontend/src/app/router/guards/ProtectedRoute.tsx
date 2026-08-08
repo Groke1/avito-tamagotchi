@@ -6,7 +6,8 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 export const ProtectedRoute: FC = () => {
   const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated)
-  const { pet, isInitialized } = useAppSelector((state) => state.pet)
+  // const { pet, isInitialized } = useAppSelector((state) => state.pet)
+  const { isInitialized } = useAppSelector((state) => state.pet)
   const location = useLocation()
 
   if (!isAuthenticated) {
@@ -17,15 +18,17 @@ export const ProtectedRoute: FC = () => {
     return <PageLoader />
   }
 
-  const hasPet = Boolean(pet)
+  // TODO: remove the comment once /pet GET is working again.
 
-  if (location.pathname === ROUTES_PATHS.CREATE_PET && hasPet) {
-    return <Navigate to={ROUTES_PATHS.DASHBOARD} replace />
-  }
+  // const hasPet = Boolean(pet)
 
-  if (location.pathname !== ROUTES_PATHS.CREATE_PET && !hasPet) {
-    return <Navigate to={ROUTES_PATHS.CREATE_PET} replace />
-  }
+  // if (location.pathname === ROUTES_PATHS.CREATE_PET && hasPet) {
+  //   return <Navigate to={ROUTES_PATHS.DASHBOARD} replace />
+  // }
+
+  // if (location.pathname !== ROUTES_PATHS.CREATE_PET && !hasPet) {
+  //   return <Navigate to={ROUTES_PATHS.CREATE_PET} replace />
+  // }
 
   return <Outlet />
 }
