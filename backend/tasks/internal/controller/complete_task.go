@@ -13,6 +13,9 @@ type (
 	coinsClient interface {
 		UpdateCoins(ctx context.Context, req entity.UpdateCoinsRequest) (*entity.UpdateCoinsResponse, error)
 	}
+	xpClient interface {
+		UpdateXP(ctx context.Context, req entity.UpdateXPRequest) error
+	}
 	transactor interface {
 		WithTx(ctx context.Context, f func(ctx context.Context) error) error
 	}
@@ -42,13 +45,15 @@ type CompleteTaskResponse struct {
 type CompleteTaskHandler struct {
 	taskRepo    *postgres.TaskRepository
 	coinsClient coinsClient
+	xpClient    xpClient
 	transactor  transactor
 }
 
-func NewCompleteTaskHandler(repo *postgres.TaskRepository, coinsClient coinsClient, transactor transactor) *CompleteTaskHandler {
+func NewCompleteTaskHandler(repo *postgres.TaskRepository, coinsClient coinsClient, xpClient xpClient, transactor transactor) *CompleteTaskHandler {
 	return &CompleteTaskHandler{
 		taskRepo:    repo,
 		coinsClient: coinsClient,
+		xpClient:    xpClient,
 		transactor:  transactor,
 	}
 }
@@ -69,6 +74,14 @@ func (h *CompleteTaskHandler) Handle(ctx context.Context, query CompleteTaskQuer
 		if err != nil {
 			fmt.Println(err.Error())
 			return fmt.Errorf("update coins: %w", err)
+		}
+		err = h.xpClient.UpdateXP(ctx, entity.UpdateXPRequest{
+			UserID: query.UserID,
+			XP:     int(completedTask.Task.RewardXP),
+		})
+		if err != nil {
+			fmt.Println(err.Error())
+			return fmt.Errorf("update xp: %w", err)
 		}
 
 		completedAt := completedTask.CompletedAt

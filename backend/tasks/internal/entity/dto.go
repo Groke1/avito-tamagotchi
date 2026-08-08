@@ -9,4 +9,9 @@ type (
 		UserID string `json:"user_id"`
 		Coins  int64  `json:"coins"`
 	}
+
+	UpdateXPRequest struct {
+		UserID string `json:"user_id"`
+		XP     int    `json:"xp"`
+	}
 )

@@ -27,6 +27,9 @@ type (
 		Client struct {
 			CoinsServiceURL string `env:"USER_SERVICE_URL_T" envDefault:"http://users:8080"`
 		}
+		Pet struct {
+			PetServiceURL string `env:"PET_SERVICE_URL_T" envDefault:"http://pets:8080"`
+		}
 	}
 )
 

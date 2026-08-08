@@ -50,11 +50,12 @@ func main() {
 
 	repo := postgres.NewTaskRepository(pool)
 	transactor := db.NewTransactor(pool)
-	coinsClient := client.NewUserServiceClient(cfg.Client.CoinsServiceURL)
+	userClient := client.NewUserServiceClient(cfg.Client.CoinsServiceURL)
+	petClient := client.NewPetServiceClient(cfg.Pet.PetServiceURL)
 	handlers := taskhttp.NewHandlers(
 		controller.NewGetTaskHandler(repo),
 		controller.NewGetTodayTasksHandler(repo),
-		controller.NewCompleteTaskHandler(repo, coinsClient, transactor),
+		controller.NewCompleteTaskHandler(repo, userClient, petClient, transactor),
 	)
 	router := taskhttp.NewRouter(handlers, []byte(jwtSecret))
 	handler := middleware.CorsHandler(router)
