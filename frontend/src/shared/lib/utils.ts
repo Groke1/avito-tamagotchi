@@ -19,3 +19,18 @@ export const formatExpirationDate = (dateStr: string | null) => {
     return dateStr
   }
 }
+
+export const formatTaskDate = (dateStr?: string | null) => {
+  if (!dateStr) return ''
+
+  try {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  } catch {
+    return dateStr
+  }
+}

@@ -1,5 +1,6 @@
 import { useGetTasksQuery } from '@/entities/task/api/taskApi'
 import { useGetProfileQuery } from '@/entities/user'
+import { formatTaskDate } from '@/shared/lib/utils'
 import { useAppSelector } from '@/shared/model'
 
 export const useHeaderTasks = () => {
@@ -9,10 +10,12 @@ export const useHeaderTasks = () => {
 
   const totalCount = tasksData?.items.length ?? 0
   const completedCount = tasksData?.items.filter((t) => t.status === 'completed').length ?? 0
+  const formattedDate = formatTaskDate(tasksData?.date)
 
   return {
     coins: user?.coins ?? 0,
     totalCount,
     completedCount,
+    formattedDate,
   }
 }
