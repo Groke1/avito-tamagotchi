@@ -61,9 +61,8 @@ func (ps *PetService) CreatePet(ctx context.Context, petName string, userID stri
 func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, error) {
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %v", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-
 	defer tx.Rollback()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
@@ -72,22 +71,22 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 	}
 
 	pet.RecalculateState(time.Now())
-	levelUp, err := pet.Feed()
+	levelUp, cost, err := pet.Feed()
 	if err != nil {
-		return nil, domain.ErrUnavailableAction
+		return nil, err
 	}
 
 	if err = ps.petRepository.UpdatePet(ctx, tx, pet); err != nil {
 		return nil, domain.ErrUnavailableAction
 	}
 
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
+	err = ps.client.WithdrawCoins(ctx, userID, cost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to withdraw coins: %w", err)
 	}
 
-	err = ps.client.WithdrawCoins(ctx, userID, 5)
-	if err != nil {
-		return nil, fmt.Errorf("failed to withdraw coins: %v", err)
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	if levelUp {
@@ -102,8 +101,9 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet, error) {
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %v", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
+	defer tx.Rollback()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
@@ -113,7 +113,7 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	pet.RecalculateState(time.Now())
 	levelUp, err := pet.Stroke()
 	if err != nil {
-		return nil, domain.ErrUnavailableAction
+		return nil, err
 	}
 
 	if err = ps.petRepository.UpdatePet(ctx, tx, pet); err != nil {
@@ -121,12 +121,12 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	err = ps.client.WithdrawCoins(ctx, userID, 7)
 	if err != nil {
-		return nil, fmt.Errorf("failed to withdraw coins: %v", err)
+		return nil, fmt.Errorf("failed to withdraw coins: %w", err)
 	}
 
 	if levelUp {
@@ -173,7 +173,7 @@ func (ps *PetService) GetLeaderboard(ctx context.Context, limit int, userID stri
 func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*domain.Pet, error) {
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %v", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -190,7 +190,7 @@ func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	ps.eventNotifier.SendToClient(userID, "pet.updated", pet)
@@ -217,7 +217,7 @@ func (ps *PetService) ClaimDailyBonus(ctx context.Context, streak int, userID st
 func (ps *PetService) RecalculateState(ctx context.Context, userID string) (*domain.Pet, bool, error) {
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to begin transaction: %v", err)
+		return nil, false, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -232,7 +232,7 @@ func (ps *PetService) RecalculateState(ctx context.Context, userID string) (*dom
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, false, fmt.Errorf("failed to commit transaction: %v", err)
+		return nil, false, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	log.Printf("[PET SERVICE] Pet retrieved. Changed=%t for userID: '%s'", changed, userID)

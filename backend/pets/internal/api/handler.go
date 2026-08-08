@@ -98,12 +98,14 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var actionUnavailableError *domain.ActionUnavailableError
+
 	pet, err := ph.service.FeedPet(ctx, userID)
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
-	} else if err != nil {
-		writeError(w, ErrUnavailableAction)
+	} else if errors.As(err, &actionUnavailableError) {
+		writeErrorWithRetryAfter(w, ErrUnavailableAction, int(actionUnavailableError.RetryAfter.Seconds()))
 		return
 	}
 
@@ -129,12 +131,14 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var actionUnavailableError *domain.ActionUnavailableError
+
 	pet, err := ph.service.StrokePet(ctx, userID)
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
-	} else if errors.Is(err, domain.ErrUnavailableAction) {
-		writeError(w, ErrUnavailableAction)
+	} else if errors.As(err, &actionUnavailableError) {
+		writeErrorWithRetryAfter(w, ErrUnavailableAction, int(actionUnavailableError.RetryAfter.Seconds()))
 		return
 	}
 

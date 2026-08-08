@@ -23,6 +23,10 @@ func NewUserClient(baseUrl string) *UserClient {
 }
 
 func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount int) error {
+	if amount == 0 {
+		return nil
+	}
+
 	url := fmt.Sprintf("%s/update-coins", uc.baseUrl)
 
 	body, _ := json.Marshal(UpdateCoinsRequest{UserID: userID, Delta: -amount})
@@ -34,7 +38,7 @@ func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount i
 
 	resp, err := uc.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("user service unavailable: %v", err)
+		return fmt.Errorf("user service unavailable: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -44,7 +48,7 @@ func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount i
 
 	var apiErr APIError
 	if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
-		return fmt.Errorf("failed to decode api error: %v (status code %d)", err, resp.StatusCode)
+		return fmt.Errorf("failed to decode api error: %w (status code %d)", err, resp.StatusCode)
 	}
 
 	switch resp.StatusCode {
@@ -56,9 +60,9 @@ func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount i
 	case http.StatusUnprocessableEntity:
 		return fmt.Errorf("bad request to user service: %s", apiErr.Message)
 	case http.StatusInternalServerError:
-		return fmt.Errorf("user service internal error: %v", apiErr.Message)
+		return fmt.Errorf("user service internal error: %w", apiErr.Message)
 	default:
-		return fmt.Errorf("unexpected status %d from user service: %v", resp.StatusCode, apiErr.Message)
+		return fmt.Errorf("unexpected status %d from user service: %w", resp.StatusCode, apiErr.Message)
 	}
 }
 
