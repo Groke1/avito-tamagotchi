@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/issue-65-add-ci-cd
     paths:
       - ".github/workflows/**"
       - "backend/**"
