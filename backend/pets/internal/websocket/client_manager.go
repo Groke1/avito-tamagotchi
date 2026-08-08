@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var wsUpgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
+var wsUpgrader = websocket.Upgrader{CheckOrigin: func(_ *http.Request) bool {
 	return true
 }}
 
@@ -55,6 +55,7 @@ func (cm *ClientManager) ConnectClient(w http.ResponseWriter, r *http.Request, u
 }
 
 func (cm *ClientManager) startUpdates(ctx context.Context, userID string, client *ClientConnection, petService *service.PetService) {
+	// обновление состояния каждые 2 минуты
 	ticker := time.NewTicker(2 * time.Minute)
 	defer ticker.Stop()
 
@@ -99,7 +100,6 @@ func (cm *ClientManager) startUpdates(ctx context.Context, userID string, client
 			log.Printf("[WS TICKER] Context done, stopping loop for userID: '%s'", userID)
 			return
 		}
-
 	}
 }
 
@@ -134,7 +134,7 @@ func (cm *ClientManager) BroadcastLeaderboard() {
 
 func (cm *ClientManager) leaderboadDebounce() {
 	log.Println("[WS DEBOUNCER] Debouncer started")
-
+	//nolint:mnd // бродкаст каждые 20 секунд
 	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 

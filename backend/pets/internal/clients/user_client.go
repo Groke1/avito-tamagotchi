@@ -12,14 +12,15 @@ import (
 )
 
 type UserClient struct {
-	baseUrl string
+	baseURL string
 	client  *http.Client
 }
 
-func NewUserClient(baseUrl string) *UserClient {
+func NewUserClient(baseURL string) *UserClient {
 	return &UserClient{
-		baseUrl: baseUrl,
-		client:  &http.Client{Timeout: 3 * time.Second}}
+		baseURL: baseURL,
+		//nolint:mnd // таймаут на весь запрос 3 секунды
+		client: &http.Client{Timeout: 3 * time.Second}}
 }
 
 func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount int) error {
@@ -27,7 +28,7 @@ func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount i
 		return nil
 	}
 
-	url := fmt.Sprintf("%s/update-coins", uc.baseUrl)
+	url := uc.baseURL + "/update-coins"
 
 	body, _ := json.Marshal(UpdateCoinsRequest{UserID: userID, Delta: -amount})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(body))
@@ -52,22 +53,25 @@ func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount i
 	}
 
 	switch resp.StatusCode {
-
 	case http.StatusNotFound:
 		return domain.ErrUserNotFound
+
 	case http.StatusConflict:
 		return domain.ErrNotEnoguhCoins
+
 	case http.StatusUnprocessableEntity:
 		return fmt.Errorf("bad request to user service: %s", apiErr.Message)
+
 	case http.StatusInternalServerError:
-		return fmt.Errorf("user service internal error: %w", apiErr.Message)
+		return fmt.Errorf("user service internal error: %v", apiErr.Message)
+
 	default:
-		return fmt.Errorf("unexpected status %d from user service: %w", resp.StatusCode, apiErr.Message)
+		return fmt.Errorf("unexpected status %d from user service: %v", resp.StatusCode, apiErr.Message)
 	}
 }
 
 func (uc *UserClient) GetUsernamesByIDs(ctx context.Context, userIDs []string) (map[string]string, error) {
-	url := fmt.Sprintf("%s/usernames", uc.baseUrl)
+	url := uc.baseURL + "/usernames"
 
 	body, _ := json.Marshal(struct {
 		UserIDs []string `json:"user_ids"`

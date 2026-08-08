@@ -2,6 +2,7 @@ package api
 
 import "net/http"
 
+// пока такое название, в будущем может поменяться
 type APIError struct {
 	StatusCode int
 	Code       string

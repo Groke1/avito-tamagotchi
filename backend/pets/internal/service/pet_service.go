@@ -29,7 +29,7 @@ type PetService struct {
 func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier) *PetService {
 	return &PetService{
 		petRepository: petRepository,
-		client:        clients.NewUserClient(fmt.Sprintf("%s/internal", userServiceURL)),
+		client:        clients.NewUserClient(userServiceURL + "internal"),
 		eventNotifier: eventNotifier,
 	}
 }
@@ -67,7 +67,9 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
@@ -107,7 +109,9 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
@@ -174,7 +178,9 @@ func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
@@ -218,7 +224,9 @@ func (ps *PetService) RecalculateState(ctx context.Context, userID string) (*dom
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
@@ -227,7 +235,10 @@ func (ps *PetService) RecalculateState(ctx context.Context, userID string) (*dom
 
 	changed := pet.RecalculateState(time.Now())
 	if changed {
-		ps.petRepository.UpdatePet(ctx, tx, pet)
+		err = ps.petRepository.UpdatePet(ctx, tx, pet)
+		if err != nil {
+			return nil, false, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

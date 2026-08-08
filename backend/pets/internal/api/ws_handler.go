@@ -30,7 +30,7 @@ func (wsh *WSHandler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJsonResponse(w, http.StatusOK, struct {
+	writeJSONResponse(w, http.StatusOK, struct {
 		Ticket string `json:"ticket"`
 	}{
 		Ticket: ticket,

@@ -52,7 +52,7 @@ func (p *Pet) Feed() (bool, int, error) {
 		}
 	}
 
-	p.Satiety = min(p.Satiety+5, MaxStatValue)
+	p.Satiety = min(p.Satiety+FeedSatietyIncrease, MaxStatValue)
 	levelUp := p.AddXP(FeedXPAmount)
 	p.LastFeedAt = time.Now()
 
@@ -60,17 +60,20 @@ func (p *Pet) Feed() (bool, int, error) {
 }
 
 func (p *Pet) Stroke() (bool, error) {
-	if p.Happiness >= MaxStatValue {
+	switch {
+	case p.Happiness >= MaxStatValue:
 		return false, ErrPetIsTooHappy
-	} else if p.Satiety < HungrySatietyThreshold {
+
+	case p.Satiety < HungrySatietyThreshold:
 		return false, ErrPetIsTooHungry // TODO frontend integration
-	} else if time.Since(p.LastStrokeAt) < StrokeCooldown {
+
+	case time.Since(p.LastStrokeAt) < StrokeCooldown:
 		return false, &ActionUnavailableError{
 			RetryAfter: StrokeCooldown - time.Since(p.LastStrokeAt),
 		}
 	}
 
-	p.Happiness = min(p.Happiness+5, MaxStatValue)
+	p.Happiness = min(p.Happiness+StrokeHappinessIncrease, MaxStatValue)
 	levelUp := p.AddXP(StrokeXPAmount)
 	p.LastStrokeAt = time.Now()
 
@@ -81,7 +84,7 @@ func (p *Pet) AddXP(amount int) bool {
 	p.XP += amount
 	p.LastGainedXP = amount
 	if p.XP >= p.NextLevelXP {
-		p.Level += 1
+		p.Level++
 		p.NextLevelXP *= p.Level * p.Level
 		return true
 	}

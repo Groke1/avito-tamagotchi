@@ -70,9 +70,9 @@ func main() {
 		r.Put("/update-xp", petHandler.UpdateXP)
 	})
 
-	log.Printf("[MAIN] Service starting on port %s", ":"+cfg.HttpPort)
-	err = http.ListenAndServe(":"+cfg.HttpPort, r)
+	log.Printf("[MAIN] Service starting on port %s", ":"+cfg.HTTPPort)
+	err = http.ListenAndServe(":"+cfg.HTTPPort, r)
 	if err != nil {
-		log.Fatalf("[MAIN] http server shut down with error: %v", err)
+		log.Printf("[MAIN] http server shut down with error: %v", err)
 	}
 }

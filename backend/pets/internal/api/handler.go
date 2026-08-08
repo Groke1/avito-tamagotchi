@@ -50,7 +50,7 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	writeJsonResponse(w, http.StatusOK, petResponse)
+	writeJSONResponse(w, http.StatusOK, petResponse)
 }
 
 func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +87,7 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	writeJsonResponse(w, http.StatusCreated, petResponse)
+	writeJSONResponse(w, http.StatusCreated, petResponse)
 }
 
 func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +120,7 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	writeJsonResponse(w, http.StatusOK, petResponse)
+	writeJSONResponse(w, http.StatusOK, petResponse)
 }
 
 func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
@@ -153,7 +153,7 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 		Happiness:   pet.Happiness,
 	}
 
-	writeJsonResponse(w, http.StatusOK, petResponse)
+	writeJSONResponse(w, http.StatusOK, petResponse)
 }
 
 func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
@@ -201,7 +201,7 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	writeJsonResponse(w, http.StatusOK, leaderboardResponse)
+	writeJSONResponse(w, http.StatusOK, leaderboardResponse)
 }
 
 func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
@@ -267,5 +267,5 @@ func (ph *PetHandler) DailyGainedXP(w http.ResponseWriter, r *http.Request) {
 	}{
 		DailyGainedXP: gainedXP,
 	}
-	writeJsonResponse(w, http.StatusOK, resp)
+	writeJSONResponse(w, http.StatusOK, resp)
 }
