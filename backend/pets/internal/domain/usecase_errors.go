@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var (
 	ErrPetNotFound       = errors.New("pet not found")
@@ -12,3 +15,11 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 	ErrNotEnoguhCoins    = errors.New("insuffient amount of coins")
 )
+
+type ActionUnavailableError struct {
+	RetryAfter time.Duration
+}
+
+func (e *ActionUnavailableError) Error() string {
+	return "Action unavailable"
+}
