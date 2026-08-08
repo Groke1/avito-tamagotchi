@@ -4,66 +4,84 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
+
+	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
 )
 
-type UpdateCoinsRequest struct {
-	UserID string `json:"user_id"`
-	Delta  int64  `json:"delta"`
-}
-
-type UpdateCoinsResponse struct {
-	UserID string `json:"user_id"`
-	Coins  int64  `json:"coins"`
-}
+var (
+	ErrUserNotFound           = errors.New("user-service: user not found")
+	ErrBadRequest             = errors.New("user-service: bad request")
+	ErrUnavailable            = errors.New("user-service: unavailable")
+	maxResponseBodySize int64 = 1 << 20
+)
 
 type UserServiceClient struct {
 	httpClient *http.Client
-	baseURL    string // Например: "http://user-service:8080" (из docker-compose или DNS)
+	baseURL    string
 }
 
 func NewUserServiceClient(baseURL string) *UserServiceClient {
 	return &UserServiceClient{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: 3 * time.Second,
 		},
 	}
 }
 
-func (c *UserServiceClient) UpdateCoins(ctx context.Context, userID string, delta int64) (*UpdateCoinsResponse, error) {
-	url := fmt.Sprintf("%s/internal/update-coins", c.baseURL)
+func (c *UserServiceClient) UpdateCoins(ctx context.Context, reqBody entity.UpdateCoinsRequest) (*entity.UpdateCoinsResponse, error) {
+	url := c.baseURL + "/internal/update-coins"
 
-	reqBody := UpdateCoinsRequest{
-		UserID: userID,
-		Delta:  delta,
-	}
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		fmt.Println(err.Error())
+		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewReader(jsonData))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		fmt.Println(err.Error())
+		return nil, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request to user-service: %w", err)
+		fmt.Println(err.Error())
+		return nil, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
 	defer resp.Body.Close()
 
+	limitedBody := io.LimitReader(resp.Body, maxResponseBodySize)
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("user-service returned bad status: %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(limitedBody)
+		return nil, fmt.Errorf("%w: status %d, body: %s",
+			classifyStatus(resp.StatusCode), resp.StatusCode, string(bodyBytes))
 	}
 
-	var respBody UpdateCoinsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	var respBody entity.UpdateCoinsResponse
+	if err := json.NewDecoder(limitedBody).Decode(&respBody); err != nil {
+		fmt.Println(err.Error())
+		return nil, fmt.Errorf("decode response: %w", err)
 	}
+
 	return &respBody, nil
+}
+
+func classifyStatus(status int) error {
+	switch {
+	case status == http.StatusNotFound:
+		return ErrUserNotFound
+	case status >= 400 && status < 500:
+		return ErrBadRequest
+	default:
+		return ErrUnavailable
+	}
 }

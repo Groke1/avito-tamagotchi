@@ -22,4 +22,5 @@ CREATE TABLE IF NOT EXISTS user_tasks (
 -- +goose StatementBegin
 DROP TABLE IF EXISTS user_tasks;
 DROP TABLE IF EXISTS tasks;
+DROP TABLE IF EXISTS goose_db_version;
 -- +goose StatementEnd

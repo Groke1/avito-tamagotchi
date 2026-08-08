@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	sqlctask "github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres/sqlc"
 
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
@@ -21,7 +22,9 @@ type TaskRepository struct {
 }
 
 func NewTaskRepository(pool *pgxpool.Pool) *TaskRepository {
-	return &TaskRepository{pool: pool}
+	return &TaskRepository{
+		pool: pool,
+	}
 }
 
 func (r *TaskRepository) FindByIDForUser(ctx context.Context, userID, taskID string) (*entity.UserTask, error) {
@@ -71,7 +74,7 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 
 	q := sqlctask.New(r.pool)
 	limit := int32(rand.Intn(3) + 3)
-	rows, err := q.GetOrGenerateTasksForUser(ctx, sqlctask.GetOrGenerateTasksForUserParams{
+	rows, err := q.CreateUserTasksBatch(ctx, sqlctask.CreateUserTasksBatchParams{
 		UserID:      pgUserID,
 		RandomLimit: limit,
 	})
@@ -83,6 +86,10 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 	var newTasksIds []pgtype.UUID
 
 	for _, row := range rows {
+		comp_at := &row.CompletedAt.Time
+		if entity.Status(row.Status) != entity.StatusCompleted {
+			comp_at = nil
+		}
 		tasks = append(tasks, entity.UserTask{
 			Task: entity.Task{
 				ID:          row.ID.String(),
@@ -92,14 +99,14 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 				RewardXP:    row.RewardXp,
 			},
 			Status:      entity.Status(row.Status),
-			CompletedAt: nil,
+			CompletedAt: comp_at,
 		})
 		if row.IsNew {
 			newTasksIds = append(newTasksIds, row.ID)
 		}
 	}
 	if len(newTasksIds) > 0 {
-		err = q.CreateUserTasksBatch(ctx, sqlctask.CreateUserTasksBatchParams{
+		err = q.InsertUserTasksBatch(ctx, sqlctask.InsertUserTasksBatchParams{
 			UserID:  pgUserID,
 			TaskIds: newTasksIds,
 		})
@@ -113,27 +120,26 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr string) (*entity.UserTask, error) {
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
+		fmt.Println(err.Error())
+
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-
 	taskID, err := uuid.Parse(taskIDStr)
 	if err != nil {
+		fmt.Println(err.Error())
+
 		return nil, fmt.Errorf("invalid task id: %w", err)
 	}
 
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("begin tx: %w", err)
-	}
-	defer tx.Rollback(ctx)
-
-	q := sqlctask.New(tx)
+	q := r.querier(ctx)
 
 	taskModel, err := q.GetTaskByID(ctx, pgtype.UUID{Bytes: taskID, Valid: true})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+
 			return nil, entity.ErrTaskNotFound
 		}
+		fmt.Println(err.Error())
 		return nil, fmt.Errorf("get task: %w", err)
 	}
 
@@ -145,36 +151,30 @@ func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr 
 	now := time.Now().UTC()
 	pgNow := pgtype.Timestamptz{Time: now, Valid: true}
 
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			err = q.InsertUserTaskCompleted(ctx, sqlctask.InsertUserTaskCompletedParams{
-				UserID:      pgtype.UUID{Bytes: userID, Valid: true},
-				TaskID:      pgtype.UUID{Bytes: taskID, Valid: true},
-				CompletedAt: pgNow,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("insert user task: %w", err)
-			}
-		} else {
-			return nil, fmt.Errorf("get user task: %w", err)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		if err := q.InsertUserTaskCompleted(ctx, sqlctask.InsertUserTaskCompletedParams{
+			UserID:      pgtype.UUID{Bytes: userID, Valid: true},
+			TaskID:      pgtype.UUID{Bytes: taskID, Valid: true},
+			CompletedAt: pgNow,
+		}); err != nil {
+			fmt.Println(err.Error())
+			return nil, fmt.Errorf("insert user task: %w", err)
 		}
-	} else {
+	case err != nil:
+		fmt.Println(err.Error())
+		return nil, fmt.Errorf("get user task: %w", err)
+	default:
 		if userTask.Status == string(entity.StatusCompleted) {
 			return nil, entity.ErrTaskAlreadyCompleted
 		}
-
-		err = q.UpdateUserTaskCompleted(ctx, sqlctask.UpdateUserTaskCompletedParams{
-			CompletedAt: pgNow,
-			UserID:      pgtype.UUID{Bytes: userID, Valid: true},
-			TaskID:      pgtype.UUID{Bytes: taskID, Valid: true},
-		})
-		if err != nil {
+		if err := q.UpdateUserTaskCompleted(ctx, sqlctask.UpdateUserTaskCompletedParams{
+			UserID: pgtype.UUID{Bytes: userID, Valid: true},
+			TaskID: pgtype.UUID{Bytes: taskID, Valid: true},
+		}); err != nil {
+			fmt.Println(err.Error())
 			return nil, fmt.Errorf("update user task: %w", err)
 		}
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("commit tx: %w", err)
 	}
 
 	return &entity.UserTask{
@@ -188,4 +188,12 @@ func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr 
 		Status:      entity.StatusCompleted,
 		CompletedAt: &now,
 	}, nil
+}
+
+func (r *TaskRepository) querier(ctx context.Context) *sqlctask.Queries {
+	tx, err := db.ExtractTx(ctx)
+	if err != nil {
+		return sqlctask.New(r.pool)
+	}
+	return sqlctask.New(tx)
 }

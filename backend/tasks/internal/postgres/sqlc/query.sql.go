@@ -11,21 +11,72 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createUserTasksBatch = `-- name: CreateUserTasksBatch :exec
-INSERT INTO user_tasks (user_id, task_id)
-SELECT 
-    $1::uuid AS user_id, 
-    unnest($2::uuid[]) AS task_id
+const createUserTasksBatch = `-- name: CreateUserTasksBatch :many
+WITH existing_tasks AS (
+    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, ut.status, ut.completed_at
+    FROM user_tasks ut
+    JOIN tasks t ON t.id = ut.task_id 
+    WHERE ut.user_id = $1::uuid
+      AND ut.updated_at >= CURRENT_DATE 
+      AND ut.updated_at < CURRENT_DATE + INTERVAL '1 day'
+),
+random_tasks AS (
+    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, 'active'::text AS status, null::timestamptz as completed_at
+    FROM tasks t
+    WHERE NOT EXISTS (SELECT 1 FROM existing_tasks)
+    ORDER BY RANDOM()
+    LIMIT $2::int
+)
+SELECT id, title, description, reward_coins, reward_xp, status, completed_at, (NOT EXISTS (SELECT 1 FROM existing_tasks))::bool AS is_new
+FROM existing_tasks
+UNION ALL
+SELECT id, title, description, reward_coins, reward_xp, status, completed_at, true AS is_new
+FROM random_tasks
 `
 
 type CreateUserTasksBatchParams struct {
-	UserID  pgtype.UUID   `json:"user_id"`
-	TaskIds []pgtype.UUID `json:"task_ids"`
+	UserID      pgtype.UUID `json:"user_id"`
+	RandomLimit int32       `json:"random_limit"`
 }
 
-func (q *Queries) CreateUserTasksBatch(ctx context.Context, arg CreateUserTasksBatchParams) error {
-	_, err := q.db.Exec(ctx, createUserTasksBatch, arg.UserID, arg.TaskIds)
-	return err
+type CreateUserTasksBatchRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	RewardCoins int32              `json:"reward_coins"`
+	RewardXp    int64              `json:"reward_xp"`
+	Status      string             `json:"status"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	IsNew       bool               `json:"is_new"`
+}
+
+func (q *Queries) CreateUserTasksBatch(ctx context.Context, arg CreateUserTasksBatchParams) ([]CreateUserTasksBatchRow, error) {
+	rows, err := q.db.Query(ctx, createUserTasksBatch, arg.UserID, arg.RandomLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CreateUserTasksBatchRow
+	for rows.Next() {
+		var i CreateUserTasksBatchRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.RewardCoins,
+			&i.RewardXp,
+			&i.Status,
+			&i.CompletedAt,
+			&i.IsNew,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const findByIDForUser = `-- name: FindByIDForUser :one
@@ -72,80 +123,14 @@ func (q *Queries) FindByIDForUser(ctx context.Context, arg FindByIDForUserParams
 	return i, err
 }
 
-const getOrGenerateTasksForUser = `-- name: GetOrGenerateTasksForUser :many
-WITH existing_tasks AS (
-    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, ut.status
-    FROM user_tasks ut
-    JOIN tasks t ON t.id = ut.task_id 
-    WHERE ut.user_id = $1::uuid
-      AND ut.updated_at >= CURRENT_DATE 
-      AND ut.updated_at < CURRENT_DATE + INTERVAL '1 day'
-),
-random_tasks AS (
-    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, 'active'::text AS status
-    FROM tasks t
-    WHERE NOT EXISTS (SELECT 1 FROM existing_tasks) -- Выполнять только если сегодня пусто
-    ORDER BY RANDOM()
-    LIMIT $2::int
-)
-SELECT id, title, description, reward_coins, reward_xp, status, (NOT EXISTS (SELECT 1 FROM existing_tasks))::bool AS is_new
-FROM existing_tasks
-UNION ALL
-SELECT id, title, description, reward_coins, reward_xp, status, true AS is_new
-FROM random_tasks
-`
-
-type GetOrGenerateTasksForUserParams struct {
-	UserID      pgtype.UUID `json:"user_id"`
-	RandomLimit int32       `json:"random_limit"`
-}
-
-type GetOrGenerateTasksForUserRow struct {
-	ID          pgtype.UUID `json:"id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	RewardCoins int32       `json:"reward_coins"`
-	RewardXp    int64       `json:"reward_xp"`
-	Status      string      `json:"status"`
-	IsNew       bool        `json:"is_new"`
-}
-
-func (q *Queries) GetOrGenerateTasksForUser(ctx context.Context, arg GetOrGenerateTasksForUserParams) ([]GetOrGenerateTasksForUserRow, error) {
-	rows, err := q.db.Query(ctx, getOrGenerateTasksForUser, arg.UserID, arg.RandomLimit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetOrGenerateTasksForUserRow
-	for rows.Next() {
-		var i GetOrGenerateTasksForUserRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Title,
-			&i.Description,
-			&i.RewardCoins,
-			&i.RewardXp,
-			&i.Status,
-			&i.IsNew,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getTaskByID = `-- name: GetTaskByID :one
 SELECT id, title, description, reward_coins, reward_xp
 FROM tasks
-WHERE id = $1
+WHERE id = $1::uuid
 `
 
-func (q *Queries) GetTaskByID(ctx context.Context, id pgtype.UUID) (Task, error) {
-	row := q.db.QueryRow(ctx, getTaskByID, id)
+func (q *Queries) GetTaskByID(ctx context.Context, dollar_1 pgtype.UUID) (Task, error) {
+	row := q.db.QueryRow(ctx, getTaskByID, dollar_1)
 	var i Task
 	err := row.Scan(
 		&i.ID,
@@ -197,19 +182,35 @@ func (q *Queries) InsertUserTaskCompleted(ctx context.Context, arg InsertUserTas
 	return err
 }
 
+const insertUserTasksBatch = `-- name: InsertUserTasksBatch :exec
+INSERT INTO user_tasks (user_id, task_id)
+SELECT 
+    $1::uuid AS user_id, 
+    unnest($2::uuid[]) AS task_id
+`
+
+type InsertUserTasksBatchParams struct {
+	UserID  pgtype.UUID   `json:"user_id"`
+	TaskIds []pgtype.UUID `json:"task_ids"`
+}
+
+func (q *Queries) InsertUserTasksBatch(ctx context.Context, arg InsertUserTasksBatchParams) error {
+	_, err := q.db.Exec(ctx, insertUserTasksBatch, arg.UserID, arg.TaskIds)
+	return err
+}
+
 const updateUserTaskCompleted = `-- name: UpdateUserTaskCompleted :exec
 UPDATE user_tasks
-SET status = 'completed', completed_at = $1, updated_at = NOW()
-WHERE user_id = $2 AND task_id = $3
+SET status = 'completed', completed_at = NOW(), updated_at = NOW()
+WHERE user_id = $1 AND task_id = $2
 `
 
 type UpdateUserTaskCompletedParams struct {
-	CompletedAt pgtype.Timestamptz `json:"completed_at"`
-	UserID      pgtype.UUID        `json:"user_id"`
-	TaskID      pgtype.UUID        `json:"task_id"`
+	UserID pgtype.UUID `json:"user_id"`
+	TaskID pgtype.UUID `json:"task_id"`
 }
 
 func (q *Queries) UpdateUserTaskCompleted(ctx context.Context, arg UpdateUserTaskCompletedParams) error {
-	_, err := q.db.Exec(ctx, updateUserTaskCompleted, arg.CompletedAt, arg.UserID, arg.TaskID)
+	_, err := q.db.Exec(ctx, updateUserTaskCompleted, arg.UserID, arg.TaskID)
 	return err
 }

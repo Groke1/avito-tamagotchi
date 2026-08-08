@@ -90,7 +90,7 @@ $headers = @{
 
 $taskId = "cd51eda4-c593-4037-a0c1-c5bf3e7da86f"
 
-Invoke-RestMethod -Method POST -Uri "http://localhost:8081/api/v1/tasks/$taskId/complete" -Headers $headers
+Invoke-RestMethod -Method POST -Uri "http://localhost:8081/api/v1/tasks/$taskId/complete" -Headers $headers | ConvertTo-Json -Depth 10
 
 
 {"task":{"id":"9b3541db-9942-4625-ba51-b6afcb23754a","title":"Лояльный продавец","description":"Получите новый отзыв с оценкой 5 звезд от верифицированного покупателя.","reward_coins":300,"reward_xp":500,"status":"completed","completed_at":"2026-08-05T16:26:34.386331502Z"},"awarded":{"coins":300,"xp":500}}
