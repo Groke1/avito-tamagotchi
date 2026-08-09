@@ -28,7 +28,7 @@ func NewPetHandler(service *service.PetService) *PetHandler {
 func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, err := UserIDFromContext(ctx)
+	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
@@ -56,7 +56,7 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, err := UserIDFromContext(ctx)
+	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
@@ -71,7 +71,7 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pet, err := ph.service.CreatePet(ctx, req.Name, userID)
+	pet, err := ph.service.CreatePet(ctx, userID, req.Name)
 	if err != nil {
 		writeError(w, ErrPetAlreadyExists)
 		return
@@ -93,7 +93,7 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, err := UserIDFromContext(ctx)
+	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
@@ -126,7 +126,7 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, err := UserIDFromContext(ctx)
+	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
@@ -159,7 +159,7 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, err := UserIDFromContext(ctx)
+	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
@@ -174,7 +174,7 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	leaderboardItems, currentUser, err := ph.service.GetLeaderboard(ctx, limit, userID)
+	leaderboardItems, currentUser, err := ph.service.GetLeaderboard(ctx, userID, limit)
 	if err != nil {
 		log.Printf("[GET LEADERBOARD] %v", err)
 		writeError(w, ErrInternalError)
@@ -215,7 +215,7 @@ func (ph *PetHandler) DailyBonusForStreak(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err := ph.service.ClaimDailyBonusForStreak(ctx, req.Streak, req.UserID)
+	err := ph.service.ClaimDailyBonusForStreak(ctx, req.UserID, req.Streak)
 	if err != nil {
 		log.Printf("[DAILY BONUS] %v", err)
 		writeError(w, ErrInternalError)
@@ -235,7 +235,7 @@ func (ph *PetHandler) UpdateXP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := ph.service.GrantXP(ctx, req.XP, req.UserID)
+	_, err := ph.service.GrantXP(ctx, req.UserID, req.XP)
 	if err != nil {
 		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
@@ -275,7 +275,7 @@ func (ph *PetHandler) DailyGainedXP(w http.ResponseWriter, r *http.Request) {
 func (ph *PetHandler) GetNextRewardDescription(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, err := UserIDFromContext(ctx)
+	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
@@ -295,4 +295,54 @@ func (ph *PetHandler) GetNextRewardDescription(w http.ResponseWriter, r *http.Re
 	}
 
 	writeJSONResponse(w, http.StatusOK, rewardResponse)
+}
+
+func (ph *PetHandler) GetWeeklyLeaderboard(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userID, err := GetUserIDFromContext(ctx)
+	if err != nil {
+		writeError(w, ErrUnauthorized)
+		return
+	}
+
+	limit := 20
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		//nolint:govet // чтобы не жаловался
+		l, err := strconv.Atoi(limitStr)
+		if err == nil && l >= 1 && l <= 100 {
+			limit = l
+		}
+	}
+
+	leaderboardItems, currentUser, err := ph.service.GetWeeklyLeaderboard(ctx, userID, limit)
+	if err != nil {
+		log.Printf("[GET WEEKLY LEADERBOARD] %v", err)
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	leaderboard := make([]LeaderboardItemResponse, len(leaderboardItems))
+	for i, item := range leaderboardItems {
+		leaderboard[i] = LeaderboardItemResponse{
+			Rank:     item.Rank,
+			Level:    item.Level,
+			UserName: item.UserName,
+			PetName:  item.PetName,
+			XP:       item.XP,
+		}
+	}
+
+	leaderboardResponse := LeaderboardResponse{
+		Items: leaderboard,
+		CurrentUser: LeaderboardItemResponse{
+			Rank:     currentUser.Rank,
+			Level:    currentUser.Level,
+			UserName: currentUser.UserName,
+			PetName:  currentUser.PetName,
+			XP:       currentUser.XP,
+		},
+	}
+
+	writeJSONResponse(w, http.StatusOK, leaderboardResponse)
 }
