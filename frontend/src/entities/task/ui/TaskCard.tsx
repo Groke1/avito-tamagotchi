@@ -26,6 +26,14 @@ const typeMap: Record<TaskType, { badgeClass: string; emoji: string }> = {
     badgeClass: 'bg-emerald-100 text-emerald-800',
     emoji: '🏷️',
   },
+  Покупки: {
+    badgeClass: 'bg-rose-100 text-rose-800',
+    emoji: '🛍️',
+  },
+  Избранное: {
+    badgeClass: 'bg-pink-100 text-pink-800',
+    emoji: '❤️',
+  },
 }
 
 export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardProps) => {

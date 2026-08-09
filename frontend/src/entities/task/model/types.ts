@@ -10,7 +10,13 @@ export interface Task {
 }
 
 export type TaskStatus = 'active' | 'completed'
-export type TaskType = 'Отзывы' | 'Поиск' | 'Сообщения' | 'Категории'
+export type TaskType =
+  | 'Отзывы'
+  | 'Поиск'
+  | 'Сообщения'
+  | 'Категории'
+  | 'Покупки'
+  | 'Избранное'
 
 export interface TasksResponse {
   date: string
