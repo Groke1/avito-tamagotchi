@@ -8,12 +8,12 @@ import { LeadersList } from './LeadersList'
 const LIMIT_OPTIONS = [10, 20, 50]
 
 export const LeaderboardWidget = () => {
-  const [limit, setLimit] = useState<number>(20)
+  const [limit, setLimit] = useState<number>(10)
   const { data, isLoading } = useGetLeaderboardQuery({ limit })
 
   return (
     <div className="space-y-8 mt-6">
-      <LeaderboardTop />
+      <LeaderboardTop leaders={data?.items} />
       <div className="space-y-6">
         <CurrentUserinfo user={data?.current_user} isLoading={isLoading} />
         <div className="bg-surface-lowest rounded-card p-6 sm:p-8 shadow-level-1 overflow-hidden">

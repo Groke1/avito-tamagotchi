@@ -1,12 +1,14 @@
-import { LeaderboardRankBadge, useGetLeaderboardQuery } from '@/entities/leaderboard'
-import { useMemo } from 'react'
+import { type LeaderboardItem, LeaderboardRankBadge } from '@/entities/leaderboard'
+import { type FC, useMemo } from 'react'
 
-export const LeaderboardTop = () => {
-  const { data: leaders } = useGetLeaderboardQuery()
+interface LeaderboardTopProps {
+  leaders?: LeaderboardItem[]
+}
 
-  const firstPlaceItem = useMemo(() => leaders?.items.find((l) => l.rank === 1), [leaders])
-  const secondPlaceItem = useMemo(() => leaders?.items.find((l) => l.rank === 2), [leaders])
-  const thirdPlaceItem = useMemo(() => leaders?.items.find((l) => l.rank === 3), [leaders])
+export const LeaderboardTop: FC<LeaderboardTopProps> = ({ leaders }) => {
+  const firstPlaceItem = useMemo(() => leaders?.find((l) => l.rank === 1), [leaders])
+  const secondPlaceItem = useMemo(() => leaders?.find((l) => l.rank === 2), [leaders])
+  const thirdPlaceItem = useMemo(() => leaders?.find((l) => l.rank === 3), [leaders])
 
   return (
     <div className="bg-surface-lowest rounded-card p-6 sm:p-10 shadow-level-1 overflow-hidden">
