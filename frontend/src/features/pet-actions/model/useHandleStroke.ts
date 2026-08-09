@@ -17,10 +17,14 @@ export const useHandleStroke = () => {
     try {
       const updatedPet = await strokePet().unwrap()
       dispatch(setPet(updatedPet))
-      toast.success('Вы погладили питомца! 🖐️ (+5 счастья, +3 XP)')
+      toast.success('Вы погладили питомца! 🖐️ (+3 счастья, +10 XP)')
     } catch (error: unknown) {
       if (isFetchBaseQueryError(error) && isApiError(error.data)) {
-        toast.error(error.data.message)
+        if ('retry_after' in error.data) {
+          toast.info(`${error.data.message}. Попробуйте через ${error.data.retry_after} секунд`)
+        } else {
+          toast.error(error.data.message)
+        }
       } else {
         toast.error('Это действие пока недоступно')
       }

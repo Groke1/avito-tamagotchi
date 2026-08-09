@@ -6,9 +6,6 @@ export const RewardsListSkeleton = () => {
       <RewardCardSkeleton />
       <RewardCardSkeleton />
       <RewardCardSkeleton />
-      <RewardCardSkeleton />
-      <RewardCardSkeleton />
-      <RewardCardSkeleton />
     </div>
   )
 }

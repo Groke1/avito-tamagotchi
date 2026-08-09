@@ -1,6 +1,5 @@
+import { useHandleFeed, useHandleStroke } from '@/features/pet-actions'
 import { useAppSelector } from '@/shared/model'
-import { useHandleFeed } from './useHandleFeed'
-import { useHandleStroke } from './useHandleStroke'
 
 export const usePetActionButtons = () => {
   const { handleFeed, isFeedLoading } = useHandleFeed()
