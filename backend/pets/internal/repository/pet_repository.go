@@ -12,18 +12,18 @@ import (
 )
 
 type Pet struct {
-	ID               int64     `db:"id"`
-	UserID           string    `db:"user_id"`
-	Name             string    `db:"name"`
-	Level            int       `db:"level"`
-	XP               int       `db:"xp"`
-	NextLevelXP      int       `db:"next_level_xp"`
-	Satiety          int       `db:"satiety"`
-	Happiness        int       `db:"happiness"`
-	CreatedAt        time.Time `db:"created_at"`
-	LastCalculatedAt time.Time `db:"last_calculated_at"`
-	LastFeedAt       time.Time `db:"last_feed_at"`
-	LastStrokeAt     time.Time `db:"last_stroke_at"`
+	ID               int64      `db:"id"`
+	UserID           string     `db:"user_id"`
+	Name             string     `db:"name"`
+	Level            int        `db:"level"`
+	XP               int        `db:"xp"`
+	NextLevelXP      int        `db:"next_level_xp"`
+	Satiety          int        `db:"satiety"`
+	Happiness        int        `db:"happiness"`
+	CreatedAt        time.Time  `db:"created_at"`
+	LastCalculatedAt time.Time  `db:"last_calculated_at"`
+	LastFeedAt       *time.Time `db:"last_feed_at"`
+	LastStrokeAt     *time.Time `db:"last_stroke_at"`
 }
 
 type PetForLeaderboard struct {
@@ -195,7 +195,7 @@ func (pr *PetRepository) GetLeaderboardWithUser(ctx context.Context, userID stri
 	query := `
 				WITH ranked_pets AS (
 					SELECT  
-						xp
+						xp,
 						name, 
 						user_id, 
 						level,
@@ -255,13 +255,17 @@ func (pr *PetRepository) GetDailyGainedXPByUserID(ctx context.Context, userID st
 }
 
 func (pr *PetRepository) GetWeeklyLeaderboardWithUser(ctx context.Context, userID string, limit int) ([]domain.LeaderboardItem, error) {
+	// Todo: в конце недели вручать награды
 	query := `
 				WITH weekly_xp AS (
 					SELECT
 						pdx.pet_id,
 						SUM(pdx.gained_xp) AS weekly_xp
 					FROM pets_daily_xp pdx
-					WHERE pdx.date >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - INTERVAL '6 days'
+					WHERE  pdx.date >= date_trunc(
+            			'week',
+            			CURRENT_TIMESTAMP AT TIME ZONE 'UTC'
+        			)::date -- // Note: топ строим с понедельника
 					GROUP BY pdx.pet_id
 				),
 				ranked_pets AS (
@@ -272,7 +276,7 @@ func (pr *PetRepository) GetWeeklyLeaderboardWithUser(ctx context.Context, userI
 						COALESCE(wxp.weekly_xp, 0) AS xp,
 						DENSE_RANK() OVER (
 							ORDER BY
-								p.level DESC,
+								-- p.level DESC, // Note: сортиртируем по опыту за неделю
 								COALESCE(wxp.weekly_xp, 0) DESC,
 								p.id ASC
 						) AS rank

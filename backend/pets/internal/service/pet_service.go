@@ -60,6 +60,7 @@ func (ps *PetService) CreatePet(ctx context.Context, userID string, petName stri
 	if err != nil {
 		return nil, err
 	}
+	ps.eventNotifier.BroadcastLeaderboard()
 
 	return pet, nil
 }

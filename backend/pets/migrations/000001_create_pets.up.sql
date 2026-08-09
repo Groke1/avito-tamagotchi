@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS pets (
     happiness INT NOT NULL DEFAULT 75,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_calculated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_feed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_stroke_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    last_feed_at TIMESTAMPTZ,
+    last_stroke_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_pets_leaderboard 
