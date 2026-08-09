@@ -1,6 +1,8 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,7 +13,7 @@ func NewRouter(handlers *Handlers, jwtSecret []byte) *gin.Engine {
 	r.Use(gin.Logger())
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 	api := r.Group("/api/v1")
 	api.Use(AuthMiddleware(jwtSecret))

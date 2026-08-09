@@ -215,10 +215,21 @@ func (q *Queries) GetTodayCompletedTasksForUser(ctx context.Context, userID pgty
 }
 
 const getUserTaskForUpdate = `-- name: GetUserTaskForUpdate :one
-SELECT status, completed_at
-FROM user_tasks
-WHERE user_id = $1 AND task_id = $2
-FOR UPDATE
+SELECT
+    ut.status,
+    ut.completed_at,
+
+    t.id,
+    t.title,
+    t.description,
+    t.reward_coins,
+    t.reward_xp,
+    t.task_type
+FROM user_tasks ut
+JOIN tasks t ON t.id = ut.task_id
+WHERE ut.user_id = $1
+  AND ut.task_id = $2
+FOR UPDATE OF ut
 `
 
 type GetUserTaskForUpdateParams struct {
@@ -229,29 +240,28 @@ type GetUserTaskForUpdateParams struct {
 type GetUserTaskForUpdateRow struct {
 	Status      string             `json:"status"`
 	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	ID          pgtype.UUID        `json:"id"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	RewardCoins int32              `json:"reward_coins"`
+	RewardXp    int64              `json:"reward_xp"`
+	TaskType    pgtype.Text        `json:"task_type"`
 }
 
 func (q *Queries) GetUserTaskForUpdate(ctx context.Context, arg GetUserTaskForUpdateParams) (GetUserTaskForUpdateRow, error) {
 	row := q.db.QueryRow(ctx, getUserTaskForUpdate, arg.UserID, arg.TaskID)
 	var i GetUserTaskForUpdateRow
-	err := row.Scan(&i.Status, &i.CompletedAt)
+	err := row.Scan(
+		&i.Status,
+		&i.CompletedAt,
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.RewardCoins,
+		&i.RewardXp,
+		&i.TaskType,
+	)
 	return i, err
-}
-
-const insertUserTaskCompleted = `-- name: InsertUserTaskCompleted :exec
-INSERT INTO user_tasks (user_id, task_id, status, completed_at, updated_at)
-VALUES ($1, $2, 'completed', $3, NOW())
-`
-
-type InsertUserTaskCompletedParams struct {
-	UserID      pgtype.UUID        `json:"user_id"`
-	TaskID      pgtype.UUID        `json:"task_id"`
-	CompletedAt pgtype.Timestamptz `json:"completed_at"`
-}
-
-func (q *Queries) InsertUserTaskCompleted(ctx context.Context, arg InsertUserTaskCompletedParams) error {
-	_, err := q.db.Exec(ctx, insertUserTaskCompleted, arg.UserID, arg.TaskID, arg.CompletedAt)
-	return err
 }
 
 const insertUserTasksBatch = `-- name: InsertUserTasksBatch :exec
@@ -273,8 +283,12 @@ func (q *Queries) InsertUserTasksBatch(ctx context.Context, arg InsertUserTasksB
 
 const updateUserTaskCompleted = `-- name: UpdateUserTaskCompleted :exec
 UPDATE user_tasks
-SET status = 'completed', completed_at = NOW(), updated_at = NOW()
-WHERE user_id = $1 AND task_id = $2
+SET
+    status = 'completed',
+    completed_at = NOW(),
+    updated_at = NOW()
+WHERE user_id = $1
+  AND task_id = $2
 `
 
 type UpdateUserTaskCompletedParams struct {

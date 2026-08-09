@@ -16,7 +16,6 @@ type Querier interface {
 	GetTaskByID(ctx context.Context, dollar_1 pgtype.UUID) (GetTaskByIDRow, error)
 	GetTodayCompletedTasksForUser(ctx context.Context, userID pgtype.UUID) ([]GetTodayCompletedTasksForUserRow, error)
 	GetUserTaskForUpdate(ctx context.Context, arg GetUserTaskForUpdateParams) (GetUserTaskForUpdateRow, error)
-	InsertUserTaskCompleted(ctx context.Context, arg InsertUserTaskCompletedParams) error
 	InsertUserTasksBatch(ctx context.Context, arg InsertUserTasksBatchParams) error
 	UpdateUserTaskCompleted(ctx context.Context, arg UpdateUserTaskCompletedParams) error
 }

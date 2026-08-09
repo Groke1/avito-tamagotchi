@@ -9,8 +9,8 @@ import (
 )
 
 type GetTaskQuery struct {
-	TaskId string
-	UserId string
+	TaskID string
+	UserID string
 }
 
 type TaskDTO struct {
@@ -32,7 +32,7 @@ func NewGetTaskHandler(repo *postgres.TaskRepository) *GetTaskHandler {
 }
 
 func (h *GetTaskHandler) Handle(ctx context.Context, query GetTaskQuery) (*TaskDTO, error) {
-	task, err := h.taskRepo.FindByIDForUser(ctx, query.UserId, query.TaskId)
+	task, err := h.taskRepo.FindByIDForUser(ctx, query.UserID, query.TaskID)
 	if err != nil {
 		return nil, err
 	}

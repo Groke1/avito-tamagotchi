@@ -3,8 +3,14 @@ package config
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/caarlos0/env/v10"
+)
+
+const (
+	ServerReadTimeout = 5 * time.Second
+	HTTPClientTimeout = 3 * time.Second
 )
 
 type (

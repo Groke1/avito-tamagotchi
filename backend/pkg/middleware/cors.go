@@ -17,7 +17,7 @@ func CorsHandler(next http.Handler) http.Handler {
 
 		w.Header().Set(
 			"Access-Control-Allow-Methods",
-			"GET, POST, OPTIONS",
+			"GET, POST, PUT, OPTIONS",
 		)
 		w.Header().Set(
 			"Access-Control-Allow-Headers",
