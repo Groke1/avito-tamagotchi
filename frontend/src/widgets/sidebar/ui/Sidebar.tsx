@@ -1,3 +1,4 @@
+import { useHandleFeed } from '@/features/pet-actions'
 import { useAppSelector } from '@/shared/model'
 import { Button, LazyImage } from '@/shared/ui'
 import { Utensils } from 'lucide-react'
@@ -5,6 +6,7 @@ import { SidebarNavList } from './SidebarNavList'
 
 export const Sidebar = () => {
   const pet = useAppSelector((state) => state.pet.pet)
+  const { handleFeed, isFeedLoading } = useHandleFeed()
 
   return (
     <aside className="flex flex-col gap-6 bg-surface-lowest px-4 py-6 rounded-r-section shadow-level-1 h-screen sticky top-0 overflow-hidden">
@@ -28,7 +30,13 @@ export const Sidebar = () => {
       <div className="flex-1">
         <SidebarNavList />
       </div>
-      <Button variant="avitoGreen" className="text-sm">
+      <Button
+        variant="avitoGreen"
+        className="text-sm"
+        onClick={handleFeed}
+        disabled={isFeedLoading}
+        isLoading={isFeedLoading}
+      >
         <Utensils className="size-5 shrink-0" />
         <span>Покормить питомца</span>
       </Button>

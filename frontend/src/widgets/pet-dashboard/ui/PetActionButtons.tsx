@@ -33,7 +33,7 @@ export const PetActionButtons = () => {
         title={isFullHappiness ? 'Питомец уже максимально счастлив! (100/100)' : ''}
         className="hover:bg-avito-blue/10 hover:border-avito-blue/60 hover:text-avito-blue-dark transition-all duration-200"
       >
-        🖐️ Погладить (-7 монет)
+        🖐️ Погладить
       </Button>
     </div>
   )

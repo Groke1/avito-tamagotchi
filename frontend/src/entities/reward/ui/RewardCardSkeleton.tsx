@@ -21,7 +21,7 @@ export const RewardCardSkeleton = () => {
       <div className="flex items-center gap-1.5">
         <Skeleton className="h-4 w-28 rounded-md" />
       </div>
-      <Skeleton className="w-full h-9 rounded-xl" />
+      <Skeleton className="w-full h-8.5 rounded-xl" />
     </div>
   )
 }

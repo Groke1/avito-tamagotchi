@@ -19,7 +19,7 @@ export const petApi = baseApi.injectEndpoints({
     }),
     strokePet: builder.mutation<PetResponse, void>({
       query: () => ({ url: `${PET_URL}/stroke`, method: 'POST' }),
-      invalidatesTags: ['Pet', 'User'],
+      invalidatesTags: ['Pet'],
     }),
     getWsTicket: builder.mutation<PetTicketResponse, void>({
       query: () => ({ url: `${PET_URL}/ws-ticket`, method: 'POST' }),
@@ -28,9 +28,11 @@ export const petApi = baseApi.injectEndpoints({
 })
 
 export const {
+  useGetPetQuery,
   useLazyGetPetQuery,
   useCreatePetMutation,
   useFeedPetMutation,
   useStrokePetMutation,
   useGetWsTicketMutation,
 } = petApi
+

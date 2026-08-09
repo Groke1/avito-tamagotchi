@@ -1,6 +1,7 @@
 export interface ApiError<TCode extends string = string> {
   code: TCode
   message: string
+  retry_after?: number
 }
 
 export type AuthErrorCode =

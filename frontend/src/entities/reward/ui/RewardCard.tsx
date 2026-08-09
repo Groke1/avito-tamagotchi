@@ -65,19 +65,25 @@ export const RewardCard = ({ reward, onRedeem, isRedeeming = false }: RewardCard
           <span className="text-[10px] uppercase font-bold tracking-wider text-on-surface-variant/70">
             Промокод
           </span>
-          <span className="font-mono font-extrabold text-sm text-on-surface tracking-widest select-all">
+          <span
+            className={cn(
+              'font-mono font-extrabold text-sm text-on-surface tracking-widest select-all',
+              (isRedeemed || isExpired) && 'select-none',
+            )}
+          >
             {promo_code}
           </span>
         </div>
         <button
           type="button"
           onClick={handleCopyCode}
-          disabled={hasCopied}
+          disabled={hasCopied || isRedeemed || isExpired}
           className={cn(
             'p-2 rounded-lg bg-surface-lowest text-on-surface-variant transition-all border border-surface-highest',
             !hasCopied &&
               'hover:bg-avito-blue/10 hover:text-avito-blue active:scale-95 cursor-pointer',
             hasCopied && 'cursor-default bg-emerald-50/80 border-emerald-200 text-emerald-600',
+            (isRedeemed || isExpired) && 'pointer-events-none opacity-50',
           )}
           title={hasCopied ? 'Скопировано' : 'Скопировать промокод'}
         >

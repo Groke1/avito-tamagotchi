@@ -14,7 +14,7 @@ export const taskApi = baseApi.injectEndpoints({
       providesTags: ['Tasks'],
     }),
     completeTask: builder.mutation<CompleteTaskResponse, string>({
-      query: (id) => ({ url: `${TASKS_URL}/${id}/complete`, method: 'POST' }),
+      query: (id) => ({ url: `${TASKS_URL}/${id}/complete`, method: 'PUT' }),
       invalidatesTags: ['Tasks', 'User', 'Pet'],
     }),
   }),
