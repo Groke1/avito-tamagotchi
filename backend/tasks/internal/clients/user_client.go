@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/config"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/controller"
 )
 
@@ -29,7 +29,7 @@ func NewUserServiceClient(baseURL string) *UserServiceClient {
 	return &UserServiceClient{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 3 * time.Second,
+			Timeout: config.HTTPClientTimeout,
 		},
 	}
 }

@@ -38,8 +38,8 @@ func (h *Handlers) GetTask(con *gin.Context) {
 		SendError(con, controller.ErrUnauthorized)
 		return
 	}
-	taskId := con.Param("task_id")
-	query := controller.GetTaskQuery{TaskId: taskId, UserId: uid}
+	taskID := con.Param("task_id")
+	query := controller.GetTaskQuery{TaskID: taskID, UserID: uid}
 	result, err := h.getTaskHandler.Handle(con.Request.Context(), query)
 	if err != nil {
 		if errors.Is(err, entity.ErrTaskNotFound) {

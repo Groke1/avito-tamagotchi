@@ -13,6 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	ExpectedTokenParts = 3
+)
+
 type accessTokenClaims struct {
 	Sub string `json:"sub"`
 	Exp int64  `json:"exp"`
@@ -65,7 +69,7 @@ func parseAccessToken(token string, secret []byte) (*accessTokenClaims, error) {
 	}
 
 	parts := strings.Split(token, ".")
-	if len(parts) != 3 {
+	if len(parts) != ExpectedTokenParts {
 		return nil, controller.ErrInvalidToken
 	}
 
@@ -79,7 +83,8 @@ func parseAccessToken(token string, secret []byte) (*accessTokenClaims, error) {
 	}
 
 	var header jwtHeader
-	if err := json.Unmarshal(headerBytes, &header); err != nil {
+	err = json.Unmarshal(headerBytes, &header)
+	if err != nil {
 		return nil, controller.ErrInvalidToken
 	}
 

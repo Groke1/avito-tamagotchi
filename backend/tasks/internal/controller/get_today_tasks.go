@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres"
 )
 
@@ -39,7 +38,7 @@ func (h *GetTodayTasksHandler) Handle(ctx context.Context, query GetTodayTasksQu
 			Description: task.Task.Description,
 			RewardCoins: task.Task.RewardCoins,
 			RewardXP:    task.Task.RewardXP,
-			Status:      entity.Status(task.Status),
+			Status:      task.Status,
 			CompletedAt: task.CompletedAt,
 			TaskType:    task.Task.Type,
 		})

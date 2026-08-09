@@ -54,20 +54,31 @@ SELECT id, title, description, reward_coins, reward_xp, task_type, status, compl
 FROM random_tasks;
 
 -- name: GetUserTaskForUpdate :one
-SELECT status, completed_at
-FROM user_tasks
-WHERE user_id = $1 AND task_id = $2
-FOR UPDATE;
+SELECT
+    ut.status,
+    ut.completed_at,
 
--- name: InsertUserTaskCompleted :exec
-INSERT INTO user_tasks (user_id, task_id, status, completed_at, updated_at)
-VALUES ($1, $2, 'completed', $3, NOW());
+    t.id,
+    t.title,
+    t.description,
+    t.reward_coins,
+    t.reward_xp,
+    t.task_type
+FROM user_tasks ut
+JOIN tasks t ON t.id = ut.task_id
+WHERE ut.user_id = $1
+  AND ut.task_id = $2
+FOR UPDATE OF ut;
 
 -- name: UpdateUserTaskCompleted :exec
 UPDATE user_tasks
-SET status = 'completed', completed_at = NOW(), updated_at = NOW()
-WHERE user_id = $1 AND task_id = $2;
-
+SET
+    status = 'completed',
+    completed_at = NOW(),
+    updated_at = NOW()
+WHERE user_id = $1
+  AND task_id = $2;
+  
 -- name: GetTodayCompletedTasksForUser :many
 SELECT 
     t.id,
