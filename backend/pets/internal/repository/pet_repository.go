@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
@@ -142,7 +143,8 @@ func (pr *PetRepository) GetPetForUpdate(ctx context.Context, tx *sqlx.Tx, userI
 func (pr *PetRepository) UpdatePet(ctx context.Context, tx *sqlx.Tx, pet *domain.Pet) error {
 	query := `
 				UPDATE pets
-				SET satiety = $1, 
+				SET 
+					satiety = $1, 
 					happiness = $2, 
 					xp = $3, 
 					next_level_xp = $4, 
@@ -168,6 +170,19 @@ func (pr *PetRepository) UpdatePet(ctx context.Context, tx *sqlx.Tx, pet *domain
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update pet: %w", err)
+	}
+	log.Println("before upsert")
+	if pet.LastGainedXP > 0 {
+		query = `
+				INSERT INTO pets_daily_xp (pet_id, date, gained_xp)
+				VALUES ($1, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date, $2)
+				ON CONFLICT (pet_id, date)
+				DO UPDATE SET gained_xp = pets_daily_xp.gained_xp + EXCLUDED.gained_xp
+		`
+		_, err := tx.ExecContext(ctx, query, pet.ID, pet.LastGainedXP)
+		if err != nil {
+			return fmt.Errorf("failed to upsert last gained xp: %w", err)
+		}
 	}
 
 	return nil
@@ -211,4 +226,24 @@ func (pr *PetRepository) GetLeaderboardWithUser(ctx context.Context, limit int, 
 	}
 
 	return pets, nil
+}
+
+func (pr *PetRepository) GetDailyGainedXPByUserID(ctx context.Context, userID string) (int, error) {
+	query := `
+				SELECT COALESCE(pdx.gained_xp, 0)
+				FROM pets p
+				LEFT JOIN pets_daily_xp pdx
+				ON p.id = pdx.pet_id AND pdx.date = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date
+				WHERE p.user_id = $1
+	`
+	var gainedXP int
+	err := pr.db.GetContext(ctx, &gainedXP, query, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, domain.ErrPetNotFound
+		}
+		return 0, err
+	}
+
+	return gainedXP, nil
 }

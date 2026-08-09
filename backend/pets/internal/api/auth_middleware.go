@@ -2,12 +2,17 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type contextKey string
+
+var userIDKey contextKey = "user_id"
 
 func JwtMiddleware(secret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -48,8 +53,16 @@ func JwtMiddleware(secret string) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "user_id", userID)
+			ctx := context.WithValue(r.Context(), userIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func UserIDFromContext(ctx context.Context) (string, error) {
+	userID, ok := ctx.Value(userIDKey).(string)
+	if !ok {
+		return "", errors.New("bad context")
+	}
+	return userID, nil
 }

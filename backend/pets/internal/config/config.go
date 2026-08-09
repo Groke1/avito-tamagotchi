@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	HttpPort       string `env:"HTTP_PORT,required"`
+	HTTPPort       string `env:"HTTP_PORT,required"`
 	DatabaseURL    string `env:"DATABASE_URL,required"`
 	JwtSecret      string `env:"JWT_SECRET,required"`
 	UserServiceURL string `env:"USER_SERVICE_URL"`

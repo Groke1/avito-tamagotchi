@@ -17,6 +17,7 @@ func NewTicketManager() *TicketManager {
 
 func (tm *TicketManager) CreateTicket(userID string) (string, error) {
 	// TODO сделать более защищенную генерацию
+	//nolint:mnd // 16 случайных байтов
 	bytes := make([]byte, 16)
 	rand.Read(bytes)
 

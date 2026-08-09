@@ -18,6 +18,7 @@ type Pet struct {
 	LastCalculatedAt time.Time
 	LastFeedAt       time.Time
 	LastStrokeAt     time.Time
+	LastGainedXP     int
 }
 
 const (
@@ -31,15 +32,24 @@ const (
 	StrokeCooldown = 2 * time.Minute
 
 	FeedSatietyIncrease     = 5
-	StrokeHappinessIncrease = 5
+	StrokeHappinessIncrease = 3
 
-	FeedXPAmount   = 2
-	StrokeXPAmount = 3
+	FeedXPAmount   = 4
+	StrokeXPAmount = 10
 
 	FeedCost = 5
 
 	HungrySatietyThreshold  = 20
-	SadnessSatietyThreshold = 40
+	SadnessSatietyThreshold = 50
+
+	HappinessHighThreshold   = 60
+	HappinessMediumThreshold = 45
+	HappinessLowThreshold    = 20
+
+	XPHighMultiplier     = 1.0
+	XPMediumMultiplier   = 0.8
+	XPLowMultiplier      = 0.6
+	XPCriticalMultiplier = 0.5
 )
 
 func (p *Pet) Feed() (bool, int, error) {
@@ -51,7 +61,7 @@ func (p *Pet) Feed() (bool, int, error) {
 		}
 	}
 
-	p.Satiety = min(p.Satiety+5, MaxStatValue)
+	p.Satiety = min(p.Satiety+FeedSatietyIncrease, MaxStatValue)
 	levelUp := p.AddXP(FeedXPAmount)
 	p.LastFeedAt = time.Now()
 
@@ -59,27 +69,53 @@ func (p *Pet) Feed() (bool, int, error) {
 }
 
 func (p *Pet) Stroke() (bool, error) {
-	if p.Happiness >= MaxStatValue {
+	switch {
+	case p.Happiness >= MaxStatValue:
 		return false, ErrPetIsTooHappy
-	} else if p.Satiety < HungrySatietyThreshold {
+
+	case p.Satiety < HungrySatietyThreshold:
 		return false, ErrPetIsTooHungry // TODO frontend integration
-	} else if time.Since(p.LastStrokeAt) < StrokeCooldown {
+
+	case time.Since(p.LastStrokeAt) < StrokeCooldown:
 		return false, &ActionUnavailableError{
 			RetryAfter: StrokeCooldown - time.Since(p.LastStrokeAt),
 		}
 	}
 
-	p.Happiness = min(p.Happiness+5, MaxStatValue)
+	p.Happiness = min(p.Happiness+StrokeHappinessIncrease, MaxStatValue)
 	levelUp := p.AddXP(StrokeXPAmount)
 	p.LastStrokeAt = time.Now()
 
 	return levelUp, nil
 }
 
-func (p *Pet) AddXP(amount int) bool {
+func (p *Pet) xpMultiplier() float64 {
+	switch {
+	case p.Happiness >= HappinessHighThreshold:
+		return XPHighMultiplier
+
+	case p.Happiness >= HappinessMediumThreshold:
+		return XPMediumMultiplier
+
+	case p.Happiness >= HappinessLowThreshold:
+		return XPLowMultiplier
+
+	default:
+		return XPCriticalMultiplier
+	}
+}
+
+func (p *Pet) computeXP(amount int) int {
+	return int(float64(amount) * p.xpMultiplier())
+}
+
+func (p *Pet) AddXP(baseAmount int) bool {
+	amount := p.computeXP(baseAmount)
+
 	p.XP += amount
+	p.LastGainedXP = amount
 	if p.XP >= p.NextLevelXP {
-		p.Level += 1
+		p.Level++
 		p.NextLevelXP *= p.Level * p.Level
 		return true
 	}
