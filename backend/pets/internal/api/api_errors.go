@@ -55,6 +55,6 @@ var (
 	ErrInternalError = HTTPError{
 		StatusCode: http.StatusInternalServerError,
 		Code:       "INTERNAL_ERROR",
-		Message:    "Внутренняя ошибка сервер",
+		Message:    "Внутренняя ошибка сервере",
 	}
 )

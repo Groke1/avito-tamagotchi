@@ -16,3 +16,7 @@ func NewLevelPolicy() *LevelPolicy {
 		},
 	}
 }
+
+func (lp *LevelPolicy) GetCode(level int) string {
+	return lp.configs[level]
+}

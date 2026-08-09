@@ -17,7 +17,7 @@ func NewWSHandler(client *websocket.ClientManager, ticketManager *websocket.Tick
 	return &WSHandler{client: client, ticketManager: ticketManager, service: petService}
 }
 
-func (wsh *WSHandler) CreateTicket(w http.ResponseWriter, r *http.Request) {
+func (wsh *WSHandler) CreateWSTicket(w http.ResponseWriter, r *http.Request) {
 	userID, err := UserIDFromContext(r.Context())
 	if err != nil {
 		writeError(w, ErrUnauthorized)

@@ -103,3 +103,72 @@ func (uc *UserClient) GetUsernamesByIDs(ctx context.Context, userIDs []string) (
 
 	return userMap, nil
 }
+
+func (uc *UserClient) ClaimReward(ctx context.Context, userID string, code string) (*domain.Reward, error) {
+	url := uc.baseURL + "/rewards"
+
+	body, _ := json.Marshal(struct {
+		UserID string `json:"user_id"`
+		Code   string `json:"code"`
+	}{
+		UserID: userID,
+		Code:   code,
+	})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := uc.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var rewardResponse RewardResponse
+	if err := json.NewDecoder(resp.Body).Decode(&rewardResponse); err != nil {
+		return nil, err
+	}
+
+	reward := &domain.Reward{
+		ID:          rewardResponse.RewardID,
+		PromoCode:   rewardResponse.PromoCode,
+		Name:        rewardResponse.Name,
+		Description: rewardResponse.Description,
+		Status:      rewardResponse.Status,
+		ExpiresAt:   rewardResponse.ExpiresAt,
+		RedeemedAt:  rewardResponse.RedeemedAt,
+	}
+
+	return reward, nil
+}
+
+func (uc *UserClient) GetRewardDescription(ctx context.Context, code string) (*domain.Reward, error) {
+	url := fmt.Sprintf("%s/rewards/%s", uc.baseURL, code)
+
+	body, _ := json.Marshal(struct{}{})
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := uc.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var rewardResponse RewardDescriptionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&rewardResponse); err != nil {
+		return nil, err
+	}
+
+	reward := &domain.Reward{
+		PromoCode:   rewardResponse.Code,
+		Name:        rewardResponse.Name,
+		Description: rewardResponse.Description,
+	}
+
+	return reward, nil
+}

@@ -1,9 +1,10 @@
 openapi: 3.0.3
+
 info:
-  title: User Service API
+  title: Pets Service API
   version: 1.0.0
   description: |
-    API микросервиса пользователей.
+    API микросервиса, отвечающего за питомцев.
 
 tags:
   - name: Internal
@@ -44,15 +45,86 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: INTERNAL_ERROR
-                message: Внутренняя ошибка сервер
+                message: Внутренняя ошибка сервера
+
+  /internal/daily-gained-xp:
+    get:
+      summary: Получение ежедневного опыта
+      description: Возвращает количество опыта, полученного пользователем за текущий день
+      tags:
+        - Internal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyGainedXPRequest'
+      responses:
+        '200':
+          description: Количество полученного опыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyGainedXPResponse'
+              example:
+                daily_gained_xp: 50
+
+        '422':
+          description: Ошибка валидации входных данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: VALIDATION_ERROR
+                message: Проверьте переданные данные
+
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервера
+
   /internal/update-xp:
     put:
-      tags: 
-        - Internal
       summary: Начисление опыта за задание
-      responses: 
-        '200':
-          description: Бонус успешно начислен
+      description: Начисляет пользователю указанный объём опыта за выполнение задания
+      tags:
+        - Internal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateXPRequest'
+      responses:
+        '204':
+          description: Опыт успешно начислен
+
+        '422':
+          description: Ошибка валидации входных данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: VALIDATION_ERROR
+                message: Проверьте переданные данные
+
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервера
+
 components:
   schemas:
     DailyBonusRequest:
@@ -64,11 +136,46 @@ components:
         user_id:
           type: string
           description: Идентификатор пользователя
-          example: "12345"
+          example: "e624c6ef-5289-4086-8c4d-3f4de5bbac6e"
         streak:
           type: integer
           description: Текущая серия дней
           example: 7
+
+    DailyGainedXPRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          description: Идентификатор пользователя
+          example: "e624c6ef-5289-4086-8c4d-3f4de5bbac6e"
+
+    DailyGainedXPResponse:
+      type: object
+      required:
+        - daily_gained_xp
+      properties:
+        daily_gained_xp:
+          type: integer
+          description: Количество опыта, полученного за текущий день
+          example: 50
+
+    UpdateXPRequest:
+      type: object
+      required:
+        - user_id
+        - xp
+      properties:
+        user_id:
+          type: string
+          description: Идентификатор пользователя
+          example: "e624c6ef-5289-4086-8c4d-3f4de5bbac6e"
+        xp:
+          type: integer
+          description: Количество начисляемого опыта
+          example: 100
 
     ErrorResponse:
       type: object

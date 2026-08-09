@@ -15,11 +15,18 @@ type PetResponse struct {
 	Happiness   int    `json:"happiness"`
 }
 
+type RewardDescriptionResponse struct {
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 type LeaderboardItemResponse struct {
 	Rank     int    `json:"rank"`
 	UserName string `json:"user_name"`
 	PetName  string `json:"pet_name"`
 	Level    int    `json:"level"`
+	XP       int    `json:"xp"`
 }
 
 type LeaderboardResponse struct {
