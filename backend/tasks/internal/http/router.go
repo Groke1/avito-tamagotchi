@@ -26,12 +26,8 @@ func NewRouter(handlers *Handlers, jwtSecret []byte) *gin.Engine {
 		}
 	}
 	internal := r.Group("/internal")
-	internal.Use(AuthMiddleware(jwtSecret))
 	{
-		t2 := internal.Group("/tasks")
-		{
-			t2.GET("/", handlers.GetTodayTasksForInternal)
-		}
+		internal.GET("/tasks/:user_id", handlers.GetTodayTasksForInternal)
 	}
 	return r
 }
