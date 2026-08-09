@@ -164,9 +164,16 @@ FROM users.reward_definitions
 WHERE code = $1
 `
 
-func (q *Queries) GetRewardDefinitionByCode(ctx context.Context, code string) (UsersRewardDefinition, error) {
+type GetRewardDefinitionByCodeRow struct {
+	ID          int32  `json:"id"`
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) GetRewardDefinitionByCode(ctx context.Context, code string) (GetRewardDefinitionByCodeRow, error) {
 	row := q.db.QueryRow(ctx, getRewardDefinitionByCode, code)
-	var i UsersRewardDefinition
+	var i GetRewardDefinitionByCodeRow
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
@@ -182,15 +189,22 @@ SELECT
 FROM users.reward_definitions
 `
 
-func (q *Queries) GetRewardDefinitions(ctx context.Context) ([]UsersRewardDefinition, error) {
+type GetRewardDefinitionsRow struct {
+	ID          int32  `json:"id"`
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) GetRewardDefinitions(ctx context.Context) ([]GetRewardDefinitionsRow, error) {
 	rows, err := q.db.Query(ctx, getRewardDefinitions)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UsersRewardDefinition
+	var items []GetRewardDefinitionsRow
 	for rows.Next() {
-		var i UsersRewardDefinition
+		var i GetRewardDefinitionsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Code,
@@ -213,7 +227,7 @@ SELECT
     ur.promo_code, rd.name,
     rd.description, ur.status,
     ur.created_at, ur.redeemed_at,
-    ur.expires_at
+    ur.expires_at, rd.earned_description, rd.redeemed_description
 FROM users.user_rewards AS ur
          JOIN users.reward_definitions AS rd
               ON rd.id = ur.reward_id
@@ -242,15 +256,17 @@ type GetRewardsByUserIDAndPeriodParams struct {
 }
 
 type GetRewardsByUserIDAndPeriodRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      pgtype.UUID        `json:"user_id"`
-	PromoCode   string             `json:"promo_code"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Status      UsersRewardStatus  `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	RedeemedAt  pgtype.Timestamptz `json:"redeemed_at"`
-	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+	ID                  pgtype.UUID        `json:"id"`
+	UserID              pgtype.UUID        `json:"user_id"`
+	PromoCode           string             `json:"promo_code"`
+	Name                string             `json:"name"`
+	Description         string             `json:"description"`
+	Status              UsersRewardStatus  `json:"status"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	RedeemedAt          pgtype.Timestamptz `json:"redeemed_at"`
+	ExpiresAt           pgtype.Timestamptz `json:"expires_at"`
+	EarnedDescription   string             `json:"earned_description"`
+	RedeemedDescription string             `json:"redeemed_description"`
 }
 
 func (q *Queries) GetRewardsByUserIDAndPeriod(ctx context.Context, arg GetRewardsByUserIDAndPeriodParams) ([]GetRewardsByUserIDAndPeriodRow, error) {
@@ -272,6 +288,8 @@ func (q *Queries) GetRewardsByUserIDAndPeriod(ctx context.Context, arg GetReward
 			&i.CreatedAt,
 			&i.RedeemedAt,
 			&i.ExpiresAt,
+			&i.EarnedDescription,
+			&i.RedeemedDescription,
 		); err != nil {
 			return nil, err
 		}
