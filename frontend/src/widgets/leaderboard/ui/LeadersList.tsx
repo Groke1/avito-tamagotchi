@@ -1,6 +1,6 @@
 import { LeaderItem, type LeaderboardItem } from '@/entities/leaderboard'
-import { Skeleton } from '@/shared/ui'
 import type { FC } from 'react'
+import { LeadersListSkeleton } from './LeadersListSkeleton'
 
 export interface LeadersListProps {
   leaders?: LeaderboardItem[]
@@ -16,23 +16,7 @@ export const LeadersList: FC<LeadersListProps> = ({
   isLoading,
 }) => {
   if (isLoading) {
-    return (
-      <div className="space-y-3 mt-6">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} className="flex items-center justify-between py-3 px-4">
-            <div className="flex items-center gap-4">
-              <Skeleton className="w-8 h-8 rounded-full" />
-              <Skeleton className="size-12 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-32 rounded-md" />
-                <Skeleton className="h-4 w-24 rounded-md" />
-              </div>
-            </div>
-            <Skeleton className="h-6 w-16 rounded-md" />
-          </div>
-        ))}
-      </div>
-    )
+    return <LeadersListSkeleton count={10} />
   }
 
   return (
@@ -47,7 +31,7 @@ export const LeadersList: FC<LeadersListProps> = ({
           <LeaderItem
             key={`${leader.rank}-${leader.user_name}`}
             leader={leader}
-            isCurrentUser={!!isCurrent}
+            isCurrentUser={Boolean(isCurrent)}
           />
         )
       })}
