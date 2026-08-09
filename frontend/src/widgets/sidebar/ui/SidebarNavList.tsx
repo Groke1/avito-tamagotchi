@@ -1,6 +1,6 @@
 import { ROUTES_PATHS } from '@/shared/config'
 import { cn } from '@/shared/lib/utils'
-import { Award, CalendarCheck, CheckSquare, Gift, Home, ShoppingBag } from 'lucide-react'
+import { Award, CalendarCheck, CheckSquare, Gift, Home } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 const NAV_LIST = [
@@ -13,11 +13,6 @@ const NAV_LIST = [
     label: 'Задания',
     icon: CheckSquare,
     link: ROUTES_PATHS.TASKS,
-  },
-  {
-    label: 'Магазин наград',
-    icon: ShoppingBag,
-    link: ROUTES_PATHS.SHOP,
   },
   {
     label: 'Мои награды',
