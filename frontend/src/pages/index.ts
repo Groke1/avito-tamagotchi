@@ -4,3 +4,5 @@ export { CreatePet } from './CreatePet'
 export { Dashboard } from './Dashboard'
 export { Tasks } from './Tasks'
 export { Rewards } from './Rewards'
+export { Leaderboard } from './Leaderboard'
+
