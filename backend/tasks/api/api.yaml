@@ -11,6 +11,8 @@ servers:
 tags:
   - name: Tasks
     description: Работа с задачами пользователя
+  - name: Internal Tasks
+    description: Внутренние методы для работы с задачами
 
 security:
   - BearerAuth: []
@@ -37,6 +39,7 @@ paths:
                   - id: "3fa8f58f-a237-4fce-9a35-c027ce4e0de1"
                     title: "Обнови объявление"
                     description: "Актуализируй информацию в своём объявлении"
+                    finished_desc: "Информация в объявлении актуализирована"
                     reward_coins: 50
                     reward_xp: 200
                     status: "active"
@@ -46,6 +49,7 @@ paths:
                   - id: "75ced52a-539c-4304-afd5-5140b268da3f"
                     title: "Начни продавать"
                     description: "Опубликуй новое объявление"
+                    finished_desc: "Новое объявление опубликовано"
                     reward_coins: 80
                     reward_xp: 400
                     status: "active"
@@ -55,6 +59,7 @@ paths:
                   - id: "609b15b5-417b-498d-8eb2-b696d1f8f6a7"
                     title: "Закажи с доставкой"
                     description: "Оформи заказ с Авито Доставкой"
+                    finished_desc: "Заказ с Авито Доставкой оформлен"
                     reward_coins: 100
                     reward_xp: 500
                     status: "active"
@@ -89,6 +94,7 @@ paths:
                 id: "609b15b5-417b-498d-8eb2-b696d1f8f6a7"
                 title: "Закажи с доставкой"
                 description: "Оформи заказ с Авито Доставкой"
+                finished_desc: "Заказ с Авито Доставкой оформлен"
                 reward_coins: 100
                 reward_xp: 500
                 status: "active"
@@ -108,7 +114,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
   /tasks/{task_id}/complete:
-    post:
+    put:
       tags:
         - Tasks
       summary: Завершить задачу
@@ -132,6 +138,7 @@ paths:
                   id: "609b15b5-417b-498d-8eb2-b696d1f8f6a7"
                   title: "Закажи с доставкой"
                   description: "Оформи заказ с Авито Доставкой"
+                  finished_desc: "Заказ с Авито Доставкой оформлен"
                   reward_coins: 100
                   reward_xp: 500
                   status: "completed"
@@ -156,6 +163,45 @@ paths:
 
         "409":
           $ref: "#/components/responses/TaskCompletionConflict"
+
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /internal/tasks/:
+    get:
+      tags:
+        - Internal Tasks
+      summary: Получить выполненные сегодня задачи пользователя
+      description: Возвращает задачи, выполненные текущим авторизованным пользователем сегодня.
+      operationId: getTodayCompletedTasksForInternal
+      servers:
+        - url: http://localhost:8081
+
+      responses:
+        "200":
+          description: Выполненные задачи успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetCompletedTasksResponse"
+              example:
+                user_id: "133b156c-bfce-41af-b522-94d01a1aecff"
+                items:
+                  - id: "609b15b5-417b-498d-8eb2-b696d1f8f6a7"
+                    title: "Закажи с доставкой"
+                    description: "Оформи заказ с Авито Доставкой"
+                    finished_desc: "Заказ с Авито Доставкой оформлен"
+                    reward_coins: 100
+                    reward_xp: 500
+                    status: "completed"
+                    completed_at: "2026-08-09T09:30:00Z"
+                    task_type: "Доставка"
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
         "500":
           $ref: "#/components/responses/InternalServerError"
@@ -207,6 +253,7 @@ components:
         - reward_xp
         - status
         - task_type
+        - finished_desc
 
       properties:
         id:
@@ -246,16 +293,45 @@ components:
           nullable: true
           example: null
 
+        finished_desc:
+          type: string
+          description: Описание выполненной задачи
+          example: "Заказ с Авито Доставкой оформлен"
+
         task_type:
           type: string
+          maxLength: 25
+          description: Раздел продукта, к которому относится задача
           enum:
-            - Ежедневное
+            - Избранное
+            - Поиск
+            - Категории
+            - Сообщения
             - Автотека
             - Доставка
             - Продажи
             - Отзывы
             - Покупки
           example: "Доставка"
+
+
+    GetCompletedTasksResponse:
+      type: object
+      required:
+        - user_id
+        - items
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: UUID текущего пользователя
+          example: "133b156c-bfce-41af-b522-94d01a1aecff"
+
+        items:
+          type: array
+          description: Задачи, выполненные пользователем сегодня
+          items:
+            $ref: "#/components/schemas/UserTask"
 
     CompleteTaskResponse:
       type: object

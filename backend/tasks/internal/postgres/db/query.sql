@@ -26,7 +26,14 @@ SELECT
 
 -- name: CreateUserTasksBatch :many
 WITH existing_tasks AS (
-    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, t.task_type, ut.status, ut.completed_at
+    SELECT t.id, 
+    t.title, 
+    t.description, 
+    t.reward_coins, 
+    t.reward_xp,
+    t.task_type,
+    ut.status,
+    ut.completed_at
     FROM user_tasks ut
     JOIN tasks t ON t.id = ut.task_id 
     WHERE ut.user_id = sqlc.arg(user_id)::uuid
@@ -60,3 +67,16 @@ VALUES ($1, $2, 'completed', $3, NOW());
 UPDATE user_tasks
 SET status = 'completed', completed_at = NOW(), updated_at = NOW()
 WHERE user_id = $1 AND task_id = $2;
+
+-- name: GetTodayCompletedTasksForUser :many
+SELECT 
+    t.id,
+    t.title,
+    t.reward_coins,
+    t.reward_xp,
+    t.finished_desc,
+    ut.updated_at 
+FROM user_tasks ut
+join tasks t on t.id = ut.task_id 
+WHERE ut.user_id = $1 AND ut.updated_at >= CURRENT_DATE AND 
+ut.updated_at < CURRENT_DATE + INTERVAL '1 day' AND ut.status = 'completed';

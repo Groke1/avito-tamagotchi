@@ -13,7 +13,14 @@ import (
 
 const createUserTasksBatch = `-- name: CreateUserTasksBatch :many
 WITH existing_tasks AS (
-    SELECT t.id, t.title, t.description, t.reward_coins, t.reward_xp, t.task_type, ut.status, ut.completed_at
+    SELECT t.id, 
+    t.title, 
+    t.description, 
+    t.reward_coins, 
+    t.reward_xp,
+    t.task_type,
+    ut.status,
+    ut.completed_at
     FROM user_tasks ut
     JOIN tasks t ON t.id = ut.task_id 
     WHERE ut.user_id = $1::uuid
@@ -155,6 +162,56 @@ func (q *Queries) GetTaskByID(ctx context.Context, dollar_1 pgtype.UUID) (GetTas
 		&i.TaskType,
 	)
 	return i, err
+}
+
+const getTodayCompletedTasksForUser = `-- name: GetTodayCompletedTasksForUser :many
+SELECT 
+    t.id,
+    t.title,
+    t.reward_coins,
+    t.reward_xp,
+    t.finished_desc,
+    ut.updated_at 
+FROM user_tasks ut
+join tasks t on t.id = ut.task_id 
+WHERE ut.user_id = $1 AND ut.updated_at >= CURRENT_DATE AND 
+ut.updated_at < CURRENT_DATE + INTERVAL '1 day' AND ut.status = 'completed'
+`
+
+type GetTodayCompletedTasksForUserRow struct {
+	ID           pgtype.UUID        `json:"id"`
+	Title        string             `json:"title"`
+	RewardCoins  int32              `json:"reward_coins"`
+	RewardXp     int64              `json:"reward_xp"`
+	FinishedDesc string             `json:"finished_desc"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetTodayCompletedTasksForUser(ctx context.Context, userID pgtype.UUID) ([]GetTodayCompletedTasksForUserRow, error) {
+	rows, err := q.db.Query(ctx, getTodayCompletedTasksForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTodayCompletedTasksForUserRow
+	for rows.Next() {
+		var i GetTodayCompletedTasksForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.RewardCoins,
+			&i.RewardXp,
+			&i.FinishedDesc,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserTaskForUpdate = `-- name: GetUserTaskForUpdate :one

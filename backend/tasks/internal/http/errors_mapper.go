@@ -75,7 +75,6 @@ func mapError(err error) ErrorDTO {
 		err_name = controller.ErrInternal.Error()
 		message = "Внутренняя ошибка сервера"
 	}
-
 	return ErrorDTO{
 		Status:  status,
 		ErrName: err_name,

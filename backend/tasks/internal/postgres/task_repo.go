@@ -18,12 +18,14 @@ import (
 )
 
 type TaskRepository struct {
-	pool *pgxpool.Pool
+	pool    *pgxpool.Pool
+	queries *sqlctask.Queries
 }
 
 func NewTaskRepository(pool *pgxpool.Pool) *TaskRepository {
 	return &TaskRepository{
-		pool: pool,
+		pool:    pool,
+		queries: sqlctask.New(pool),
 	}
 }
 
@@ -179,6 +181,18 @@ func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr 
 		Status:      entity.StatusCompleted,
 		CompletedAt: &now,
 	}, nil
+}
+
+func (r *TaskRepository) ListCompletedToday(ctx context.Context, userIDStr string) ([]sqlctask.GetTodayCompletedTasksForUserRow, error) {
+	userId, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id: %w", entity.ErrInvalidID)
+	}
+	rows, err := r.queries.GetTodayCompletedTasksForUser(ctx, pgtype.UUID{Bytes: userId, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("list completed today: %w", err)
+	}
+	return rows, nil
 }
 
 func (r *TaskRepository) querier(ctx context.Context) *sqlctask.Queries {

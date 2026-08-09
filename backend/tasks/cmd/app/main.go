@@ -56,6 +56,7 @@ func main() {
 		controller.NewGetTaskHandler(repo),
 		controller.NewGetTodayTasksHandler(repo),
 		controller.NewCompleteTaskHandler(repo, userClient, petClient, transactor),
+		controller.NewGetCompletedTasksHandler(repo),
 	)
 	router := taskhttp.NewRouter(handlers, []byte(jwtSecret))
 	handler := middleware.CorsHandler(router)

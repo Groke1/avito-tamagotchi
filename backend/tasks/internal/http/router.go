@@ -20,7 +20,15 @@ func NewRouter(handlers *Handlers, jwtSecret []byte) *gin.Engine {
 		{
 			tasks.GET("", handlers.GetTodayTasks)
 			tasks.GET("/:task_id", handlers.GetTask)
-			tasks.POST("/:task_id/complete", handlers.CompleteTask)
+			tasks.PUT("/:task_id/complete", handlers.CompleteTask)
+		}
+	}
+	internal := r.Group("/internal")
+	internal.Use(AuthMiddleware(jwtSecret))
+	{
+		t2 := internal.Group("/tasks")
+		{
+			t2.GET("/", handlers.GetTodayTasksForInternal)
 		}
 	}
 	return r

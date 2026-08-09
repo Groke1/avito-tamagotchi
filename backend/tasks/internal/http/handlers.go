@@ -11,20 +11,23 @@ import (
 )
 
 type Handlers struct {
-	getTaskHandler       *controller.GetTaskHandler
-	getTodayTasksHandler *controller.GetTodayTasksHandler
-	completeTaskHandler  *controller.CompleteTaskHandler
+	getTaskHandler           *controller.GetTaskHandler
+	getTodayTasksHandler     *controller.GetTodayTasksHandler
+	completeTaskHandler      *controller.CompleteTaskHandler
+	getCompletedTasksHandler *controller.GetCompletedTasksHandler
 }
 
 func NewHandlers(
 	getTaskHandler *controller.GetTaskHandler,
 	getTodayTasksHandler *controller.GetTodayTasksHandler,
 	completeTaskHandler *controller.CompleteTaskHandler,
+	getCompletedTasksHandler *controller.GetCompletedTasksHandler,
 ) *Handlers {
 	return &Handlers{
-		getTaskHandler:       getTaskHandler,
-		getTodayTasksHandler: getTodayTasksHandler,
-		completeTaskHandler:  completeTaskHandler,
+		getTaskHandler:           getTaskHandler,
+		getTodayTasksHandler:     getTodayTasksHandler,
+		completeTaskHandler:      completeTaskHandler,
+		getCompletedTasksHandler: getCompletedTasksHandler,
 	}
 }
 
@@ -89,5 +92,20 @@ func (h *Handlers) CompleteTask(con *gin.Context) {
 		return
 	}
 
+	con.JSON(http.StatusOK, result)
+}
+
+func (h *Handlers) GetTodayTasksForInternal(con *gin.Context) {
+	userID, _ := con.Get("userID")
+	uid, _ := userID.(string)
+	if uid == "" {
+		SendError(con, controller.ErrUnauthorized)
+		return
+	}
+	result, err := h.getCompletedTasksHandler.Handle(con.Request.Context(), controller.GetCompletedTasksQuery{UserID: uid})
+	if err != nil {
+		SendError(con, err)
+		return
+	}
 	con.JSON(http.StatusOK, result)
 }

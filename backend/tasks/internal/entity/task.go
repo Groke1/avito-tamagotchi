@@ -15,6 +15,7 @@ var (
 	ErrTaskAlreadyCompleted = errors.New("TASK ALREADY COMPLETED")
 	ErrInvalidTaskType      = errors.New("TASK TYPE IS REQUIRED")
 	ErrUserNotFound         = errors.New("USER NOT FOUND")
+	ErrNoCompletedTasks     = errors.New("NO COMPLETED TASKS")
 )
 
 type Status string
