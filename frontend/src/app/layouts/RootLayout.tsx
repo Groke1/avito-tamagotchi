@@ -1,7 +1,7 @@
 import { useGetPetQuery } from '@/entities/pet'
 import { useWebSocket } from '@/shared/lib/websocket/useWebSocket'
 import { useAppSelector } from '@/shared/model'
-import { Sidebar } from '@/widgets/sidebar'
+import { MobileNav, Sidebar } from '@/widgets/sidebar'
 import { Outlet } from 'react-router-dom'
 
 export const RootLayout = () => {
@@ -10,11 +10,12 @@ export const RootLayout = () => {
   useWebSocket()
 
   return (
-    <div className="flex min-h-screen">
-      <div className="shrink-0 basis-64">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-surface-bg">
+      <MobileNav />
+      <div className="hidden lg:block shrink-0 basis-64">
         <Sidebar />
       </div>
-      <main className="flex-1 overflow-hidden min-w-0 px-8 py-6">
+      <main className="flex-1 min-w-0 px-4 py-5 pb-24 lg:px-8 lg:py-6 lg:pb-8">
         <Outlet />
       </main>
     </div>

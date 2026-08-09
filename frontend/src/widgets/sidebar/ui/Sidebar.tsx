@@ -9,7 +9,7 @@ export const Sidebar = () => {
   const { handleFeed, isFeedLoading } = useHandleFeed()
 
   return (
-    <aside className="flex flex-col gap-6 bg-surface-lowest px-4 py-6 rounded-r-section shadow-level-1 h-screen sticky top-0 overflow-hidden">
+    <aside className="hidden lg:flex flex-col gap-6 bg-surface-lowest px-4 py-6 rounded-r-section shadow-level-1 h-screen sticky top-0 overflow-hidden">
       <h1 className="flex items-center gap-1.5 px-1 mb-2">
         <span className="text-4xl font-black tracking-tight text-avito-green">Авито</span>
         <span className="bg-avito-blue/15 text-avito-blue px-2.5 py-0.5 rounded-lg text-sm font-semibold">
