@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
+	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/controller"
 )
 
 var (
@@ -34,7 +34,7 @@ func NewPetServiceClient(baseURL string) *PetServiceClient {
 
 func (c *PetServiceClient) UpdateXP(
 	ctx context.Context,
-	reqBody entity.UpdateXPRequest,
+	reqBody controller.UpdateXPRequest,
 ) error {
 	url := c.baseURL + "/internal/update-xp"
 

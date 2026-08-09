@@ -11,36 +11,15 @@ import (
 
 type (
 	coinsClient interface {
-		UpdateCoins(ctx context.Context, req entity.UpdateCoinsRequest) (*entity.UpdateCoinsResponse, error)
+		UpdateCoins(ctx context.Context, req UpdateCoinsRequest) (*UpdateCoinsResponse, error)
 	}
 	xpClient interface {
-		UpdateXP(ctx context.Context, req entity.UpdateXPRequest) error
+		UpdateXP(ctx context.Context, req UpdateXPRequest) error
 	}
 	transactor interface {
 		WithTx(ctx context.Context, f func(ctx context.Context) error) error
 	}
 )
-
-type (
-	CompleteTaskQuery struct {
-		TaskID string
-		UserID string
-	}
-)
-type AwardedDTO struct {
-	Coins int   `json:"coins"`
-	XP    int64 `json:"xp"`
-}
-type BalanceDTO struct {
-	Coins int64 `json:"coins"`
-}
-
-type CompleteTaskResponse struct {
-	Task    TaskDTO     `json:"task"`
-	Awarded AwardedDTO  `json:"awarded"`
-	Balance *BalanceDTO `json:"balance"`
-	// TODO: here must be also a PetDTO, but they are not implemented yet
-}
 
 type CompleteTaskHandler struct {
 	taskRepo    *postgres.TaskRepository
@@ -60,28 +39,26 @@ func NewCompleteTaskHandler(repo *postgres.TaskRepository, coinsClient coinsClie
 
 func (h *CompleteTaskHandler) Handle(ctx context.Context, query CompleteTaskQuery) (*CompleteTaskResponse, error) {
 	var resp *CompleteTaskResponse
-
 	err := h.transactor.WithTx(ctx, func(ctx context.Context) error {
 		completedTask, err := h.taskRepo.CompleteTask(ctx, query.UserID, query.TaskID)
 		if err != nil {
-			fmt.Println(err.Error())
 			return err
 		}
-		coinsResp, err := h.coinsClient.UpdateCoins(ctx, entity.UpdateCoinsRequest{
+
+		coinsResp, err := h.coinsClient.UpdateCoins(ctx, UpdateCoinsRequest{
 			UserID: query.UserID,
 			Delta:  completedTask.Task.RewardCoins,
 		})
 		if err != nil {
-			fmt.Println(err.Error())
-			return fmt.Errorf("update coins: %w", err)
+			return fmt.Errorf("update coins: %w", ErrUserServiceUnavailable)
 		}
-		err = h.xpClient.UpdateXP(ctx, entity.UpdateXPRequest{
+
+		err = h.xpClient.UpdateXP(ctx, UpdateXPRequest{
 			UserID: query.UserID,
 			XP:     int(completedTask.Task.RewardXP),
 		})
 		if err != nil {
-			fmt.Println(err.Error())
-			return fmt.Errorf("update xp: %w", err)
+			return fmt.Errorf("update xp: %w", ErrPetServiceUnavailable)
 		}
 
 		completedAt := completedTask.CompletedAt
@@ -109,7 +86,6 @@ func (h *CompleteTaskHandler) Handle(ctx context.Context, query CompleteTaskQuer
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

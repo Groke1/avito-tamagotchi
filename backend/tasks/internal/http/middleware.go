@@ -5,25 +5,13 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
-	"net/http"
+
 	"strings"
 	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/controller"
 	"github.com/gin-gonic/gin"
 )
-
-type ErrorResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-func sendError(c *gin.Context, status int, code string, message string) {
-	c.JSON(status, ErrorResponse{
-		Code:    code,
-		Message: message,
-	})
-}
 
 type accessTokenClaims struct {
 	Sub string `json:"sub"`
@@ -36,38 +24,18 @@ type jwtHeader struct {
 	Typ string `json:"typ"`
 }
 
-var (
-	errInvalidToken = errors.New("invalid token")
-	errExpiredToken = errors.New("token expired")
-)
-
 func AuthMiddleware(jwtSecret []byte) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := bearerToken(c.GetHeader("Authorization"))
 		if err != nil {
-			sendError(
-				c,
-				http.StatusUnauthorized,
-				"UNAUTHORIZED",
-				"Невалидный токен авторизации",
-			)
+			SendError(c, err)
 			c.Abort()
 			return
 		}
 
 		claims, err := parseAccessToken(token, jwtSecret)
 		if err != nil {
-			message := "Невалидный токен авторизации"
-			if errors.Is(err, errExpiredToken) {
-				message = "Срок действия токена истёк"
-			}
-
-			sendError(
-				c,
-				http.StatusUnauthorized,
-				"UNAUTHORIZED",
-				message,
-			)
+			SendError(c, err)
 			c.Abort()
 			return
 		}
@@ -76,17 +44,16 @@ func AuthMiddleware(jwtSecret []byte) gin.HandlerFunc {
 		c.Next()
 	}
 }
-
 func bearerToken(authHeader string) (string, error) {
 	if authHeader == "" {
-		return "", errInvalidToken
+		return "", controller.ErrInvalidToken
 	}
 
 	parts := strings.Fields(authHeader)
 	if len(parts) != 2 ||
 		!strings.EqualFold(parts[0], "Bearer") ||
 		parts[1] == "" {
-		return "", errInvalidToken
+		return "", controller.ErrInvalidToken
 	}
 
 	return parts[1], nil
@@ -94,12 +61,12 @@ func bearerToken(authHeader string) (string, error) {
 
 func parseAccessToken(token string, secret []byte) (*accessTokenClaims, error) {
 	if len(secret) == 0 {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	encodedHeader := parts[0]
@@ -108,61 +75,61 @@ func parseAccessToken(token string, secret []byte) (*accessTokenClaims, error) {
 
 	headerBytes, err := base64.RawURLEncoding.DecodeString(encodedHeader)
 	if err != nil {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	var header jwtHeader
 	if err := json.Unmarshal(headerBytes, &header); err != nil {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	if header.Alg != "HS256" || header.Typ != "JWT" {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	signingInput := encodedHeader + "." + encodedPayload
 	expectedSignature := signJWT(signingInput, secret)
 	actualSignature, err := base64.RawURLEncoding.DecodeString(encodedSignature)
 	if err != nil {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	expectedSignatureBytes, err := base64.RawURLEncoding.DecodeString(expectedSignature)
 	if err != nil {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	if !hmac.Equal(actualSignature, expectedSignatureBytes) {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	payloadBytes, err := base64.RawURLEncoding.DecodeString(encodedPayload)
 	if err != nil {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	var claims accessTokenClaims
 	if err := json.Unmarshal(payloadBytes, &claims); err != nil {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	if claims.Sub == "" || claims.Exp == 0 || claims.Iat == 0 {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	now := time.Now().UTC().Unix()
 
 	if claims.Exp <= now {
-		return nil, errExpiredToken
+		return nil, controller.ErrExpiredToken
 	}
 
 	const allowedClockSkew = 30 * time.Second
 	if claims.Iat > now+int64(allowedClockSkew.Seconds()) {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 
 	if claims.Exp <= claims.Iat {
-		return nil, errInvalidToken
+		return nil, controller.ErrInvalidToken
 	}
 	return &claims, nil
 }

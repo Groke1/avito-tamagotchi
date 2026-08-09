@@ -6,13 +6,15 @@ import (
 )
 
 var (
-	ErrInvalidTitle         = errors.New("title is required")
-	ErrInvalidDescription   = errors.New("description is required")
-	ErrInvalidRewardCoins   = errors.New("coins must be nonnegative")
-	ErrInvalidRewardXP      = errors.New("xp must be nonnegative")
-	ErrTaskNotFound         = errors.New("task not found")
-	ErrTaskAlreadyCompleted = errors.New("task already completed")
-	ErrInvalidTaskType      = errors.New("task type is required")
+	ErrInvalidID            = errors.New("INVALID ID")
+	ErrInvalidTitle         = errors.New("TITLE IS REQUIRED")
+	ErrInvalidDescription   = errors.New("DESCRIPTION IS REQUIRED")
+	ErrInvalidRewardCoins   = errors.New("COINS MUST BE NONNEGATIVE")
+	ErrInvalidRewardXP      = errors.New("XP MUST BE NONNEGATIVE")
+	ErrTaskNotFound         = errors.New("TASK NOT FOUND")
+	ErrTaskAlreadyCompleted = errors.New("TASK ALREADY COMPLETED")
+	ErrInvalidTaskType      = errors.New("TASK TYPE IS REQUIRED")
+	ErrUserNotFound         = errors.New("USER NOT FOUND")
 )
 
 type Status string

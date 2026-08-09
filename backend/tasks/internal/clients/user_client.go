@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
+	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/controller"
 )
 
 var (
@@ -34,7 +34,7 @@ func NewUserServiceClient(baseURL string) *UserServiceClient {
 	}
 }
 
-func (c *UserServiceClient) UpdateCoins(ctx context.Context, reqBody entity.UpdateCoinsRequest) (*entity.UpdateCoinsResponse, error) {
+func (c *UserServiceClient) UpdateCoins(ctx context.Context, reqBody controller.UpdateCoinsRequest) (*controller.UpdateCoinsResponse, error) {
 	url := c.baseURL + "/internal/update-coins"
 
 	jsonData, err := json.Marshal(reqBody)
@@ -66,7 +66,7 @@ func (c *UserServiceClient) UpdateCoins(ctx context.Context, reqBody entity.Upda
 			classifyStatus(resp.StatusCode), resp.StatusCode, string(bodyBytes))
 	}
 
-	var respBody entity.UpdateCoinsResponse
+	var respBody controller.UpdateCoinsResponse
 	if err := json.NewDecoder(limitedBody).Decode(&respBody); err != nil {
 		fmt.Println(err.Error())
 		return nil, fmt.Errorf("decode response: %w", err)

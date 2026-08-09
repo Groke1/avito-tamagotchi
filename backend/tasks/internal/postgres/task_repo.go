@@ -30,29 +30,28 @@ func NewTaskRepository(pool *pgxpool.Pool) *TaskRepository {
 func (r *TaskRepository) FindByIDForUser(ctx context.Context, userID, taskID string) (*entity.UserTask, error) {
 	userId, err := uuid.Parse(userID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid user id: %w", err)
+		return nil, fmt.Errorf("invalid user id: %w", entity.ErrInvalidID)
 	}
 	taskId, err := uuid.Parse(taskID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid task id: %w", err)
+		return nil, fmt.Errorf("invalid task id: %w", entity.ErrInvalidID)
 	}
 	q := sqlctask.New(r.pool)
 	row, err := q.FindByIDForUser(ctx, sqlctask.FindByIDForUserParams{
 		UserID: pgtype.UUID{Bytes: userId, Valid: true},
 		ID:     pgtype.UUID{Bytes: taskId, Valid: true},
 	})
-
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, entity.ErrTaskNotFound
+			return nil, fmt.Errorf("task_id %q for user %q: %w", taskID, userID, entity.ErrTaskNotFound)
 		}
-		return nil, err
+		return nil, fmt.Errorf("find task: %w", err)
 	}
+
 	var completedAt *time.Time
 	if row.CompletedAt.Valid {
 		completedAt = &row.CompletedAt.Time
 	}
-
 	return &entity.UserTask{
 		Task: entity.Task{
 			ID:          row.ID.String(),
@@ -69,8 +68,9 @@ func (r *TaskRepository) FindByIDForUser(ctx context.Context, userID, taskID str
 
 func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]entity.UserTask, error) {
 	var pgUserID pgtype.UUID
-	if err := pgUserID.Scan(userIDStr); err != nil {
-		return nil, fmt.Errorf("invalid user id: %w", err)
+	err := pgUserID.Scan(userIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id: %w", entity.ErrInvalidID)
 	}
 
 	q := sqlctask.New(r.pool)
@@ -80,12 +80,11 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 		RandomLimit: limit,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create user tasks batch %q: %w", userIDStr, entity.ErrInvalidID)
 	}
 
 	tasks := make([]entity.UserTask, 0, len(rows))
 	var newTasksIds []pgtype.UUID
-
 	for _, row := range rows {
 		comp_at := &row.CompletedAt.Time
 		if entity.Status(row.Status) != entity.StatusCompleted {
@@ -122,26 +121,18 @@ func (r *TaskRepository) ListForUser(ctx context.Context, userIDStr string) ([]e
 func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr string) (*entity.UserTask, error) {
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		fmt.Println(err.Error())
-
-		return nil, fmt.Errorf("invalid user id: %w", err)
+		return nil, fmt.Errorf("user_id %q: %w", userIDStr, entity.ErrInvalidID)
 	}
 	taskID, err := uuid.Parse(taskIDStr)
 	if err != nil {
-		fmt.Println(err.Error())
-
-		return nil, fmt.Errorf("invalid task id: %w", err)
+		return nil, fmt.Errorf("task_id %q: %w", taskIDStr, entity.ErrInvalidID)
 	}
-
 	q := r.querier(ctx)
-
 	taskModel, err := q.GetTaskByID(ctx, pgtype.UUID{Bytes: taskID, Valid: true})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-
-			return nil, entity.ErrTaskNotFound
+			return nil, fmt.Errorf("task_id %q: %w", taskIDStr, entity.ErrTaskNotFound)
 		}
-		fmt.Println(err.Error())
 		return nil, fmt.Errorf("get task: %w", err)
 	}
 
@@ -160,11 +151,9 @@ func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr 
 			TaskID:      pgtype.UUID{Bytes: taskID, Valid: true},
 			CompletedAt: pgNow,
 		}); err != nil {
-			fmt.Println(err.Error())
 			return nil, fmt.Errorf("insert user task: %w", err)
 		}
 	case err != nil:
-		fmt.Println(err.Error())
 		return nil, fmt.Errorf("get user task: %w", err)
 	default:
 		if userTask.Status == string(entity.StatusCompleted) {
@@ -174,7 +163,6 @@ func (r *TaskRepository) CompleteTask(ctx context.Context, userIDStr, taskIDStr 
 			UserID: pgtype.UUID{Bytes: userID, Valid: true},
 			TaskID: pgtype.UUID{Bytes: taskID, Valid: true},
 		}); err != nil {
-			fmt.Println(err.Error())
 			return nil, fmt.Errorf("update user task: %w", err)
 		}
 	}
