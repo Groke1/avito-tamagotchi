@@ -2,7 +2,7 @@ import { useGetLeaderboardQuery } from '@/entities/leaderboard'
 import { Award, Trophy, Zap } from 'lucide-react'
 
 export const HeaderLeaderboard = () => {
-  const { data } = useGetLeaderboardQuery({ limit: 20 })
+  const { data } = useGetLeaderboardQuery({ limit: 10 })
   const currentUser = data?.current_user
 
   return (
