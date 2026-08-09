@@ -23,8 +23,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
 
   tasks:
     image: ${IMAGE_PREFIX}-tasks:${IMAGE_TAG}
@@ -35,8 +35,8 @@ services:
     depends_on:
       tasks-postgres:
         condition: service_healthy
-    ports:
-      - "8081:8080"
+    expose:
+      - "8080"
 
   pets:
     image: ${IMAGE_PREFIX}-pets:${IMAGE_TAG}
@@ -49,8 +49,8 @@ services:
         condition: service_healthy
       migrate-pets-postgres:
         condition: service_completed_successfully
-    ports:
-      - "8082:8080"
+    expose:
+      - "8080"
 
   postgres:
     image: postgres:17
