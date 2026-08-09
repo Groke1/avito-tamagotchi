@@ -167,15 +167,29 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /internal/tasks/:
+  /internal/tasks/{user_id}:
     get:
       tags:
         - Internal Tasks
-      summary: Получить выполненные сегодня задачи пользователя
-      description: Возвращает задачи, выполненные текущим авторизованным пользователем сегодня.
+      summary: Получить задачи, выполненные сегодня
+      description: Возвращает задачи, выполненные указанным пользователем сегодня.
       operationId: getTodayCompletedTasksForInternal
+
+      # Внутренняя ручка не требует Bearer token
+      security: []
+
       servers:
         - url: http://localhost:8081
+
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: UUID пользователя
+          schema:
+            type: string
+            format: uuid
+          example: "133b156c-bfce-41af-b522-94d01a1aecff"
 
       responses:
         "200":
@@ -199,9 +213,6 @@ paths:
 
         "400":
           $ref: "#/components/responses/BadRequest"
-
-        "401":
-          $ref: "#/components/responses/Unauthorized"
 
         "500":
           $ref: "#/components/responses/InternalServerError"

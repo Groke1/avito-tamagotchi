@@ -22,13 +22,13 @@ type (
 )
 
 type CompleteTaskHandler struct {
-	taskRepo    *postgres.TaskRepository
+	taskRepo    postgres.TaskRepoInterface
 	coinsClient coinsClient
 	xpClient    xpClient
 	transactor  transactor
 }
 
-func NewCompleteTaskHandler(repo *postgres.TaskRepository, coinsClient coinsClient, xpClient xpClient, transactor transactor) *CompleteTaskHandler {
+func NewCompleteTaskHandler(repo postgres.TaskRepoInterface, coinsClient coinsClient, xpClient xpClient, transactor transactor) *CompleteTaskHandler {
 	return &CompleteTaskHandler{
 		taskRepo:    repo,
 		coinsClient: coinsClient,
