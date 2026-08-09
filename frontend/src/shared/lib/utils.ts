@@ -32,3 +32,10 @@ export const getDaysPlural = (count: number): string => {
   }
   return 'дней'
 }
+
+export const formatDateStr = (date: string) => {
+  return new Date(date).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
