@@ -1,22 +1,14 @@
 name: CI
 
-#on:
-#  pull_request:
-#    branches:
-#      - main
-#    paths:
-#      - ".github/workflows/**"
-#      - "backend/**"
-#      - "docker-compose.test.yml"
-#      - "Makefile"
-#
-#  push:
-#    branches:
-#      - main
-#      - feat/issue-65-add-ci-cd
-
 on:
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+      - "backend/**"
+      - "docker-compose.test.yml"
+      - "Makefile"
 
 permissions:
   contents: read
@@ -31,7 +23,7 @@ env:
 jobs:
   ci:
     name: Lint and tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
