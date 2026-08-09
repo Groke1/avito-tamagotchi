@@ -1,3 +1,4 @@
+import { EmptyState } from '@/shared/ui'
 import type { ActivityItem } from '../model/types'
 import { DailyTimelineReward } from './DailyTimelineReward'
 import { DailyTimelineTask } from './DailyTimelineTask'
@@ -7,6 +8,12 @@ interface DailyTimelineListProps {
 }
 
 export const DailyTimelineList = ({ activities }: DailyTimelineListProps) => {
+  if (!activities.length) {
+    return (
+      <EmptyState message="Пока нет активности за сегодня. Выполняйте задания и получайте награды!" />
+    )
+  }
+
   return (
     <ul className="space-y-4">
       {activities.map((activity) => {
