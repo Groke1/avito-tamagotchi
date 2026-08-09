@@ -357,6 +357,37 @@ paths:
           $ref: "#/components/responses/TaskNotFound"
         "409":
           $ref: "#/components/responses/TaskCompletionConflict"
+  /next-reward-description:
+    get:
+      summary: Получение описания следующей награды
+      description: Возвращает информацию о следующей награде питомца
+      tags:
+        - Rewards
+      responses:
+        '200':
+          description: Описание следующей награды
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardDescriptionResponse'
+              example:
+                code: "DELIVERY_DISCOUNT_10"
+                name: "Скидка 10% на доставку"
+                description: "Скидка 10% на одну покупку с Авито Доставкой"
+
+        '401':
+                $ref: "#/components/responses/Unauthorized"
+
+
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервера
 components:
   securitySchemes:
     bearerAuth:
@@ -470,6 +501,25 @@ components:
             code: VALIDATION_ERROR
             message: Проверьте переданные данные
   schemas:
+    RewardDescriptionResponse:
+      type: object
+      required:
+        - code
+        - name
+        - description
+      properties:
+        code:
+          type: string
+          description: Код награды
+          example: "DELIVERY_DISCOUNT_10"
+        name:
+          type: string
+          description: Название награды
+          example: "Скидка 10% на доставку"
+        description:
+          type: string
+          description: Описание награды
+          example: "Скидка 10% на одну покупку с Авито Доставкой"
     RegisterRequest:
       type: object
       required:
@@ -624,6 +674,10 @@ components:
           type: integer
           minimum: 1
           example: 12
+        xp:
+          type: integer
+          minimum: 0
+          example: 20
     Task:
       type: object
       required:

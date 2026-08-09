@@ -6,4 +6,5 @@ type LeaderboardItem struct {
 	UserName string
 	PetName  string
 	Level    int
+	XP       int
 }

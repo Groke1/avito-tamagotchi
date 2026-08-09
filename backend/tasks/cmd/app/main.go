@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,30 +23,38 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	cfg, err := config.New()
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		return fmt.Errorf("failed to load config: %v", err)
 	}
 	dsn := cfg.ConstructPostgresURL()
-	if err := runMigrations(dsn); err != nil {
-		log.Fatalf("migration error: %v", err)
+	err = runMigrations(dsn)
+	if err != nil {
+		return fmt.Errorf("migration error: %v", err)
 	}
 
 	jwtSecret := cfg.JWT.Secret
 	if jwtSecret == "" {
-		log.Fatal("JWT_SECRET is required")
+		return errors.New("JWT_SECRET is required")
 	}
 	cnx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	pool, err := pgxpool.New(cnx, dsn)
 	if err != nil {
-		log.Fatalf("unable to connect to database: %v", err)
+		return fmt.Errorf("unable to connect to database: %v", err)
 	}
 	defer pool.Close()
 
-	if err := pool.Ping(cnx); err != nil {
-		log.Fatalf("unable to ping database: %v", err)
+	err = pool.Ping(cnx)
+	if err != nil {
+		return fmt.Errorf("unable to ping database: %v", err)
 	}
 
 	repo := postgres.NewTaskRepository(pool)
@@ -63,12 +72,18 @@ func main() {
 	server := &http.Server{
 		Addr:         cfg.HTTP.Addr,
 		Handler:      handler,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  config.ServerReadTimeout,
+		WriteTimeout: config.HTTPClientTimeout,
 	}
 
 	log.Printf("tasks service listening on %s", cfg.HTTP.Addr)
-	log.Fatal(server.ListenAndServe())
+
+	err = server.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("server stopped: %w", err)
+	}
+
+	return nil
 }
 
 func runMigrations(dsn string) error {
@@ -77,12 +92,10 @@ func runMigrations(dsn string) error {
 		return fmt.Errorf("failed to open db for migrations: %w", err)
 	}
 	defer db.Close()
-
 	log.Println("applying database migrations...")
 	if err := migrations.RunMigrations(db); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 	log.Println("migrations applied successfully")
-
 	return nil
 }

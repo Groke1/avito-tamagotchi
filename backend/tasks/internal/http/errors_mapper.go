@@ -29,9 +29,9 @@ func SendError(c *gin.Context, err error) {
 
 func mapError(err error) ErrorDTO {
 	var (
-		status   int
-		err_name string
-		message  string
+		status  int
+		errName string
+		message string
 	)
 
 	switch {
@@ -39,18 +39,18 @@ func mapError(err error) ErrorDTO {
 		errors.Is(err, controller.ErrInvalidToken) ||
 		errors.Is(err, controller.ErrUnauthorized):
 		status = http.StatusUnauthorized
-		err_name = controller.ErrUnauthorized.Error()
+		errName = controller.ErrUnauthorized.Error()
 		message = "Требуется авторизация"
 
 	case errors.Is(err, entity.ErrTaskAlreadyCompleted):
 		status = http.StatusConflict
-		err_name = entity.ErrTaskAlreadyCompleted.Error()
+		errName = entity.ErrTaskAlreadyCompleted.Error()
 		message = "Награда за эту задачу уже получена"
 
 	case errors.Is(err, entity.ErrTaskNotFound) ||
 		errors.Is(err, entity.ErrUserNotFound):
 		status = http.StatusNotFound
-		err_name = entity.ErrTaskNotFound.Error()
+		errName = entity.ErrTaskNotFound.Error()
 		message = "Задача не найдена"
 
 	case errors.Is(err, entity.ErrInvalidID) ||
@@ -61,23 +61,17 @@ func mapError(err error) ErrorDTO {
 		errors.Is(err, entity.ErrInvalidTaskType):
 
 		status = http.StatusBadRequest
-		err_name = controller.ErrInvalidRequest.Error()
+		errName = controller.ErrInvalidRequest.Error()
 		message = "Некорректный запрос"
-
-	case errors.Is(err, controller.ErrUserServiceUnavailable) ||
-		errors.Is(err, controller.ErrPetServiceUnavailable):
-		status = http.StatusInternalServerError
-		err_name = controller.ErrInternal.Error()
-		message = "Внутренняя ошибка сервера"
 
 	default:
 		status = http.StatusInternalServerError
-		err_name = controller.ErrInternal.Error()
+		errName = controller.ErrInternal.Error()
 		message = "Внутренняя ошибка сервера"
 	}
 	return ErrorDTO{
 		Status:  status,
-		ErrName: err_name,
+		ErrName: errName,
 		Message: message,
 	}
 }

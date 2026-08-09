@@ -16,7 +16,7 @@ var (
 )
 
 type EventNotifier interface {
-	SendToClient(string, string, any)
+	SendToClient(userID string, eventType string, v any)
 	BroadcastLeaderboard()
 }
 
@@ -24,13 +24,15 @@ type PetService struct {
 	petRepository *repository.PetRepository
 	client        *clients.UserClient
 	eventNotifier EventNotifier
+	levelPolicy   *domain.LevelPolicy
 }
 
-func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier) *PetService {
+func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier, levelPolicy *domain.LevelPolicy) *PetService {
 	return &PetService{
 		petRepository: petRepository,
 		client:        clients.NewUserClient(userServiceURL + "/internal"),
 		eventNotifier: eventNotifier,
+		levelPolicy:   levelPolicy,
 	}
 }
 
@@ -96,7 +98,9 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 	}
 
 	if levelUp {
-		// TODO сообщить о награде
+		if err := ps.levelUp(ctx, userID, pet); err != nil {
+			return nil, err
+		}
 	}
 
 	ps.eventNotifier.BroadcastLeaderboard()
@@ -133,7 +137,9 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	}
 
 	if levelUp {
-		// TODO сообщить о награде
+		if err := ps.levelUp(ctx, userID, pet); err != nil {
+			return nil, err
+		}
 	}
 
 	ps.eventNotifier.BroadcastLeaderboard()
@@ -201,7 +207,9 @@ func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*
 	ps.eventNotifier.SendToClient(userID, "pet.updated", pet)
 
 	if levelUp {
-		// TODO сообщить о награде
+		if err := ps.levelUp(ctx, userID, pet); err != nil {
+			return nil, err
+		}
 	}
 
 	ps.eventNotifier.BroadcastLeaderboard()
@@ -209,7 +217,7 @@ func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*
 	return pet, nil
 }
 
-func (ps *PetService) ClaimDailyBonus(ctx context.Context, streak int, userID string) error {
+func (ps *PetService) ClaimDailyBonusForStreak(ctx context.Context, streak int, userID string) error {
 	amount := XPperStreak * streak
 	_, err := ps.GrantXP(ctx, amount, userID)
 	if err != nil {
@@ -257,4 +265,31 @@ func (ps *PetService) ClaimDailyGainedXP(ctx context.Context, userID string) (in
 	}
 
 	return gainedXP, nil
+}
+
+func (ps *PetService) levelUp(ctx context.Context, userID string, pet *domain.Pet) error {
+	code := ps.levelPolicy.GetCode(pet.Level)
+	reward, err := ps.client.ClaimReward(ctx, userID, code)
+	if err != nil {
+		return err
+	}
+
+	ps.eventNotifier.SendToClient(userID, domain.EventLevelUp, reward)
+
+	return nil
+}
+
+func (ps *PetService) GetNextRewardDescription(ctx context.Context, userID string) (*domain.Reward, error) {
+	pet, err := ps.petRepository.GetPet(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	code := ps.levelPolicy.GetCode(pet.Level + 1)
+	reward, err := ps.client.GetRewardDescription(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+
+	return reward, nil
 }

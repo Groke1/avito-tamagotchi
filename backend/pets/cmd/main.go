@@ -7,6 +7,7 @@ import (
 	cors "github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/api"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/config"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/websocket"
@@ -35,7 +36,8 @@ func main() {
 	repository := repository.NewPetRepository(db)
 	wsClientManager := websocket.NewClient()
 	wsTicketManager := websocket.NewTicketManager()
-	service := service.NewPetService(repository, cfg.UserServiceURL, wsClientManager)
+	levelPolicy := domain.NewLevelPolicy()
+	service := service.NewPetService(repository, cfg.UserServiceURL, wsClientManager, levelPolicy)
 	petHandler := api.NewPetHandler(service)
 	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, service)
 
@@ -57,15 +59,16 @@ func main() {
 				r.Post("/", petHandler.CreatePet)
 				r.Post("/feed", petHandler.FeedPet)
 				r.Post("/stroke", petHandler.StrokePet)
-				r.Post("/ws-ticket", wsHandler.CreateTicket)
+				r.Post("/ws-ticket", wsHandler.CreateWSTicket)
 			})
 
 			r.Get("/leaderboard", petHandler.GetLeaderboard)
+			r.Get("/next-reward-description", petHandler.GetNextRewardDescription)
 		})
 	})
 
 	r.Route("/internal", func(r chi.Router) {
-		r.Post("/daily-bonus", petHandler.DailyBonus)
+		r.Post("/daily-bonus", petHandler.DailyBonusForStreak)
 		r.Get("/daily-gained-xp", petHandler.DailyGainedXP)
 		r.Put("/update-xp", petHandler.UpdateXP)
 	})

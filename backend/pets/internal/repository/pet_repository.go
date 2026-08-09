@@ -32,6 +32,7 @@ type PetForLeaderboard struct {
 	Name   string `db:"name"`
 	Level  int    `db:"level"`
 	Rank   int    `db:"rank"`
+	XP     int    `db:"xp"`
 }
 
 type PetRepository struct {
@@ -222,6 +223,7 @@ func (pr *PetRepository) GetLeaderboardWithUser(ctx context.Context, limit int, 
 			Level:   dbPet.Level,
 			UserID:  dbPet.UserID,
 			PetName: dbPet.Name,
+			XP:      dbPet.XP,
 		}
 	}
 

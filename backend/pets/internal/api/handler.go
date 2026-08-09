@@ -63,10 +63,10 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req CreatePetRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, ErrValidationError)
 		return
-	} else if err := ph.validator.Struct(req); err != nil {
+	} else if err = ph.validator.Struct(req); err != nil {
 		writeError(w, ErrValidationError)
 		return
 	}
@@ -167,16 +167,16 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 	limit := 20
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err != nil {
-			if l >= 1 && l <= 100 {
-				limit = l
-			}
+		//nolint:govet // чтобы не жаловался
+		l, err := strconv.Atoi(limitStr)
+		if err == nil && l >= 1 && l <= 100 {
+			limit = l
 		}
 	}
 
 	leaderboardItems, currentUser, err := ph.service.GetLeaderboard(ctx, limit, userID)
 	if err != nil {
-		log.Printf("[UPDATED XP] %v", err)
+		log.Printf("[GET LEADERBOARD] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
@@ -188,6 +188,7 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 			Level:    item.Level,
 			UserName: item.UserName,
 			PetName:  item.PetName,
+			XP:       item.XP,
 		}
 	}
 
@@ -198,13 +199,14 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 			Level:    currentUser.Level,
 			UserName: currentUser.UserName,
 			PetName:  currentUser.PetName,
+			XP:       currentUser.XP,
 		},
 	}
 
 	writeJSONResponse(w, http.StatusOK, leaderboardResponse)
 }
 
-func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
+func (ph *PetHandler) DailyBonusForStreak(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req BonusXpRequest
@@ -213,9 +215,9 @@ func (ph *PetHandler) DailyBonus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := ph.service.ClaimDailyBonus(ctx, req.Streak, req.UserID)
+	err := ph.service.ClaimDailyBonusForStreak(ctx, req.Streak, req.UserID)
 	if err != nil {
-		log.Printf("[UPDATED XP] %v", err)
+		log.Printf("[DAILY BONUS] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
@@ -257,7 +259,7 @@ func (ph *PetHandler) DailyGainedXP(w http.ResponseWriter, r *http.Request) {
 
 	gainedXP, err := ph.service.ClaimDailyGainedXP(ctx, req.UserID)
 	if err != nil {
-		log.Printf("[UPDATED XP] %v", err)
+		log.Printf("[DAILY GAINED XP] %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
@@ -268,4 +270,29 @@ func (ph *PetHandler) DailyGainedXP(w http.ResponseWriter, r *http.Request) {
 		DailyGainedXP: gainedXP,
 	}
 	writeJSONResponse(w, http.StatusOK, resp)
+}
+
+func (ph *PetHandler) GetNextRewardDescription(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
+		writeError(w, ErrUnauthorized)
+		return
+	}
+
+	reward, err := ph.service.GetNextRewardDescription(ctx, userID)
+	if err != nil {
+		log.Printf("[NEXT REWARD DESCRIPTION] %v", err)
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	rewardResponse := RewardDescriptionResponse{
+		Code:        reward.PromoCode,
+		Name:        reward.Name,
+		Description: reward.Description,
+	}
+
+	writeJSONResponse(w, http.StatusOK, rewardResponse)
 }
