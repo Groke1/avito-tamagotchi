@@ -6,12 +6,16 @@ import (
 )
 
 var (
-	ErrInvalidTitle         = errors.New("title is required")
-	ErrInvalidDescription   = errors.New("description is required")
-	ErrInvalidRewardCoins   = errors.New("coins must be nonnegative")
-	ErrInvalidRewardXP      = errors.New("xp must be nonnegative")
-	ErrTaskNotFound         = errors.New("task not found")
-	ErrTaskAlreadyCompleted = errors.New("task already completed")
+	ErrInvalidID            = errors.New("INVALID ID")
+	ErrInvalidTitle         = errors.New("TITLE IS REQUIRED")
+	ErrInvalidDescription   = errors.New("DESCRIPTION IS REQUIRED")
+	ErrInvalidRewardCoins   = errors.New("COINS MUST BE NONNEGATIVE")
+	ErrInvalidRewardXP      = errors.New("XP MUST BE NONNEGATIVE")
+	ErrTaskNotFound         = errors.New("TASK NOT FOUND")
+	ErrTaskAlreadyCompleted = errors.New("TASK ALREADY COMPLETED")
+	ErrInvalidTaskType      = errors.New("TASK TYPE IS REQUIRED")
+	ErrUserNotFound         = errors.New("USER NOT FOUND")
+	ErrNoCompletedTasks     = errors.New("NO COMPLETED TASKS")
 )
 
 type Status string
@@ -27,6 +31,7 @@ type Task struct {
 	Description string
 	RewardCoins int
 	RewardXP    int64
+	Type        string
 }
 
 type UserTask struct {
@@ -35,7 +40,7 @@ type UserTask struct {
 	CompletedAt *time.Time
 }
 
-func NewTask(id, title, description string, rewardCoins int, rewardXP int64) (*Task, error) {
+func NewTask(id, title, description string, rewardCoins int, rewardXP int64, taskType string) (*Task, error) {
 	if title == "" {
 		return nil, ErrInvalidTitle
 	}
@@ -48,13 +53,16 @@ func NewTask(id, title, description string, rewardCoins int, rewardXP int64) (*T
 	if rewardXP < 0 {
 		return nil, ErrInvalidRewardXP
 	}
-
+	if taskType == "" || len(taskType) >= 25 {
+		return nil, ErrInvalidTaskType
+	}
 	return &Task{
 		ID:          id,
 		Title:       title,
 		Description: description,
 		RewardCoins: rewardCoins,
 		RewardXP:    rewardXP,
+		Type:        taskType,
 	}, nil
 }
 

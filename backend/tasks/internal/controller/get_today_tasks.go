@@ -41,6 +41,7 @@ func (h *GetTodayTasksHandler) Handle(ctx context.Context, query GetTodayTasksQu
 			RewardXP:    task.Task.RewardXP,
 			Status:      entity.Status(task.Status),
 			CompletedAt: task.CompletedAt,
+			TaskType:    task.Task.Type,
 		})
 	}
 

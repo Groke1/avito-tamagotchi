@@ -21,6 +21,7 @@ type TaskDTO struct {
 	RewardXP    int64         `json:"reward_xp"`
 	Status      entity.Status `json:"status"`
 	CompletedAt *time.Time    `json:"completed_at"`
+	TaskType    string        `json:"task_type"`
 }
 type GetTaskHandler struct {
 	taskRepo *postgres.TaskRepository
@@ -43,5 +44,6 @@ func (h *GetTaskHandler) Handle(ctx context.Context, query GetTaskQuery) (*TaskD
 		RewardXP:    task.Task.RewardXP,
 		Status:      task.Status,
 		CompletedAt: task.CompletedAt,
+		TaskType:    task.Task.Type,
 	}, nil
 }

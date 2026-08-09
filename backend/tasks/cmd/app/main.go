@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
+	client "github.com/cayman444/avito-gamification-hackathon.tasks/internal/clients"
+	config "github.com/cayman444/avito-gamification-hackathon.tasks/internal/config"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/controller"
 	taskhttp "github.com/cayman444/avito-gamification-hackathon.tasks/internal/http"
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/postgres"
@@ -19,38 +21,19 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func runMigrations(dsn string) error {
-	db, err := sql.Open("pgx", dsn)
-	if err != nil {
-		return fmt.Errorf("failed to open db for migrations: %w", err)
-	}
-	defer db.Close()
-
-	log.Println("applying database migrations...")
-	if err := migrations.RunMigrations(db); err != nil {
-		return fmt.Errorf("failed to run migrations: %w", err)
-	}
-	log.Println("migrations applied successfully")
-
-	return nil
-}
-
 func main() {
-	dsn := os.Getenv("DATABASE_DSN")
-	if dsn == "" {
-		log.Fatal("DATABASE_DSN is required")
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
 	}
-
-	addr := os.Getenv("HTTP_ADDR")
-	if addr == "" {
-		addr = ":8080"
-	}
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		log.Fatal("JWT_SECRET is required")
-	}
+	dsn := cfg.ConstructPostgresURL()
 	if err := runMigrations(dsn); err != nil {
 		log.Fatalf("migration error: %v", err)
+	}
+
+	jwtSecret := cfg.JWT.Secret
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is required")
 	}
 	cnx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -66,20 +49,40 @@ func main() {
 	}
 
 	repo := postgres.NewTaskRepository(pool)
+	transactor := db.NewTransactor(pool)
+	userClient := client.NewUserServiceClient(cfg.Client.CoinsServiceURL)
+	petClient := client.NewPetServiceClient(cfg.Pet.PetServiceURL)
 	handlers := taskhttp.NewHandlers(
 		controller.NewGetTaskHandler(repo),
 		controller.NewGetTodayTasksHandler(repo),
-		controller.NewCompleteTaskHandler(repo),
+		controller.NewCompleteTaskHandler(repo, userClient, petClient, transactor),
+		controller.NewGetCompletedTasksHandler(repo),
 	)
 	router := taskhttp.NewRouter(handlers, []byte(jwtSecret))
 	handler := middleware.CorsHandler(router)
 	server := &http.Server{
-		Addr:         addr,
+		Addr:         cfg.HTTP.Addr,
 		Handler:      handler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
-	log.Printf("tasks service listening on %s", addr)
+	log.Printf("tasks service listening on %s", cfg.HTTP.Addr)
 	log.Fatal(server.ListenAndServe())
+}
+
+func runMigrations(dsn string) error {
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return fmt.Errorf("failed to open db for migrations: %w", err)
+	}
+	defer db.Close()
+
+	log.Println("applying database migrations...")
+	if err := migrations.RunMigrations(db); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+	log.Println("migrations applied successfully")
+
+	return nil
 }
