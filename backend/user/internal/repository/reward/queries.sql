@@ -31,7 +31,7 @@ SELECT
     ur.promo_code, rd.name,
     rd.description, ur.status,
     ur.created_at, ur.redeemed_at,
-    ur.expires_at
+    ur.expires_at, rd.earned_description, rd.redeemed_description
 FROM users.user_rewards AS ur
          JOIN users.reward_definitions AS rd
               ON rd.id = ur.reward_id
