@@ -1,5 +1,6 @@
 import { logout } from '@/entities/user'
 import { type PayloadAction, createSlice } from '@reduxjs/toolkit'
+import { petApi } from '../api/petApi'
 import type { Pet, PetState } from './types'
 
 const initialState: PetState = {
@@ -20,6 +21,10 @@ export const petSlice = createSlice({
     builder.addCase(logout, (state) => {
       state.pet = null
       state.isInitialized = false
+    })
+    builder.addMatcher(petApi.endpoints.getPet.matchFulfilled, (state, action) => {
+      state.pet = action.payload
+      state.isInitialized = true
     })
   },
 })

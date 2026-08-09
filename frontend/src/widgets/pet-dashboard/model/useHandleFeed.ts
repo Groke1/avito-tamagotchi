@@ -20,7 +20,11 @@ export const useHandleFeed = () => {
       toast.success('Вы покормили питомца! 🍎 (+5 сытости, +2 XP)')
     } catch (error: unknown) {
       if (isFetchBaseQueryError(error) && isApiError(error.data)) {
-        toast.error(error.data.message)
+        if ('retry_after' in error.data) {
+          toast.info(`${error.data.message}. Попробуйте через ${error.data.retry_after} секунд`)
+        } else {
+          toast.error(error.data.message)
+        }
       } else {
         toast.error('Это действие пока недоступно')
       }

@@ -1,4 +1,4 @@
-import { setPet, useGetWsTicketMutation } from '@/entities/pet'
+import { useGetWsTicketMutation } from '@/entities/pet'
 import { SOCKET_URL, baseApi } from '@/shared/api/baseApi'
 import { useAppDispatch, useAppSelector } from '@/shared/model/hooks'
 import { useEffect, useRef } from 'react'
@@ -34,7 +34,7 @@ export const useWebSocket = () => {
           try {
             const data = JSON.parse(event.data)
             if (data.event_type === 'pet.updated' && data.payload) {
-              dispatch(setPet(data.payload))
+              dispatch(baseApi.util.invalidateTags(['Pet', 'Rewards']))
             } else if (data.event_type === 'leaderboard.position_updated') {
               dispatch(baseApi.util.invalidateTags(['Pet', 'User']))
             }
