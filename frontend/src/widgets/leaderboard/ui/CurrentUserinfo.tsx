@@ -50,7 +50,7 @@ export const CurrentUserinfo: FC<CurrentUserinfoProps> = ({ user, isLoading }) =
       <div className="flex flex-col items-end gap-2 shrink-0 ml-auto sm:ml-0">
         <div className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-xs px-3.5 py-1 rounded-full text-xs font-bold text-avito-blue-dark border border-white/80 shadow-2xs">
           <Zap className="size-3.5 text-amber-500 fill-amber-500 shrink-0" />
-          <span>До следующего уровня осталось всего {nextLevelXp} XP!</span>
+          <span>До следующего уровня осталось {nextLevelXp} XP!</span>
         </div>
         <Button size="sm" onClick={() => navigate(ROUTES_PATHS.TASKS)}>
           Получить XP

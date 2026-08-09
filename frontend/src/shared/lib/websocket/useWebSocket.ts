@@ -34,9 +34,9 @@ export const useWebSocket = () => {
           try {
             const data = JSON.parse(event.data)
             if (data.event_type === 'pet.updated' && data.payload) {
-              dispatch(baseApi.util.invalidateTags(['Pet', 'Rewards']))
+              dispatch(baseApi.util.invalidateTags(['Pet', 'Rewards', 'Leaderboard']))
             } else if (data.event_type === 'leaderboard.position_updated') {
-              dispatch(baseApi.util.invalidateTags(['Pet', 'User']))
+              dispatch(baseApi.util.invalidateTags(['Pet', 'User', 'Leaderboard']))
             }
           } catch {
             toast.error('Ошибка при обработке сообщения сервера')
