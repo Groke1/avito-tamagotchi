@@ -33,6 +33,18 @@ func NewTasksClient(addr string, httpClient *http.Client) (*client, error) {
 	}, nil
 }
 
-func (c *client) GetCompletedTasks(ctx context.Context, userID string) (*entity.TasksStat, error) {
-	panic("implement me")
+func (c *client) GetCompletedTasks(ctx context.Context, userID string) ([]entity.TasksStat, error) {
+	endpoint := c.baseURL.ResolveReference(
+		&url.URL{
+			Path: "/internal/tasks/" + userID,
+		},
+	)
+
+	resp, err := httpclient.WithoutRequest[getCompletedTasksResponse](
+		ctx, c.httpClient, endpoint.String(), http.MethodGet)
+	if err != nil {
+		return nil, fmt.Errorf("get tasks stat: %w", err)
+	}
+
+	return resp.Items, nil
 }

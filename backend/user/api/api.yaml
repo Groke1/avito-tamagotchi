@@ -12,6 +12,8 @@ tags:
     description: Профиль текущего пользователя
   - name: Rewards
     description: Награды текущего пользователя
+  - name: Statistics
+    description: Дневная статистика текущего пользователя
   - name: Internal
     description: Внутренние методы межсервисного взаимодействия
 
@@ -264,6 +266,43 @@ paths:
           $ref: '#/components/responses/RewardUnavailable'
         '422':
           $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/daily-stat:
+    get:
+      tags: [Statistics]
+      operationId: getDailyStat
+      summary: Получить статистику текущего пользователя за день
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Дневная статистика пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyStatResponse'
+              example:
+                user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+                streak: 7
+                tasks:
+                  - id: 1f3bbf09-54fe-49f0-bf9b-c82107ddc63a
+                    title: Добавить 3 товара в Избранное
+                    reward_coins: 50
+                    reward_xp: 100
+                    finished_desc: Добавлено 3 товара в Избранное
+                    updated_at: '2026-08-09T10:15:00Z'
+                pet:
+                  daily_gained_xp: 350
+                rewards:
+                  - promo_code: DELIVERYDISC-X8K2M7Q9WP
+                    name: Скидка 10% на доставку
+                    description: Скидка 10% на одну покупку с Авито Доставкой
+                    finished_desc: Получена скидка 10% на доставку
+                    created_time: '2026-08-09T12:30:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -685,6 +724,97 @@ components:
           type: string
           readOnly: true
           example: Скидка 10% на одну покупку с Авито Доставкой
+
+    DailyStatResponse:
+      type: object
+      additionalProperties: false
+      required: [user_id, streak, tasks, pet, rewards]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          readOnly: true
+        streak:
+          type: integer
+          format: int32
+          readOnly: true
+        tasks:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/DailyTaskStat'
+        pet:
+          allOf:
+            - $ref: '#/components/schemas/DailyPetStat'
+          readOnly: true
+        rewards:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/DailyRewardStat'
+
+    DailyPetStat:
+      type: object
+      additionalProperties: false
+      required: [daily_gained_xp]
+      properties:
+        daily_gained_xp:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Количество XP, полученное питомцем за текущий день.
+
+    DailyTaskStat:
+      type: object
+      additionalProperties: false
+      required: [id, title, reward_coins, reward_xp, finished_desc, updated_at]
+      properties:
+        id:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        reward_coins:
+          type: integer
+          format: int32
+          readOnly: true
+        reward_xp:
+          type: integer
+          format: int64
+          readOnly: true
+        finished_desc:
+          type: string
+          readOnly: true
+          description: Текст для отображения выполненного действия в детализации активности.
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    DailyRewardStat:
+      type: object
+      additionalProperties: false
+      required: [promo_code, name, description, finished_desc, created_time]
+      properties:
+        promo_code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        finished_desc:
+          type: string
+          readOnly: true
+          description: Текст события с наградой для отображения в детализации активности.
+        created_time:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Время события с наградой.
 
     ErrorResponse:
       type: object

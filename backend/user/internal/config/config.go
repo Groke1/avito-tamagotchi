@@ -42,7 +42,7 @@ type (
 			RegistrationBonusCoins  uint64        `env:"REGISTRATION_BONUS_COINS" envDefault:"100"`
 			AccessTokenTTL          time.Duration `env:"ACCESS_TOKEN_TTL" envDefault:"15m"`
 			RefreshTokenTTL         time.Duration `env:"REFRESH_TOKEN_TTL" envDefault:"720h"`
-			SessionStore            SessionStore  `env:"SESSION_STORE" envDefault:"redis"`
+			SessionStore            SessionStore  `env:"SESSION_STORE" envDefault:"postgres"`
 			TokenCleanupInterval    time.Duration `env:"TOKEN_CLEANUP_INTERVAL" envDefault:"24h"`
 			ShutdownTimeout         time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"5s"`
 			JWTSecret               string        `env:"JWT_SECRET,required"`

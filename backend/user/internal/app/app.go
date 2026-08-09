@@ -107,14 +107,16 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 		return errors.New("unsupported session store")
 	}
 
-	authService := authserv.NewAuthService(userRepo, tokenRepo, transactor, authserv.Config{
-		JWTSecret:              []byte(cfg.Settings.JWTSecret),
-		AccessTokenTTL:         cfg.Settings.AccessTokenTTL,
-		RefreshTokenTTL:        cfg.Settings.RefreshTokenTTL,
-		RegistrationBonusCoins: cfg.Settings.RegistrationBonusCoins,
-	})
-	userService := userserv.NewUserService(userRepo, streakRepo, rewardRepo, transactor, petClient, tasksClient)
 	rewardService := rewardserv.NewRewardService(rewardRepo)
+
+	authService := authserv.NewAuthService(userRepo, tokenRepo, transactor,
+		rewardRepo, rewardService, authserv.Config{
+			JWTSecret:              []byte(cfg.Settings.JWTSecret),
+			AccessTokenTTL:         cfg.Settings.AccessTokenTTL,
+			RefreshTokenTTL:        cfg.Settings.RefreshTokenTTL,
+			RegistrationBonusCoins: cfg.Settings.RegistrationBonusCoins,
+		})
+	userService := userserv.NewUserService(userRepo, streakRepo, rewardRepo, transactor, petClient, tasksClient)
 
 	router := mux.NewRouter()
 	contr := controller.NewController(logger, authService,

@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
@@ -37,7 +38,7 @@ type (
 	}
 
 	tasksClient interface {
-		GetCompletedTasks(ctx context.Context, userID string) (*entity.TasksStat, error)
+		GetCompletedTasks(ctx context.Context, userID string) ([]entity.TasksStat, error)
 	}
 )
 
@@ -115,9 +116,11 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 		if reward.CreatedAt.Compare(from) >= 0 &&
 			reward.CreatedAt.Compare(to) < 0 {
 			rewardStats = append(rewardStats, entity.RewardsStat{
-				PromoCode:   reward.PromoCode,
-				Name:        reward.Definition.Name,
-				Description: reward.Definition.Description,
+				PromoCode:    reward.PromoCode,
+				Name:         reward.Definition.Name,
+				Description:  reward.Definition.Description,
+				FinishedDesc: "Получена " + strings.ToLower(reward.Definition.Name),
+				CreatedTime:  reward.CreatedAt,
 			})
 		}
 
@@ -125,19 +128,21 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 			reward.RedeemedAt.Compare(from) >= 0 &&
 			reward.RedeemedAt.Compare(to) < 0 {
 			rewardStats = append(rewardStats, entity.RewardsStat{
-				PromoCode:   reward.PromoCode,
-				Name:        reward.Definition.Name,
-				Description: reward.Definition.Description,
+				PromoCode:    reward.PromoCode,
+				Name:         reward.Definition.Name,
+				Description:  reward.Definition.Description,
+				FinishedDesc: "Использована " + strings.ToLower(reward.Definition.Name),
+				CreatedTime:  *reward.RedeemedAt,
 			})
 		}
 	}
 
-	_, err = s.tasksClient.GetCompletedTasks(ctx, userID)
+	tasks, err := s.tasksClient.GetCompletedTasks(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
 
-	_, err = s.petClient.GetPetDailyStat(ctx, userID)
+	pet, err := s.petClient.GetPetDailyStat(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
@@ -146,6 +151,8 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 		UserID:  userID,
 		Streak:  streak.CurrentStreak,
 		Rewards: rewardStats,
+		Tasks:   tasks,
+		Pet:     *pet,
 	}, nil
 }
 

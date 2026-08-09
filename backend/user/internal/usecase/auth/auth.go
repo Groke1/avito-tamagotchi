@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -27,16 +28,26 @@ type (
 		DeleteSession(ctx context.Context, userID, tokenHash string) error
 	}
 
+	rewardRepository interface {
+		GetRewardDefinitions(ctx context.Context) ([]entity.RewardDefinition, error)
+	}
+
+	rewardService interface {
+		GrantReward(ctx context.Context, userID string, code string) (*entity.UserReward, error)
+	}
+
 	transactor interface {
 		WithTx(ctx context.Context, f func(ctx context.Context) error) error
 	}
 )
 
 type authService struct {
-	userRepository  userRepository
-	tokenRepository TokenRepository
-	transactor      transactor
-	cfg             *Config
+	userRepository   userRepository
+	tokenRepository  TokenRepository
+	rewardRepository rewardRepository
+	transactor       transactor
+	rewardService    rewardService
+	cfg              *Config
 }
 
 type Config struct {
@@ -50,13 +61,17 @@ func NewAuthService(
 	userRepository userRepository,
 	tokenRepository TokenRepository,
 	transactor transactor,
+	rewardRepository rewardRepository,
+	rewardService rewardService,
 	cfg Config,
 ) *authService {
 	return &authService{
-		userRepository:  userRepository,
-		tokenRepository: tokenRepository,
-		transactor:      transactor,
-		cfg:             &cfg,
+		userRepository:   userRepository,
+		tokenRepository:  tokenRepository,
+		transactor:       transactor,
+		rewardRepository: rewardRepository,
+		rewardService:    rewardService,
+		cfg:              &cfg,
 	}
 }
 
@@ -69,6 +84,12 @@ func (s *authService) Register(ctx context.Context, user entity.User) (*entity.J
 	user.PasswordHash = passwordHash
 	user.Coins = s.cfg.RegistrationBonusCoins
 
+	rewardDefinitions, err := s.rewardRepository.GetRewardDefinitions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get reward definitions: %w", err)
+	}
+	randRewardDef := rewardDefinitions[rand.Intn(len(rewardDefinitions))]
+
 	var tokens *entity.JWT
 	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
 		var userID string
@@ -78,6 +99,11 @@ func (s *authService) Register(ctx context.Context, user entity.User) (*entity.J
 		}
 
 		tokens, err = s.generateTokens(ctx, userID)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.rewardService.GrantReward(ctx, userID, randRewardDef.Code)
 		if err != nil {
 			return err
 		}
