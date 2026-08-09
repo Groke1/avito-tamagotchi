@@ -32,6 +32,10 @@ type (
 		GetRewardDefinitions(ctx context.Context) ([]entity.RewardDefinition, error)
 	}
 
+	streakRepository interface {
+		UpdateStreak(ctx context.Context, streak *entity.Streak) error
+	}
+
 	rewardService interface {
 		GrantReward(ctx context.Context, userID string, code string) (*entity.UserReward, error)
 	}
@@ -45,6 +49,7 @@ type authService struct {
 	userRepository   userRepository
 	tokenRepository  TokenRepository
 	rewardRepository rewardRepository
+	streakRepository streakRepository
 	transactor       transactor
 	rewardService    rewardService
 	cfg              *Config
@@ -62,6 +67,7 @@ func NewAuthService(
 	tokenRepository TokenRepository,
 	transactor transactor,
 	rewardRepository rewardRepository,
+	streakRepository streakRepository,
 	rewardService rewardService,
 	cfg Config,
 ) *authService {
@@ -70,6 +76,7 @@ func NewAuthService(
 		tokenRepository:  tokenRepository,
 		transactor:       transactor,
 		rewardRepository: rewardRepository,
+		streakRepository: streakRepository,
 		rewardService:    rewardService,
 		cfg:              &cfg,
 	}
@@ -83,6 +90,10 @@ func (s *authService) Register(ctx context.Context, user entity.User) (*entity.J
 
 	user.PasswordHash = passwordHash
 	user.Coins = s.cfg.RegistrationBonusCoins
+
+	eventTime := time.Now()
+
+	businessDate := dateOnly(eventTime)
 
 	rewardDefinitions, err := s.rewardRepository.GetRewardDefinitions(ctx)
 	if err != nil {
@@ -107,6 +118,12 @@ func (s *authService) Register(ctx context.Context, user entity.User) (*entity.J
 		if err != nil {
 			return err
 		}
+
+		err = s.streakRepository.UpdateStreak(ctx, &entity.Streak{
+			UserID:         userID,
+			CurrentStreak:  1,
+			LastActiveDate: businessDate,
+		})
 
 		return nil
 	})
@@ -205,4 +222,13 @@ func (s *authService) ValidateAccessToken(_ context.Context, token string) (stri
 	}
 
 	return claims.Sub, nil
+}
+
+func dateOnly(t time.Time) time.Time {
+	t = t.UTC()
+
+	return time.Date(
+		t.Year(), t.Month(), t.Day(),
+		0, 0, 0, 0, time.UTC,
+	)
 }

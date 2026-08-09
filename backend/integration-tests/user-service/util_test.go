@@ -96,6 +96,7 @@ func setup(t *testing.T) *config {
 	cfg := loadConfig(t)
 	waitForUsers(t, cfg.Users.APIURL, 45*time.Second)
 	require.NoError(t, cleanDB(t.Context(), cfg.db))
+	seedRewardDefinitions(t, cfg)
 
 	t.Cleanup(func() {
 		require.NoError(t, cleanDB(context.Background(), cfg.db))
@@ -353,6 +354,7 @@ func seedRewardDefinitions(t *testing.T, cfg *config) {
 			('AUTOTEKA_DISCOUNT_20', 'Скидка 20% на Автотеку', 'Скидка 20% на один отчёт об истории автомобиля'),
 			('FREE_LISTING_HIGHLIGHT', 'Выделение объявления', 'Бесплатное визуальное выделение одного объявления на ограниченный срок'),
 			('LISTING_DISCOUNT_15', 'Скидка 15% на размещение', 'Скидка 15% на одно платное размещение объявления')
+		ON CONFLICT (code) DO NOTHING
 	`)
 	require.NoError(t, err)
 }

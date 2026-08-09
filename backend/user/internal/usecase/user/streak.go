@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -23,18 +22,10 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 		streak, err = s.streakRepository.GetStreakByUserIDForUpdate(ctx, userID)
 
 		if err != nil {
-			if !errors.Is(err, entity.ErrUserNotFound) {
-				return err
-			}
-			streak = &entity.Streak{
-				UserID:         userID,
-				CurrentStreak:  1,
-				LastActiveDate: businessDate,
-			}
-			isStreakChanged = true
-		} else {
-			isStreakChanged = updateStreak(streak, businessDate)
+			return err
 		}
+
+		isStreakChanged = updateStreak(streak, businessDate)
 
 		if isStreakChanged {
 			err = s.streakRepository.UpdateStreak(ctx, streak)

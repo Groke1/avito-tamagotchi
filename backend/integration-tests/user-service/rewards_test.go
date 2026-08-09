@@ -40,12 +40,14 @@ func TestRewardLifecycle(t *testing.T) {
 	rewardsResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards", nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, rewardsResp.StatusCode)
 	rewardsBefore := decodeBody[userRewardsResponse](t, rewardsResp)
-	require.Empty(t, rewardsBefore.Items)
+	require.Len(t, rewardsBefore.Items, 1)
+	require.Equal(t, "active", rewardsBefore.Items[0].Status)
 
 	activeResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/active", nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, activeResp.StatusCode)
 	activeBefore := decodeBody[userRewardsResponse](t, activeResp)
-	require.Empty(t, activeBefore.Items)
+	require.Len(t, activeBefore.Items, 1)
+	require.Equal(t, "active", activeBefore.Items[0].Status)
 
 	firstReward := grantReward(t, cfg, profile.UserID, rewardCodeDelivery)
 	secondReward := grantReward(t, cfg, profile.UserID, rewardCodeListing)
@@ -63,7 +65,7 @@ func TestRewardLifecycle(t *testing.T) {
 	allRewardsResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards", nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, allRewardsResp.StatusCode)
 	allRewards := decodeBody[userRewardsResponse](t, allRewardsResp)
-	require.Len(t, allRewards.Items, 3)
+	require.Len(t, allRewards.Items, 4)
 
 	rewardsByID := make(map[string]userRewardResponse, len(allRewards.Items))
 	for _, reward := range allRewards.Items {
@@ -77,7 +79,7 @@ func TestRewardLifecycle(t *testing.T) {
 	activeAfterGrantResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/active", nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, activeAfterGrantResp.StatusCode)
 	activeAfterGrant := decodeBody[userRewardsResponse](t, activeAfterGrantResp)
-	require.Len(t, activeAfterGrant.Items, 3)
+	require.Len(t, activeAfterGrant.Items, 4)
 
 	singleRewardResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/"+firstReward.RewardID, nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, singleRewardResp.StatusCode)
@@ -103,7 +105,7 @@ func TestRewardLifecycle(t *testing.T) {
 	activeAfterRedeemResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/active", nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, activeAfterRedeemResp.StatusCode)
 	activeAfterRedeem := decodeBody[userRewardsResponse](t, activeAfterRedeemResp)
-	require.Len(t, activeAfterRedeem.Items, 2)
+	require.Len(t, activeAfterRedeem.Items, 3)
 
 	for _, reward := range activeAfterRedeem.Items {
 		require.NotEqual(t, firstReward.RewardID, reward.RewardID)
@@ -113,7 +115,7 @@ func TestRewardLifecycle(t *testing.T) {
 	allAfterRedeemResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards", nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, allAfterRedeemResp.StatusCode)
 	allAfterRedeem := decodeBody[userRewardsResponse](t, allAfterRedeemResp)
-	require.Len(t, allAfterRedeem.Items, 3)
+	require.Len(t, allAfterRedeem.Items, 4)
 
 	statusByID := make(map[string]string, len(allAfterRedeem.Items))
 	for _, reward := range allAfterRedeem.Items {
@@ -279,13 +281,21 @@ func TestExpiredRewardCannotBeRedeemed(t *testing.T) {
 	activeResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards/active", nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, activeResp.StatusCode)
 	active := decodeBody[userRewardsResponse](t, activeResp)
-	require.Empty(t, active.Items)
+	require.Len(t, active.Items, 1)
+	require.NotEqual(t, granted.RewardID, active.Items[0].RewardID)
+	require.Equal(t, "active", active.Items[0].Status)
 
 	allResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards", nil, auth.AccessToken)
 	require.Equal(t, http.StatusOK, allResp.StatusCode)
 	all := decodeBody[userRewardsResponse](t, allResp)
-	require.Len(t, all.Items, 1)
-	require.Equal(t, "expired", all.Items[0].Status)
+	require.Len(t, all.Items, 2)
+
+	statusByID := make(map[string]string, len(all.Items))
+	for _, item := range all.Items {
+		statusByID[item.RewardID] = item.Status
+	}
+
+	require.Equal(t, "expired", statusByID[granted.RewardID])
 }
 
 func TestGetUnknownReward(t *testing.T) {

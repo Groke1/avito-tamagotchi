@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -25,6 +26,18 @@ func TestRegisterLoginRefreshAndProfile(t *testing.T) {
 	require.NotEmpty(t, profile.UserID)
 	require.Equal(t, username, profile.Username)
 	require.Equal(t, email, profile.Email)
+
+	streak := getStreak(t, cfg, profile.UserID)
+	require.Equal(t, 1, streak.CurrentStreak)
+	require.Equal(t, time.Now().UTC().Format(time.DateOnly), streak.LastActiveDate.Format(time.DateOnly))
+
+	initialRewardsResp := jsonReq(t, http.MethodGet, cfg.Users.APIURL+"/rewards", nil, registered.AccessToken)
+	require.Equal(t, http.StatusOK, initialRewardsResp.StatusCode)
+	initialRewards := decodeBody[userRewardsResponse](t, initialRewardsResp)
+	require.Len(t, initialRewards.Items, 1)
+	require.Equal(t, "active", initialRewards.Items[0].Status)
+	require.NotEmpty(t, initialRewards.Items[0].PromoCode)
+	require.NotEmpty(t, initialRewards.Items[0].Name)
 
 	loginResp := jsonReq(t, http.MethodPost, cfg.Users.APIURL+"/auth/login", map[string]any{
 		"email":    email,

@@ -110,7 +110,7 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 	rewardService := rewardserv.NewRewardService(rewardRepo)
 
 	authService := authserv.NewAuthService(userRepo, tokenRepo, transactor,
-		rewardRepo, rewardService, authserv.Config{
+		rewardRepo, streakRepo, rewardService, authserv.Config{
 			JWTSecret:              []byte(cfg.Settings.JWTSecret),
 			AccessTokenTTL:         cfg.Settings.AccessTokenTTL,
 			RefreshTokenTTL:        cfg.Settings.RefreshTokenTTL,
