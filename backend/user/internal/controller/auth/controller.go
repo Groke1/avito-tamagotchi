@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=controller.go -destination=mocks/controller_mocks.go -package=mocks
+
 type Service interface {
 	Register(ctx context.Context, user entity.User) (*entity.JWT, error)
 	Login(ctx context.Context, email, password string) (*entity.JWT, error)

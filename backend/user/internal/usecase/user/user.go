@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
@@ -31,8 +32,13 @@ type (
 		WithTx(ctx context.Context, f func(ctx context.Context) error) error
 	}
 
-	petService interface {
+	petClient interface {
 		SendDailyBonus(ctx context.Context, userID string, streak int32) error
+		GetPetDailyStat(ctx context.Context, userID string) (*entity.PetStat, error)
+	}
+
+	tasksClient interface {
+		GetCompletedTasks(ctx context.Context, userID string) ([]entity.TasksStat, error)
 	}
 )
 
@@ -41,7 +47,8 @@ type userService struct {
 	streakRepository streakRepository
 	rewardRepository rewardRepository
 	transactor       transactor
-	petService       petService
+	petClient        petClient
+	tasksClient      tasksClient
 }
 
 func NewUserService(
@@ -49,14 +56,16 @@ func NewUserService(
 	streakRepository streakRepository,
 	rewardRepository rewardRepository,
 	transactor transactor,
-	petService petService,
+	petClient petClient,
+	tasksClient tasksClient,
 ) *userService {
 	return &userService{
 		userRepository:   userRepository,
 		streakRepository: streakRepository,
 		rewardRepository: rewardRepository,
 		transactor:       transactor,
-		petService:       petService,
+		petClient:        petClient,
+		tasksClient:      tasksClient,
 	}
 }
 
@@ -88,30 +97,69 @@ func (s *userService) UpdateCoins(ctx context.Context, userID string, deltaCoins
 }
 
 func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.DailyStat, error) {
-	_, err := s.streakRepository.GetStreakByUserID(ctx, userID)
+	streak, err := s.streakRepository.GetStreakByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
-	loc, err := time.LoadLocation("Europe/Moscow")
-	if err != nil {
-		return nil, fmt.Errorf("get daily stat: %w", err)
-	}
-	from, to := dayBounds(time.Now(), loc)
 
-	_, err = s.rewardRepository.GetRewardsByUserIDAndPeriod(ctx, userID, from, to)
+	from, to := dayBounds(time.Now())
+
+	rewards, err := s.rewardRepository.GetRewardsByUserIDAndPeriod(ctx, userID, from, to)
 
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
 
-	// Todo: запросы в другие сервисы
-	panic("implement me")
+	rewardStats := make([]entity.RewardsStat, 0, len(rewards))
+
+	for _, reward := range rewards {
+		if reward.CreatedAt.Compare(from) >= 0 &&
+			reward.CreatedAt.Compare(to) < 0 {
+			rewardStats = append(rewardStats, entity.RewardsStat{
+				PromoCode:    reward.PromoCode,
+				Name:         reward.Definition.Name,
+				Description:  reward.Definition.Description,
+				FinishedDesc: "Получена " + strings.ToLower(reward.Definition.Name),
+				CreatedTime:  reward.CreatedAt,
+			})
+		}
+
+		if reward.RedeemedAt != nil &&
+			reward.RedeemedAt.Compare(from) >= 0 &&
+			reward.RedeemedAt.Compare(to) < 0 {
+			rewardStats = append(rewardStats, entity.RewardsStat{
+				PromoCode:    reward.PromoCode,
+				Name:         reward.Definition.Name,
+				Description:  reward.Definition.Description,
+				FinishedDesc: "Использована " + strings.ToLower(reward.Definition.Name),
+				CreatedTime:  *reward.RedeemedAt,
+			})
+		}
+	}
+
+	tasks, err := s.tasksClient.GetCompletedTasks(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get daily stat: %w", err)
+	}
+
+	pet, err := s.petClient.GetPetDailyStat(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get daily stat: %w", err)
+	}
+
+	return &entity.DailyStat{
+		UserID:  userID,
+		Streak:  streak.CurrentStreak,
+		Rewards: rewardStats,
+		Tasks:   tasks,
+		Pet:     *pet,
+	}, nil
 }
 
-func dayBounds(now time.Time, loc *time.Location) (time.Time, time.Time) {
-	localNow := now.In(loc)
+func dayBounds(t time.Time) (time.Time, time.Time) {
+	t = t.UTC()
 
-	from := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, loc)
+	from := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 
 	to := from.AddDate(0, 0, 1)
 

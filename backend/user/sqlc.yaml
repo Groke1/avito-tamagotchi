@@ -12,13 +12,13 @@ sql:
         emit_interface: true
         omit_unused_structs: true
   - engine: "postgresql"
-    queries: "internal/repository/token/queries.sql"
+    queries: "internal/repository/token/postgres/queries.sql"
     schema: "migrations/migrations"
     gen:
       go:
         package: "token"
         sql_package: "pgx/v5"
-        out: "internal/repository/token/sqlc"
+        out: "internal/repository/token/postgres/sqlc"
         emit_json_tags: true
         emit_interface: true
         omit_unused_structs: true

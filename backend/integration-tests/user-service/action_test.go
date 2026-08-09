@@ -21,6 +21,13 @@ func TestActionUpdatesStreakLifecycle(t *testing.T) {
 		testPassword,
 	)
 	profile := getProfile(t, cfg, auth.AccessToken)
+	createPet(t, cfg, auth.AccessToken, "Action Pet")
+
+	initialStreak := getStreak(t, cfg, profile.UserID)
+	baseDate := initialStreak.LastActiveDate
+
+	require.Equal(t, 1, initialStreak.CurrentStreak)
+	require.Equal(t, time.Now().UTC().Format(time.DateOnly), baseDate.Format(time.DateOnly))
 
 	testCases := []struct {
 		name           string
@@ -29,28 +36,22 @@ func TestActionUpdatesStreakLifecycle(t *testing.T) {
 		expectedDate   string
 	}{
 		{
-			name:           "first action creates streak",
-			occurredAt:     "2026-08-01T08:15:00Z",
+			name:           "same utc day keeps streak",
+			occurredAt:     time.Date(baseDate.Year(), baseDate.Month(), baseDate.Day(), 12, 0, 0, 0, time.UTC).Format(time.RFC3339),
 			expectedStreak: 1,
-			expectedDate:   "2026-08-01",
+			expectedDate:   baseDate.Format(time.DateOnly),
 		},
 		{
-			name:           "same moscow day keeps streak",
-			occurredAt:     "2026-08-01T20:10:00Z",
-			expectedStreak: 1,
-			expectedDate:   "2026-08-01",
-		},
-		{
-			name:           "next moscow day increments streak",
-			occurredAt:     "2026-08-01T22:30:00Z",
+			name:           "next utc day increments streak",
+			occurredAt:     time.Date(baseDate.Year(), baseDate.Month(), baseDate.Day()+1, 9, 0, 0, 0, time.UTC).Format(time.RFC3339),
 			expectedStreak: 2,
-			expectedDate:   "2026-08-02",
+			expectedDate:   baseDate.AddDate(0, 0, 1).Format(time.DateOnly),
 		},
 		{
-			name:           "skipped day resets streak",
-			occurredAt:     "2026-08-04T09:00:00Z",
+			name:           "skipped utc day resets streak",
+			occurredAt:     time.Date(baseDate.Year(), baseDate.Month(), baseDate.Day()+3, 9, 0, 0, 0, time.UTC).Format(time.RFC3339),
 			expectedStreak: 1,
-			expectedDate:   "2026-08-04",
+			expectedDate:   baseDate.AddDate(0, 0, 3).Format(time.DateOnly),
 		},
 	}
 
@@ -85,7 +86,13 @@ func TestActionStatuses(t *testing.T) {
 	})
 
 	t.Run("invalid json", func(t *testing.T) {
-		resp := rawReq(t, http.MethodPost, cfg.Users.InternalURL+"/action", `{"user_id":"1","occurred_at":"2026-08-01T10:00:00Z","extra":true}`, "")
+		resp := rawReq(
+			t,
+			http.MethodPost,
+			cfg.Users.InternalURL+"/action",
+			`{"user_id":"1","occurred_at":"2026-08-01T10:00:00Z","extra":true}`,
+			"",
+		)
 		require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 
 		apiErr := decodeBody[apiError](t, resp)

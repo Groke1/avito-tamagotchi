@@ -7,11 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 )
+
+//go:generate mockgen -source=auth.go -destination=mocks/middleware_auth.go -package=mocks
 
 type (
 	userRepository interface {
@@ -19,12 +22,22 @@ type (
 		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
 	}
 
-	tokenRepository interface {
+	TokenRepository interface {
 		AddToken(ctx context.Context, userID string, token entity.RefreshToken) error
-		GetRefreshTokenByHashForUpdate(ctx context.Context, hash string) (*entity.RefreshToken, error)
-		DeleteRefreshTokenByHash(ctx context.Context, hash string) error
-		DeleteExpiredTokens(ctx context.Context) error
+		ConsumeRefreshToken(ctx context.Context, hash string) (*entity.RefreshToken, error)
 		DeleteSession(ctx context.Context, userID, tokenHash string) error
+	}
+
+	rewardRepository interface {
+		GetRewardDefinitions(ctx context.Context) ([]entity.RewardDefinition, error)
+	}
+
+	streakRepository interface {
+		UpdateStreak(ctx context.Context, streak *entity.Streak) error
+	}
+
+	rewardService interface {
+		GrantReward(ctx context.Context, userID string, code string) (*entity.UserReward, error)
 	}
 
 	transactor interface {
@@ -33,10 +46,13 @@ type (
 )
 
 type authService struct {
-	userRepository  userRepository
-	tokenRepository tokenRepository
-	transactor      transactor
-	cfg             *Config
+	userRepository   userRepository
+	tokenRepository  TokenRepository
+	rewardRepository rewardRepository
+	streakRepository streakRepository
+	transactor       transactor
+	rewardService    rewardService
+	cfg              *Config
 }
 
 type Config struct {
@@ -48,15 +64,21 @@ type Config struct {
 
 func NewAuthService(
 	userRepository userRepository,
-	tokenRepository tokenRepository,
+	tokenRepository TokenRepository,
 	transactor transactor,
+	rewardRepository rewardRepository,
+	streakRepository streakRepository,
+	rewardService rewardService,
 	cfg Config,
 ) *authService {
 	return &authService{
-		userRepository:  userRepository,
-		tokenRepository: tokenRepository,
-		transactor:      transactor,
-		cfg:             &cfg,
+		userRepository:   userRepository,
+		tokenRepository:  tokenRepository,
+		transactor:       transactor,
+		rewardRepository: rewardRepository,
+		streakRepository: streakRepository,
+		rewardService:    rewardService,
+		cfg:              &cfg,
 	}
 }
 
@@ -68,6 +90,16 @@ func (s *authService) Register(ctx context.Context, user entity.User) (*entity.J
 
 	user.PasswordHash = passwordHash
 	user.Coins = s.cfg.RegistrationBonusCoins
+
+	eventTime := time.Now()
+
+	businessDate := dateOnly(eventTime)
+
+	rewardDefinitions, err := s.rewardRepository.GetRewardDefinitions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get reward definitions: %w", err)
+	}
+	randRewardDef := rewardDefinitions[rand.Intn(len(rewardDefinitions))]
 
 	var tokens *entity.JWT
 	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
@@ -81,6 +113,17 @@ func (s *authService) Register(ctx context.Context, user entity.User) (*entity.J
 		if err != nil {
 			return err
 		}
+
+		_, err = s.rewardService.GrantReward(ctx, userID, randRewardDef.Code)
+		if err != nil {
+			return err
+		}
+
+		err = s.streakRepository.UpdateStreak(ctx, &entity.Streak{
+			UserID:         userID,
+			CurrentStreak:  1,
+			LastActiveDate: businessDate,
+		})
 
 		return nil
 	})
@@ -117,7 +160,7 @@ func (s *authService) Refresh(ctx context.Context, refreshToken string) (*entity
 
 	var tokens *entity.JWT
 	err := s.transactor.WithTx(ctx, func(ctx context.Context) error {
-		storedToken, err := s.tokenRepository.GetRefreshTokenByHashForUpdate(ctx, refreshTokenHash)
+		storedToken, err := s.tokenRepository.ConsumeRefreshToken(ctx, refreshTokenHash)
 		if err != nil {
 			if errors.Is(err, entity.ErrRefreshTokenNotFound) {
 				return entity.ErrInvalidRefreshToken
@@ -126,14 +169,7 @@ func (s *authService) Refresh(ctx context.Context, refreshToken string) (*entity
 		}
 
 		if time.Now().UTC().After(storedToken.ExpiresAt) {
-			if err = s.tokenRepository.DeleteRefreshTokenByHash(ctx, refreshTokenHash); err != nil {
-				return err
-			}
 			return entity.ErrInvalidRefreshToken
-		}
-
-		if err = s.tokenRepository.DeleteRefreshTokenByHash(ctx, refreshTokenHash); err != nil {
-			return err
 		}
 
 		tokens, err = s.generateTokens(ctx, storedToken.UserID)
@@ -186,4 +222,13 @@ func (s *authService) ValidateAccessToken(_ context.Context, token string) (stri
 	}
 
 	return claims.Sub, nil
+}
+
+func dateOnly(t time.Time) time.Time {
+	t = t.UTC()
+
+	return time.Date(
+		t.Year(), t.Month(), t.Day(),
+		0, 0, 0, 0, time.UTC,
+	)
 }

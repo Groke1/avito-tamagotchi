@@ -14,9 +14,30 @@ services:
       JWT_SECRET: integration-tests-secret-at-least-32-bytes
       ACCESS_TOKEN_TTL: 15m
       REFRESH_TOKEN_TTL: 720h
+      SESSION_STORE: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      PETS_HTTP_ADDR: pets:8080
       TOKEN_CLEANUP_INTERVAL: 24h
       SHUTDOWN_TIMEOUT: 5s
       REGISTRATION_BONUS_COINS: "100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  pets:
+    image: pets-test
+    build:
+      context: .
+      dockerfile: ./backend/pets/Dockerfile
+    environment:
+      HTTP_PORT: "8080"
+      DATABASE_URL: postgres://db_user:12345@postgres:5432/db?sslmode=disable
+      JWT_SECRET: integration-tests-secret-at-least-32-bytes
+      USER_SERVICE_URL: http://users:8080
     depends_on:
       postgres:
         condition: service_healthy
@@ -32,8 +53,21 @@ services:
       interval: 2s
       timeout: 3s
       retries: 20
+    volumes:
+      - ./backend/pets/migrations/000001_create_pets.up.sql:/docker-entrypoint-initdb.d/010-create-pets.sql:ro
     tmpfs:
       - /var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--save", "60", "1000"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    tmpfs:
+      - /data
 
   integration-tests:
     build:
@@ -41,6 +75,7 @@ services:
       dockerfile: ./backend/integration-tests/Dockerfile
     environment:
       USERS_BASE_URL: http://users:8080
+      PETS_BASE_URL: http://pets:8080
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
       POSTGRES_DB: db
@@ -49,5 +84,9 @@ services:
     depends_on:
       users:
         condition: service_started
+      pets:
+        condition: service_started
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy

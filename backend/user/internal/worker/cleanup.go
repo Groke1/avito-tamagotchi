@@ -7,11 +7,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type cleaner interface {
+type Cleaner interface {
 	DeleteExpiredTokens(ctx context.Context) error
 }
 
-func StartTokenCleaner(ctx context.Context, logger *zap.Logger, cleaner cleaner, interval time.Duration) {
+func StartTokenCleaner(ctx context.Context, logger *zap.Logger, cleaner Cleaner, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 

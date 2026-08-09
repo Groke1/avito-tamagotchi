@@ -9,11 +9,14 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=controller.go -destination=mocks/controller_mocks.go -package=mocks
+
 type Service interface {
 	Profile(ctx context.Context, userID string) (*entity.User, error)
 	GetUsers(ctx context.Context, userIDs []string) ([]entity.User, error)
 	UpdateCoins(ctx context.Context, userID string, coins int64) (*entity.User, error)
 	UpdateStreak(ctx context.Context, userID, occurredAt string) error
+	GetDailyStat(ctx context.Context, userID string) (*entity.DailyStat, error)
 }
 
 type controller struct {
@@ -30,9 +33,10 @@ func (c *controller) InitRoutes(
 	internal *mux.Router,
 	authMiddleware func(http.Handler) http.Handler,
 ) {
-	profile := api.PathPrefix("/profile").Subrouter()
-	profile.Use(authMiddleware)
-	profile.HandleFunc("", c.Profile).Methods(http.MethodGet)
+	protected := api.NewRoute().Subrouter()
+	protected.Use(authMiddleware)
+	protected.HandleFunc("/profile", c.Profile).Methods(http.MethodGet)
+	protected.HandleFunc("/daily-stat", c.DailyStat).Methods(http.MethodGet)
 
 	internal.HandleFunc("/usernames", c.Usernames).Methods(http.MethodPost)
 	internal.HandleFunc("/update-coins", c.UpdateCoins).Methods(http.MethodPut)

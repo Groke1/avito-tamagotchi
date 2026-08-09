@@ -176,19 +176,63 @@ func (q *Queries) GetRewardDefinitionByCode(ctx context.Context, code string) (U
 	return i, err
 }
 
+const getRewardDefinitions = `-- name: GetRewardDefinitions :many
+SELECT
+    id, code, name, description
+FROM users.reward_definitions
+`
+
+func (q *Queries) GetRewardDefinitions(ctx context.Context) ([]UsersRewardDefinition, error) {
+	rows, err := q.db.Query(ctx, getRewardDefinitions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UsersRewardDefinition
+	for rows.Next() {
+		var i UsersRewardDefinition
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRewardsByUserIDAndPeriod = `-- name: GetRewardsByUserIDAndPeriod :many
 SELECT
     ur.id, ur.user_id,
     ur.promo_code, rd.name,
     rd.description, ur.status,
-    ur.redeemed_at, ur.expires_at
+    ur.created_at, ur.redeemed_at,
+    ur.expires_at
 FROM users.user_rewards AS ur
-    JOIN users.reward_definitions AS rd
-    ON rd.id = ur.reward_id
+         JOIN users.reward_definitions AS rd
+              ON rd.id = ur.reward_id
 WHERE ur.user_id = $1
-  AND ur.created_at >= $2
-  AND ur.created_at < $3
-ORDER BY ur.created_at DESC
+  AND (
+    (
+        ur.created_at >= $2
+            AND ur.created_at < $3
+        )
+        OR
+    (
+        ur.redeemed_at >= $2
+            AND ur.redeemed_at < $3
+        )
+    )
+ORDER BY GREATEST(
+    ur.created_at,
+    COALESCE(ur.redeemed_at, ur.created_at)
+) DESC
 `
 
 type GetRewardsByUserIDAndPeriodParams struct {
@@ -204,6 +248,7 @@ type GetRewardsByUserIDAndPeriodRow struct {
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
 	Status      UsersRewardStatus  `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	RedeemedAt  pgtype.Timestamptz `json:"redeemed_at"`
 	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
 }
@@ -224,6 +269,7 @@ func (q *Queries) GetRewardsByUserIDAndPeriod(ctx context.Context, arg GetReward
 			&i.Name,
 			&i.Description,
 			&i.Status,
+			&i.CreatedAt,
 			&i.RedeemedAt,
 			&i.ExpiresAt,
 		); err != nil {

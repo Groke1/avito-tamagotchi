@@ -5,4 +5,8 @@ type dailyBonusRequest struct {
 	Streak int32  `json:"streak"`
 }
 
+type petDailyStatRequest struct {
+	UserID string `json:"user_id"`
+}
+
 type emptyResponse struct{}
