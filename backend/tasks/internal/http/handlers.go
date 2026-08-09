@@ -96,16 +96,20 @@ func (h *Handlers) CompleteTask(con *gin.Context) {
 }
 
 func (h *Handlers) GetTodayTasksForInternal(con *gin.Context) {
-	userID, _ := con.Get("userID")
-	uid, _ := userID.(string)
+	uid := con.Param("user_id")
 	if uid == "" {
-		SendError(con, controller.ErrUnauthorized)
+		SendError(con, controller.ErrInvalidRequest)
 		return
 	}
-	result, err := h.getCompletedTasksHandler.Handle(con.Request.Context(), controller.GetCompletedTasksQuery{UserID: uid})
+
+	result, err := h.getCompletedTasksHandler.Handle(
+		con.Request.Context(),
+		controller.GetCompletedTasksQuery{UserID: uid},
+	)
 	if err != nil {
 		SendError(con, err)
 		return
 	}
+
 	con.JSON(http.StatusOK, result)
 }
