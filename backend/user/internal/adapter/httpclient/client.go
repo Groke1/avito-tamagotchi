@@ -62,19 +62,19 @@ func doJSON[Resp any](ctx context.Context, client *http.Client,
 	return &result, nil
 }
 
-func GetJSON[Resp any](ctx context.Context, client *http.Client, endpoint string) (*Resp, error) {
-	return doJSON[Resp](ctx, client, http.MethodGet, endpoint, nil)
+func WithoutRequest[Resp any](ctx context.Context, client *http.Client, endpoint, method string) (*Resp, error) {
+	return doJSON[Resp](ctx, client, method, endpoint, nil)
 }
 
-func PostJSON[Req any, Resp any](
+func WithRequest[Req any, Resp any](
 	ctx context.Context, client *http.Client,
-	endpoint string, request Req) (*Resp, error) {
+	endpoint string, method string, request Req) (*Resp, error) {
 	data, err := json.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	return doJSON[Resp](ctx, client, http.MethodPost, endpoint, bytes.NewReader(data))
+	return doJSON[Resp](ctx, client, method, endpoint, bytes.NewReader(data))
 }
 
 func NormalizeAddr(addr string) string {

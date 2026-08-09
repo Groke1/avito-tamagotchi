@@ -30,14 +30,27 @@ SELECT
     ur.id, ur.user_id,
     ur.promo_code, rd.name,
     rd.description, ur.status,
-    ur.redeemed_at, ur.expires_at
+    ur.created_at, ur.redeemed_at,
+    ur.expires_at
 FROM users.user_rewards AS ur
-    JOIN users.reward_definitions AS rd
-    ON rd.id = ur.reward_id
+         JOIN users.reward_definitions AS rd
+              ON rd.id = ur.reward_id
 WHERE ur.user_id = sqlc.arg(user_id)
-  AND ur.created_at >= sqlc.arg(from_time)
-  AND ur.created_at < sqlc.arg(to_time)
-ORDER BY ur.created_at DESC;
+  AND (
+    (
+        ur.created_at >= sqlc.arg(from_time)
+            AND ur.created_at < sqlc.arg(to_time)
+        )
+        OR
+    (
+        ur.redeemed_at >= sqlc.arg(from_time)
+            AND ur.redeemed_at < sqlc.arg(to_time)
+        )
+    )
+ORDER BY GREATEST(
+    ur.created_at,
+    COALESCE(ur.redeemed_at, ur.created_at)
+) DESC;
 
 -- name: GetRewardByUserIDAndRewardID :one
 SELECT ur.id, ur.user_id, ur.promo_code,
@@ -53,6 +66,12 @@ SELECT
     id, code, name, description
 FROM users.reward_definitions
 WHERE code = sqlc.arg(code);
+
+-- name: GetRewardDefinitions :many
+SELECT
+    id, code, name, description
+FROM users.reward_definitions;
+
 
 -- name: AddUserReward :one
 INSERT INTO users.user_rewards (

@@ -8,7 +8,7 @@ type JWT struct {
 }
 
 type RefreshToken struct {
-	UserID    string
-	TokenHash string
-	ExpiresAt time.Time
+	UserID    string    `json:"user_id"`
+	TokenHash string    `json:"token_hash"`
+	ExpiresAt time.Time `json:"expires_at"`
 }

@@ -109,18 +109,44 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
 
-	tasks, err := s.tasksClient.GetCompletedTasks(ctx, userID)
+	rewardStats := make([]entity.RewardsStat, 0, len(rewards))
+
+	for _, reward := range rewards {
+		if reward.CreatedAt.Compare(from) >= 0 &&
+			reward.CreatedAt.Compare(to) < 0 {
+			rewardStats = append(rewardStats, entity.RewardsStat{
+				PromoCode:   reward.PromoCode,
+				Name:        reward.Definition.Name,
+				Description: reward.Definition.Description,
+			})
+		}
+
+		if reward.RedeemedAt != nil &&
+			reward.RedeemedAt.Compare(from) >= 0 &&
+			reward.RedeemedAt.Compare(to) < 0 {
+			rewardStats = append(rewardStats, entity.RewardsStat{
+				PromoCode:   reward.PromoCode,
+				Name:        reward.Definition.Name,
+				Description: reward.Definition.Description,
+			})
+		}
+	}
+
+	_, err = s.tasksClient.GetCompletedTasks(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
 
-	pet, err := s.petClient.GetPetDailyStat(ctx, userID)
+	_, err = s.petClient.GetPetDailyStat(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
 
-	// Todo: запросы в другие сервисы
-	panic("implement me")
+	return &entity.DailyStat{
+		UserID:  userID,
+		Streak:  streak.CurrentStreak,
+		Rewards: rewardStats,
+	}, nil
 }
 
 func dayBounds(t time.Time) (time.Time, time.Time) {

@@ -9,6 +9,8 @@ import (
 )
 
 type (
+	SessionStore string
+
 	Config struct {
 		HTTP struct {
 			Port string `env:"HTTP_PORT" envDefault:"8080"`
@@ -24,14 +26,23 @@ type (
 			MinConns int32  `env:"POSTGRES_MIN_CONNS" envDefault:"1"`
 		}
 
+		Redis struct {
+			Host     string `env:"REDIS_HOST" envDefault:"localhost"`
+			Port     string `env:"REDIS_PORT" envDefault:"6379"`
+			Password string `env:"REDIS_PASSWORD"`
+			DB       int    `env:"REDIS_DB" envDefault:"0"`
+		}
+
 		Clients struct {
-			PetsHTTPAddr string `env:"PETS_HTTP_ADDR" envDefault:"pets:8081"`
+			PetsHTTPAddr  string `env:"PETS_HTTP_ADDR" envDefault:"pets:8080"`
+			TasksHTTPAddr string `env:"TASKS_HTTP_ADDR" envDefault:"tasks:8080"`
 		}
 
 		Settings struct {
 			RegistrationBonusCoins  uint64        `env:"REGISTRATION_BONUS_COINS" envDefault:"100"`
 			AccessTokenTTL          time.Duration `env:"ACCESS_TOKEN_TTL" envDefault:"15m"`
 			RefreshTokenTTL         time.Duration `env:"REFRESH_TOKEN_TTL" envDefault:"720h"`
+			SessionStore            SessionStore  `env:"SESSION_STORE" envDefault:"redis"`
 			TokenCleanupInterval    time.Duration `env:"TOKEN_CLEANUP_INTERVAL" envDefault:"24h"`
 			ShutdownTimeout         time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"5s"`
 			JWTSecret               string        `env:"JWT_SECRET,required"`
@@ -44,10 +55,23 @@ type (
 	}
 )
 
+const (
+	SessionStorePostgres SessionStore = "postgres"
+	SessionStoreRedis    SessionStore = "redis"
+)
+
 func New() (*Config, error) {
 	var cfg Config
 	err := env.Parse(&cfg)
-	return &cfg, err
+	if err != nil {
+		return nil, err
+	}
+
+	if !cfg.Settings.SessionStore.Valid() {
+		return nil, fmt.Errorf("invalid SESSION_STORE %q", cfg.Settings.SessionStore)
+	}
+
+	return &cfg, nil
 }
 
 func (c *Config) ConstructPostgresURL() string {
@@ -58,4 +82,17 @@ func (c *Config) ConstructPostgresURL() string {
 		hostPort,
 		c.PG.DB,
 	)
+}
+
+func (c *Config) ConstructRedisAddr() string {
+	return net.JoinHostPort(c.Redis.Host, c.Redis.Port)
+}
+
+func (s SessionStore) Valid() bool {
+	switch s {
+	case SessionStorePostgres, SessionStoreRedis:
+		return true
+	default:
+		return false
+	}
 }

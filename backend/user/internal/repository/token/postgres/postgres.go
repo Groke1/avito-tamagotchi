@@ -1,4 +1,4 @@
-package token
+package postgres
 
 import (
 	"context"
@@ -8,35 +8,35 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon.pkg/db"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/repository/converter"
-	sqlctoken "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/token/sqlc"
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/repository/token/postgres/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type tokenRepository struct {
-	db      sqlctoken.DBTX
-	queries *sqlctoken.Queries
+	db      token.DBTX
+	queries *token.Queries
 }
 
-func NewTokenRepository(qdb sqlctoken.DBTX) *tokenRepository {
+func NewTokenRepository(qdb token.DBTX) *tokenRepository {
 	return &tokenRepository{
 		db:      qdb,
-		queries: sqlctoken.New(qdb),
+		queries: token.New(qdb),
 	}
 }
 
-func (r *tokenRepository) AddToken(ctx context.Context, userID string, token entity.RefreshToken) error {
+func (r *tokenRepository) AddToken(ctx context.Context, userID string, rToken entity.RefreshToken) error {
 	userUUID, err := converter.StringToUUID(userID)
 	if err != nil {
 		return fmt.Errorf("add refresh token: parse user id: %w", err)
 	}
 
-	err = r.getQueries(ctx).AddToken(ctx, sqlctoken.AddTokenParams{
+	err = r.getQueries(ctx).AddToken(ctx, token.AddTokenParams{
 		UserID:    userUUID,
-		TokenHash: token.TokenHash,
+		TokenHash: rToken.TokenHash,
 		ExpiresAt: pgtype.Timestamptz{
-			Time:  token.ExpiresAt,
+			Time:  rToken.ExpiresAt,
 			Valid: true,
 		},
 	})
@@ -58,7 +58,7 @@ func (r *tokenRepository) AddToken(ctx context.Context, userID string, token ent
 }
 
 func (r *tokenRepository) GetRefreshTokenByHashForUpdate(ctx context.Context, hash string) (*entity.RefreshToken, error) {
-	token, err := r.getQueries(ctx).GetRefreshTokenByHashForUpdate(ctx, hash)
+	rToken, err := r.getQueries(ctx).GetRefreshTokenByHashForUpdate(ctx, hash)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, entity.ErrRefreshTokenNotFound
@@ -67,15 +67,28 @@ func (r *tokenRepository) GetRefreshTokenByHashForUpdate(ctx context.Context, ha
 		return nil, fmt.Errorf("get refresh token by hash: %w", err)
 	}
 
-	if !token.ExpiresAt.Valid {
+	if !rToken.ExpiresAt.Valid {
 		return nil, errors.New("get refresh token by hash: expires_at is null")
 	}
 
 	return &entity.RefreshToken{
-		UserID:    token.UserID.String(),
-		TokenHash: token.TokenHash,
-		ExpiresAt: token.ExpiresAt.Time,
+		UserID:    rToken.UserID.String(),
+		TokenHash: rToken.TokenHash,
+		ExpiresAt: rToken.ExpiresAt.Time,
 	}, nil
+}
+
+func (r *tokenRepository) ConsumeRefreshToken(ctx context.Context, hash string) (*entity.RefreshToken, error) {
+	token, err := r.GetRefreshTokenByHashForUpdate(ctx, hash)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.DeleteRefreshTokenByHash(ctx, hash); err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 func (r *tokenRepository) DeleteRefreshTokenByHash(ctx context.Context, hash string) error {
@@ -99,7 +112,7 @@ func (r *tokenRepository) DeleteSession(ctx context.Context, userID, tokenHash s
 		return fmt.Errorf("delete session: %w", err)
 	}
 
-	if err := r.getQueries(ctx).DeleteSession(ctx, sqlctoken.DeleteSessionParams{
+	if err := r.getQueries(ctx).DeleteSession(ctx, token.DeleteSessionParams{
 		UserID:    userUUID,
 		TokenHash: tokenHash,
 	}); err != nil {
@@ -108,11 +121,11 @@ func (r *tokenRepository) DeleteSession(ctx context.Context, userID, tokenHash s
 	return nil
 }
 
-func (r *tokenRepository) getQueries(ctx context.Context) *sqlctoken.Queries {
+func (r *tokenRepository) getQueries(ctx context.Context) *token.Queries {
 	tx, err := db.ExtractTx(ctx)
 	if err != nil {
 		return r.queries
 	}
 
-	return sqlctoken.New(tx)
+	return token.New(tx)
 }

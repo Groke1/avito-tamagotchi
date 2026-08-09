@@ -13,17 +13,17 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 )
 
+//go:generate mockgen -source=auth.go -destination=mocks/middleware_auth.go -package=mocks
+
 type (
 	userRepository interface {
 		AddUser(ctx context.Context, arg entity.User) (string, error)
 		GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
 	}
 
-	tokenRepository interface {
+	TokenRepository interface {
 		AddToken(ctx context.Context, userID string, token entity.RefreshToken) error
-		GetRefreshTokenByHashForUpdate(ctx context.Context, hash string) (*entity.RefreshToken, error)
-		DeleteRefreshTokenByHash(ctx context.Context, hash string) error
-		DeleteExpiredTokens(ctx context.Context) error
+		ConsumeRefreshToken(ctx context.Context, hash string) (*entity.RefreshToken, error)
 		DeleteSession(ctx context.Context, userID, tokenHash string) error
 	}
 
@@ -34,7 +34,7 @@ type (
 
 type authService struct {
 	userRepository  userRepository
-	tokenRepository tokenRepository
+	tokenRepository TokenRepository
 	transactor      transactor
 	cfg             *Config
 }
@@ -48,7 +48,7 @@ type Config struct {
 
 func NewAuthService(
 	userRepository userRepository,
-	tokenRepository tokenRepository,
+	tokenRepository TokenRepository,
 	transactor transactor,
 	cfg Config,
 ) *authService {
@@ -117,7 +117,7 @@ func (s *authService) Refresh(ctx context.Context, refreshToken string) (*entity
 
 	var tokens *entity.JWT
 	err := s.transactor.WithTx(ctx, func(ctx context.Context) error {
-		storedToken, err := s.tokenRepository.GetRefreshTokenByHashForUpdate(ctx, refreshTokenHash)
+		storedToken, err := s.tokenRepository.ConsumeRefreshToken(ctx, refreshTokenHash)
 		if err != nil {
 			if errors.Is(err, entity.ErrRefreshTokenNotFound) {
 				return entity.ErrInvalidRefreshToken
@@ -126,14 +126,7 @@ func (s *authService) Refresh(ctx context.Context, refreshToken string) (*entity
 		}
 
 		if time.Now().UTC().After(storedToken.ExpiresAt) {
-			if err = s.tokenRepository.DeleteRefreshTokenByHash(ctx, refreshTokenHash); err != nil {
-				return err
-			}
 			return entity.ErrInvalidRefreshToken
-		}
-
-		if err = s.tokenRepository.DeleteRefreshTokenByHash(ctx, refreshTokenHash); err != nil {
-			return err
 		}
 
 		tokens, err = s.generateTokens(ctx, storedToken.UserID)

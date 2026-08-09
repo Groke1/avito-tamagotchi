@@ -45,8 +45,8 @@ func (c *client) SendDailyBonus(ctx context.Context, userID string, streak int32
 		},
 	)
 
-	_, err := httpclient.PostJSON[dailyBonusRequest, emptyResponse](
-		ctx, c.httpClient, endpoint.String(), payload)
+	_, err := httpclient.WithRequest[dailyBonusRequest, emptyResponse](
+		ctx, c.httpClient, endpoint.String(), http.MethodPost, payload)
 	if err != nil {
 		return fmt.Errorf("send daily bonus: %w", err)
 	}
@@ -55,5 +55,19 @@ func (c *client) SendDailyBonus(ctx context.Context, userID string, streak int32
 }
 
 func (c *client) GetPetDailyStat(ctx context.Context, userID string) (*entity.PetStat, error) {
-	panic("implement me")
+	payload := petDailyStatRequest{UserID: userID}
+
+	endpoint := c.baseURL.ResolveReference(
+		&url.URL{
+			Path: "/internal/daily-gained-xp",
+		},
+	)
+
+	resp, err := httpclient.WithRequest[petDailyStatRequest, entity.PetStat](
+		ctx, c.httpClient, endpoint.String(), http.MethodGet, payload)
+	if err != nil {
+		return nil, fmt.Errorf("get pet stat: %w", err)
+	}
+
+	return resp, nil
 }

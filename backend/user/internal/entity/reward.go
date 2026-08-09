@@ -25,6 +25,7 @@ type UserReward struct {
 	PromoCode  string
 	Status     Status
 	Definition RewardDefinition
+	CreatedAt  time.Time
 	ExpiresAt  *time.Time
 	RedeemedAt *time.Time
 }

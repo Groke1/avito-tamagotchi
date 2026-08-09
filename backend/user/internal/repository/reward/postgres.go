@@ -118,6 +118,7 @@ func (r *rewardRepository) GetRewardsByUserIDAndPeriod(
 				Name:        row.Name,
 				Description: row.Description,
 			},
+			CreatedAt: *converter.TimestamptzToTime(row.CreatedAt),
 
 			RedeemedAt: converter.TimestamptzToTime(row.RedeemedAt),
 			ExpiresAt:  converter.TimestamptzToTime(row.ExpiresAt),
@@ -178,6 +179,23 @@ func (r *rewardRepository) GetRewardDefinitionByCode(ctx context.Context, code s
 		Name:        definitionRaw.Name,
 		Description: definitionRaw.Description,
 	}, nil
+}
+
+func (r *rewardRepository) GetRewardDefinitions(ctx context.Context) ([]entity.RewardDefinition, error) {
+	definitionsRaw, err := r.getQueries(ctx).GetRewardDefinitions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get reward definitions: %w", err)
+	}
+	definitions := make([]entity.RewardDefinition, 0, len(definitionsRaw))
+	for _, definitionRaw := range definitionsRaw {
+		definitions = append(definitions, entity.RewardDefinition{
+			ID:          definitionRaw.ID,
+			Code:        definitionRaw.Code,
+			Name:        definitionRaw.Name,
+			Description: definitionRaw.Description,
+		})
+	}
+	return definitions, nil
 }
 
 func (r *rewardRepository) AddUserReward(ctx context.Context, userID, promoCode string,

@@ -29,6 +29,11 @@ type config struct {
 		InternalURL string
 	}
 
+	Pets struct {
+		BaseURL string `env:"PETS_BASE_URL" envDefault:"http://pets:8080"`
+		APIURL  string
+	}
+
 	PG struct {
 		Host     string `env:"POSTGRES_HOST" envDefault:"localhost"`
 		Port     string `env:"POSTGRES_PORT" envDefault:"5432"`
@@ -109,6 +114,8 @@ func loadConfig(t *testing.T) *config {
 	cfg.Users.BaseURL = normalizeURL(cfg.Users.BaseURL)
 	cfg.Users.APIURL = cfg.Users.BaseURL + "/api/v1"
 	cfg.Users.InternalURL = cfg.Users.BaseURL + "/internal"
+	cfg.Pets.BaseURL = normalizeURL(cfg.Pets.BaseURL)
+	cfg.Pets.APIURL = cfg.Pets.BaseURL + "/api/v1"
 	cfg.initDB(t)
 
 	return &cfg
@@ -283,6 +290,16 @@ func getProfile(t *testing.T, cfg *config, accessToken string) profileResponse {
 	return decodeBody[profileResponse](t, resp)
 }
 
+func createPet(t *testing.T, cfg *config, accessToken string, name string) {
+	t.Helper()
+
+	resp := jsonReq(t, http.MethodPost, cfg.Pets.APIURL+"/pet/", map[string]any{
+		"name": name,
+	}, accessToken)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+	requireEmptyBodyOrClose(t, resp)
+}
+
 func requireEmptyBody(t *testing.T, resp *http.Response) {
 	t.Helper()
 	defer resp.Body.Close()
@@ -290,6 +307,13 @@ func requireEmptyBody(t *testing.T, resp *http.Response) {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Empty(t, body)
+}
+
+func requireEmptyBodyOrClose(t *testing.T, resp *http.Response) {
+	t.Helper()
+	defer resp.Body.Close()
+	_, err := io.Copy(io.Discard, resp.Body)
+	require.NoError(t, err)
 }
 
 func grantReward(t *testing.T, cfg *config, userID string, code string) userRewardResponse {
