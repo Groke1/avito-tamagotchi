@@ -1,0 +1,14 @@
+workspace:
+  id: ""
+
+localResources:
+  specs:
+    - ../user/api/api.yaml
+    - ../pets/internal/api/api.yaml
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  specs:
+    ../user/api/api.yaml: bbfec520-2710-4052-87f4-5ba13b53d4fe
+    ../pets/internal/api/api.yaml: 97c4fa82-65f5-4bd9-b9bd-a7a10fd77f33
