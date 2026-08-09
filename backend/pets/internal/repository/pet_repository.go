@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
@@ -78,7 +77,7 @@ func (pr *PetRepository) GetPet(ctx context.Context, userID string) (*domain.Pet
 	return &pet, nil
 }
 
-func (pr *PetRepository) CreatePet(ctx context.Context, petName string, userID string) (*domain.Pet, error) {
+func (pr *PetRepository) CreatePet(ctx context.Context, userID string, petName string) (*domain.Pet, error) {
 	query := `
 				INSERT INTO pets (name, user_id)
 				VALUES ($1, $2)
@@ -121,6 +120,9 @@ func (pr *PetRepository) GetPetForUpdate(ctx context.Context, tx *sqlx.Tx, userI
 	err := tx.GetContext(ctx, &dbPet, query, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrPetNotFound
+	} else if err != nil {
+		print(fmt.Errorf("failed to get pet for update: %w", err))
+		return nil, fmt.Errorf("failed to get pet for update: %w", err)
 	}
 
 	pet := domain.Pet{
@@ -172,7 +174,7 @@ func (pr *PetRepository) UpdatePet(ctx context.Context, tx *sqlx.Tx, pet *domain
 	if err != nil {
 		return fmt.Errorf("failed to update pet: %w", err)
 	}
-	log.Println("before upsert")
+
 	if pet.LastGainedXP > 0 {
 		query = `
 				INSERT INTO pets_daily_xp (pet_id, date, gained_xp)
@@ -189,24 +191,26 @@ func (pr *PetRepository) UpdatePet(ctx context.Context, tx *sqlx.Tx, pet *domain
 	return nil
 }
 
-func (pr *PetRepository) GetLeaderboardWithUser(ctx context.Context, limit int, userID string) ([]domain.LeaderboardItem, error) {
+func (pr *PetRepository) GetLeaderboardWithUser(ctx context.Context, userID string, limit int) ([]domain.LeaderboardItem, error) {
 	query := `
 				WITH ranked_pets AS (
-					SELECT name, user_id, level,
-							DENSE_RANK() OVER (ORDER BY level DESC, xp DESC, id ASC) as rank
+					SELECT  
+						xp
+						name, 
+						user_id, 
+						level,
+						DENSE_RANK() OVER (
+							ORDER BY 
+								level DESC, 
+								xp DESC, 
+								id ASC
+						) as rank
 					FROM pets
 				)
-
 				SELECT *
 				FROM ranked_pets
 				WHERE rank <= $1
-
-				UNION ALL
-
-				SELECT *
-				FROM ranked_pets
-				WHERE user_id = $2 and rank > $1
-
+				OR user_id = $2
 				ORDER BY rank
 	`
 
@@ -248,4 +252,56 @@ func (pr *PetRepository) GetDailyGainedXPByUserID(ctx context.Context, userID st
 	}
 
 	return gainedXP, nil
+}
+
+func (pr *PetRepository) GetWeeklyLeaderboardWithUser(ctx context.Context, userID string, limit int) ([]domain.LeaderboardItem, error) {
+	query := `
+				WITH weekly_xp AS (
+					SELECT
+						pdx.pet_id,
+						SUM(pdx.gained_xp) AS weekly_xp
+					FROM pets_daily_xp pdx
+					WHERE pdx.date >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - INTERVAL '6 days'
+					GROUP BY pdx.pet_id
+				),
+				ranked_pets AS (
+					SELECT
+						p.name,
+						p.user_id,
+						p.level,
+						COALESCE(wxp.weekly_xp, 0) AS xp,
+						DENSE_RANK() OVER (
+							ORDER BY
+								p.level DESC,
+								COALESCE(wxp.weekly_xp, 0) DESC,
+								p.id ASC
+						) AS rank
+					FROM pets p
+					LEFT JOIN weekly_xp wxp ON p.id = wxp.pet_id
+				)
+				SELECT *
+				FROM ranked_pets
+				WHERE rank <= $1
+				OR user_id = $2
+				ORDER BY rank;
+	`
+
+	var dbPets []PetForLeaderboard
+	err := pr.db.SelectContext(ctx, &dbPets, query, limit, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	pets := make([]domain.LeaderboardItem, len(dbPets))
+	for i, dbPet := range dbPets {
+		pets[i] = domain.LeaderboardItem{
+			Rank:    dbPet.Rank,
+			Level:   dbPet.Level,
+			UserID:  dbPet.UserID,
+			PetName: dbPet.Name,
+			XP:      dbPet.XP,
+		}
+	}
+
+	return pets, nil
 }

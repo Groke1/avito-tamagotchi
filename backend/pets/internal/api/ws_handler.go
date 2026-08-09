@@ -18,7 +18,7 @@ func NewWSHandler(client *websocket.ClientManager, ticketManager *websocket.Tick
 }
 
 func (wsh *WSHandler) CreateWSTicket(w http.ResponseWriter, r *http.Request) {
-	userID, err := UserIDFromContext(r.Context())
+	userID, err := GetUserIDFromContext(r.Context())
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
