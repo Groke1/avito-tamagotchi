@@ -1,15 +1,16 @@
 export interface Task {
   id: string
-  title: TaskTitle
+  title: string
   description: string
   reward_coins: number
   reward_xp: number
   status: TaskStatus
   completed_at: null
+  task_type: TaskType
 }
 
 export type TaskStatus = 'active' | 'completed'
-export type TaskTitle = 'Первая продажа месяца' | 'Лояльный продавец' | 'Быстрый ответ покупателю'
+export type TaskType = 'Отзывы' | 'Поиск' | 'Сообщения' | 'Категории'
 
 export interface TasksResponse {
   date: string

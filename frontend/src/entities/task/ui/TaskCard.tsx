@@ -1,7 +1,7 @@
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui'
 import { Check, Coins, Sparkles } from 'lucide-react'
-import type { Task } from '../model/types'
+import type { Task, TaskType } from '../model/types'
 
 interface TaskCardProps {
   task: Task
@@ -9,29 +9,30 @@ interface TaskCardProps {
   isCompleting?: boolean
 }
 
-const categoryMap: Record<string, { label: string; badgeClass: string; emoji: string }> = {
-  'Первая продажа месяца': {
-    label: 'Продажи',
+const typeMap: Record<TaskType, { badgeClass: string; emoji: string }> = {
+  Отзывы: {
+    badgeClass: 'bg-amber-100 text-amber-800',
+    emoji: '⭐',
+  },
+  Поиск: {
+    badgeClass: 'bg-purple-100 text-purple-800',
+    emoji: '🔍',
+  },
+  Сообщения: {
+    badgeClass: 'bg-blue-100 text-avito-blue-dark',
+    emoji: '💬',
+  },
+  Категории: {
     badgeClass: 'bg-emerald-100 text-emerald-800',
     emoji: '🏷️',
-  },
-  'Лояльный продавец': {
-    label: 'Ежедневное',
-    badgeClass: 'bg-blue-100 text-avito-blue-dark',
-    emoji: '❤️',
-  },
-  'Быстрый ответ покупателю': {
-    label: 'Доставка',
-    badgeClass: 'bg-pink-100 text-pink-800',
-    emoji: '📦',
   },
 }
 
 export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardProps) => {
-  const { id, title, description, reward_coins, reward_xp, status } = task
+  const { id, title, description, reward_coins, reward_xp, status, task_type } = task
   const isCompleted = status === 'completed'
-  const category = categoryMap[title] ?? {
-    label: 'Задание',
+
+  const category = typeMap[task_type] ?? {
     badgeClass: 'bg-blue-100 text-avito-blue-dark',
     emoji: '✨',
   }
@@ -40,7 +41,7 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
     <div
       className={cn(
         'p-5 rounded-card border bg-surface-lowest transition-all flex flex-col justify-between gap-4 shadow-level-1 relative',
-        isCompleted ? 'border-avito-green/40 bg-avito-green/5' : 'border-surface-highest ',
+        isCompleted ? 'border-avito-green/40 bg-avito-green/5' : 'border-surface-highest',
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -50,7 +51,7 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
             isCompleted ? 'bg-surface-high text-on-surface-variant' : category.badgeClass,
           )}
         >
-          {category.label}
+          {task_type}
         </span>
         {isCompleted && (
           <div className="inline-flex items-center p-1.5 rounded-full bg-avito-green/20 text-surface-lowest">
@@ -80,7 +81,7 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
         </div>
       ) : (
         <Button
-          size={'sm'}
+          size="sm"
           onClick={() => onComplete?.(id)}
           disabled={isCompleting}
           isLoading={isCompleting}

@@ -54,8 +54,7 @@ export const LeaderItem = ({ leader, isCurrentUser, className }: LeaderItemProps
       </div>
       <div className="text-right">
         <span className="font-extrabold text-base sm:text-lg text-avito-blue-dark">
-          {/* TODO: тут должно быть поле с XP питомца */}
-          {leader.xp || 120} XP
+          {leader.xp} XP
         </span>
       </div>
     </li>
