@@ -83,12 +83,12 @@ lint-clean:
 
 test:
 	@set -eu; \
-	docker-compose \
+	docker compose \
 		-f docker-compose.test.yml \
 		down -v --remove-orphans || true; \
 	\
 	status=0; \
-	docker-compose \
+	docker compose \
 		-f docker-compose.test.yml \
 		up \
 		--build \
@@ -96,7 +96,7 @@ test:
 		--exit-code-from integration-tests \
 		|| status=$$?; \
 	\
-	docker-compose \
+	docker compose \
 		-f docker-compose.test.yml \
 		down -v --remove-orphans; \
 	\

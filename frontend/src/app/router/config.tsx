@@ -1,4 +1,13 @@
-import { CreatePet, Dashboard, Leaderboard, Login, Register, Rewards, Tasks } from '@/pages'
+import {
+  CreatePet,
+  DailyReport,
+  Dashboard,
+  Leaderboard,
+  Login,
+  Register,
+  Rewards,
+  Tasks,
+} from '@/pages'
 import { ROUTES_PATHS } from '@/shared/config'
 import { PageLoader } from '@/shared/ui'
 import { createBrowserRouter } from 'react-router-dom'
@@ -36,9 +45,8 @@ export const router = createBrowserRouter([
               { path: ROUTES_PATHS.DASHBOARD, element: <Dashboard /> },
               { path: ROUTES_PATHS.TASKS, element: <Tasks /> },
               { path: ROUTES_PATHS.REWARDS, element: <Rewards /> },
-              { path: ROUTES_PATHS.SHOP, element: <div>Shop</div> },
               { path: ROUTES_PATHS.LEADERBOARD, element: <Leaderboard /> },
-              { path: ROUTES_PATHS.DAILY_REPORT, element: <div>Daily report</div> },
+              { path: ROUTES_PATHS.DAILY_REPORT, element: <DailyReport /> },
             ],
           },
         ],
@@ -46,4 +54,3 @@ export const router = createBrowserRouter([
     ],
   },
 ])
-

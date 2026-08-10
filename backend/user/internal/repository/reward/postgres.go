@@ -115,8 +115,10 @@ func (r *rewardRepository) GetRewardsByUserIDAndPeriod(
 			Status:    entity.Status(row.Status),
 
 			Definition: entity.RewardDefinition{
-				Name:        row.Name,
-				Description: row.Description,
+				Name:                row.Name,
+				Description:         row.Description,
+				EarnedDescription:   row.EarnedDescription,
+				RedeemedDescription: row.RedeemedDescription,
 			},
 			CreatedAt: *converter.TimestamptzToTime(row.CreatedAt),
 

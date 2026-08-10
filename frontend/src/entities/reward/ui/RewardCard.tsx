@@ -1,4 +1,4 @@
-import { cn, formatExpirationDate } from '@/shared/lib/utils'
+import { cn, formatTaskDate } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui'
 import { Check, Clock, Copy, Gift } from 'lucide-react'
 import type { UserReward } from '../model/types'
@@ -97,7 +97,7 @@ export const RewardCard = ({ reward, onRedeem, isRedeeming = false }: RewardCard
       <div className="flex items-center justify-between text-xs text-on-surface-variant">
         <span className="inline-flex items-center gap-1.5 font-medium">
           <Clock className="size-3.5" />
-          {isRedeemed ? 'Использован' : `Срок: ${formatExpirationDate(expires_at)}`}
+          {isRedeemed ? 'Использован' : `Срок: ${formatTaskDate(expires_at)}`}
         </span>
       </div>
       {isActive ? (

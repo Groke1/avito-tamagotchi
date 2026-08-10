@@ -16,8 +16,8 @@ type Pet struct {
 	Happiness        int
 	CreatedAt        time.Time
 	LastCalculatedAt time.Time
-	LastFeedAt       time.Time
-	LastStrokeAt     time.Time
+	LastFeedAt       *time.Time
+	LastStrokeAt     *time.Time
 	LastGainedXP     int
 }
 
@@ -55,15 +55,15 @@ const (
 func (p *Pet) Feed() (bool, int, error) {
 	if p.Satiety >= MaxStatValue {
 		return false, 0, ErrPetIsFull
-	} else if time.Since(p.LastFeedAt) < FeedCooldown {
+	} else if p.LastFeedAt != nil && time.Since(*p.LastFeedAt) < FeedCooldown {
 		return false, 0, &ActionUnavailableError{
-			RetryAfter: FeedCooldown - time.Since(p.LastFeedAt),
+			RetryAfter: FeedCooldown - time.Since(*p.LastFeedAt),
 		}
 	}
 
 	p.Satiety = min(p.Satiety+FeedSatietyIncrease, MaxStatValue)
 	levelUp := p.AddXP(FeedXPAmount)
-	p.LastFeedAt = time.Now()
+	p.LastFeedAt = new(time.Now())
 
 	return levelUp, FeedCost, nil
 }
@@ -76,15 +76,15 @@ func (p *Pet) Stroke() (bool, error) {
 	case p.Satiety < HungrySatietyThreshold:
 		return false, ErrPetIsTooHungry // TODO frontend integration
 
-	case time.Since(p.LastStrokeAt) < StrokeCooldown:
+	case p.LastStrokeAt != nil && time.Since(*p.LastStrokeAt) < StrokeCooldown:
 		return false, &ActionUnavailableError{
-			RetryAfter: StrokeCooldown - time.Since(p.LastStrokeAt),
+			RetryAfter: StrokeCooldown - time.Since(*p.LastStrokeAt),
 		}
 	}
 
 	p.Happiness = min(p.Happiness+StrokeHappinessIncrease, MaxStatValue)
 	levelUp := p.AddXP(StrokeXPAmount)
-	p.LastStrokeAt = time.Now()
+	p.LastStrokeAt = new(time.Now())
 
 	return levelUp, nil
 }
@@ -116,7 +116,7 @@ func (p *Pet) AddXP(baseAmount int) bool {
 	p.LastGainedXP = amount
 	if p.XP >= p.NextLevelXP {
 		p.Level++
-		p.NextLevelXP *= p.Level * p.Level
+		p.NextLevelXP *= p.Level * p.Level // Note: мне кажется, что это жестоко по отношению к пользователю
 		return true
 	}
 

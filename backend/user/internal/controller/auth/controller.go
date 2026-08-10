@@ -3,7 +3,9 @@ package auth
 import (
 	"context"
 	"net/http"
+	"time"
 
+	cntrmiddleware "github.com/cayman444/avito-gamification-hackathon.user/internal/controller/middleware"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -19,12 +21,25 @@ type Service interface {
 }
 
 type controller struct {
-	logger  *zap.Logger
-	service Service
+	logger     *zap.Logger
+	service    Service
+	cookieConf cntrmiddleware.CookieConfig
 }
 
-func NewController(logger *zap.Logger, service Service) *controller {
-	return &controller{logger: logger, service: service}
+func NewController(
+	logger *zap.Logger,
+	service Service,
+	accessTokenTTL time.Duration,
+	refreshTokenTTL time.Duration,
+) *controller {
+	return &controller{
+		logger:  logger,
+		service: service,
+		cookieConf: cntrmiddleware.CookieConfig{
+			AccessTokenTTL:  accessTokenTTL,
+			RefreshTokenTTL: refreshTokenTTL,
+		},
+	}
 }
 
 func (c *controller) InitRoutes(api *mux.Router, _ *mux.Router, authMiddleware func(http.Handler) http.Handler) {

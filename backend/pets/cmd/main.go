@@ -62,7 +62,11 @@ func main() {
 				r.Post("/ws-ticket", wsHandler.CreateWSTicket)
 			})
 
-			r.Get("/leaderboard", petHandler.GetLeaderboard)
+			r.Route("/leaderboard", func(r chi.Router) {
+				r.Get("/", petHandler.GetLeaderboard)
+				r.Get("/weekly", petHandler.GetWeeklyLeaderboard)
+			})
+
 			r.Get("/next-reward-description", petHandler.GetNextRewardDescription)
 		})
 	})

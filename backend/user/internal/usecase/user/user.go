@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
@@ -119,7 +118,7 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 				PromoCode:    reward.PromoCode,
 				Name:         reward.Definition.Name,
 				Description:  reward.Definition.Description,
-				FinishedDesc: "Получена " + strings.ToLower(reward.Definition.Name),
+				FinishedDesc: reward.Definition.EarnedDescription,
 				CreatedTime:  reward.CreatedAt,
 			})
 		}
@@ -131,7 +130,7 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 				PromoCode:    reward.PromoCode,
 				Name:         reward.Definition.Name,
 				Description:  reward.Definition.Description,
-				FinishedDesc: "Использована " + strings.ToLower(reward.Definition.Name),
+				FinishedDesc: reward.Definition.RedeemedDescription,
 				CreatedTime:  *reward.RedeemedAt,
 			})
 		}

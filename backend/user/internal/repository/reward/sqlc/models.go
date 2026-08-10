@@ -50,10 +50,3 @@ func (ns NullUsersRewardStatus) Value() (driver.Value, error) {
 	}
 	return string(ns.UsersRewardStatus), nil
 }
-
-type UsersRewardDefinition struct {
-	ID          int32  `json:"id"`
-	Code        string `json:"code"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}

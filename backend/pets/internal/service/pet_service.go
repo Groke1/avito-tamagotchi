@@ -55,11 +55,12 @@ func (ps *PetService) GetPet(ctx context.Context, userID string) (*domain.Pet, e
 	return pet, nil
 }
 
-func (ps *PetService) CreatePet(ctx context.Context, petName string, userID string) (*domain.Pet, error) {
-	pet, err := ps.petRepository.CreatePet(ctx, petName, userID)
+func (ps *PetService) CreatePet(ctx context.Context, userID string, petName string) (*domain.Pet, error) {
+	pet, err := ps.petRepository.CreatePet(ctx, userID, petName)
 	if err != nil {
 		return nil, err
 	}
+	ps.eventNotifier.BroadcastLeaderboard()
 
 	return pet, nil
 }
@@ -147,8 +148,8 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	return pet, nil
 }
 
-func (ps *PetService) GetLeaderboard(ctx context.Context, limit int, userID string) ([]domain.LeaderboardItem, *domain.LeaderboardItem, error) {
-	records, err := ps.petRepository.GetLeaderboardWithUser(ctx, limit, userID)
+func (ps *PetService) GetLeaderboard(ctx context.Context, userID string, limit int) ([]domain.LeaderboardItem, *domain.LeaderboardItem, error) {
+	records, err := ps.petRepository.GetLeaderboardWithUser(ctx, userID, limit)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -179,7 +180,7 @@ func (ps *PetService) GetLeaderboard(ctx context.Context, limit int, userID stri
 	return records, &currentUserItem, nil
 }
 
-func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*domain.Pet, error) {
+func (ps *PetService) GrantXP(ctx context.Context, userID string, amount int) (*domain.Pet, error) {
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -217,9 +218,9 @@ func (ps *PetService) GrantXP(ctx context.Context, amount int, userID string) (*
 	return pet, nil
 }
 
-func (ps *PetService) ClaimDailyBonusForStreak(ctx context.Context, streak int, userID string) error {
+func (ps *PetService) ClaimDailyBonusForStreak(ctx context.Context, userID string, streak int) error {
 	amount := XPperStreak * streak
-	_, err := ps.GrantXP(ctx, amount, userID)
+	_, err := ps.GrantXP(ctx, userID, amount)
 	if err != nil {
 		return err
 	}
@@ -292,4 +293,36 @@ func (ps *PetService) GetNextRewardDescription(ctx context.Context, userID strin
 	}
 
 	return reward, nil
+}
+
+func (ps *PetService) GetWeeklyLeaderboard(ctx context.Context, userID string, limit int) ([]domain.LeaderboardItem, *domain.LeaderboardItem, error) {
+	records, err := ps.petRepository.GetWeeklyLeaderboardWithUser(ctx, userID, limit)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var currentUserItem domain.LeaderboardItem
+	var userIDs = make([]string, len(records))
+	for i := range records {
+		userIDs[i] = records[i].UserID
+		if records[i].UserID == userID {
+			currentUserItem = records[i]
+		}
+	}
+
+	userMap, err := ps.client.GetUsernamesByIDs(ctx, userIDs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for i := range records {
+		if name, ok := userMap[records[i].UserID]; ok {
+			records[i].UserName = name
+		} else {
+			return nil, nil, err
+		}
+	}
+	currentUserItem.UserName = userMap[currentUserItem.UserID]
+
+	return records, &currentUserItem, nil
 }

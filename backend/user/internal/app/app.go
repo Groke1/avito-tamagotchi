@@ -120,7 +120,7 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 
 	router := mux.NewRouter()
 	contr := controller.NewController(logger, authService,
-		userService, rewardService, authService)
+		userService, rewardService, authService, cfg.Settings.AccessTokenTTL, cfg.Settings.RefreshTokenTTL)
 	contr.InitRoutes(router)
 
 	handler := middleware.CorsHandler(router)

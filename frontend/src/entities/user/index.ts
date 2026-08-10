@@ -1,3 +1,5 @@
 export * from './api/authApi'
+export * from './api/dailyStatApi'
 export * from './model/types'
+export * from './model/dailyStatTypes'
 export * from './model/userSlice'

@@ -13,10 +13,12 @@ const (
 )
 
 type RewardDefinition struct {
-	ID          int32
-	Code        string
-	Name        string
-	Description string
+	ID                  int32
+	Code                string
+	Name                string
+	Description         string
+	EarnedDescription   string
+	RedeemedDescription string
 }
 
 type UserReward struct {
