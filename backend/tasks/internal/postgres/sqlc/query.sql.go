@@ -282,13 +282,15 @@ func (q *Queries) InsertUserTasksBatch(ctx context.Context, arg InsertUserTasksB
 }
 
 const updateUserTaskCompleted = `-- name: UpdateUserTaskCompleted :exec
-UPDATE user_tasks
+UPDATE user_tasks ut
 SET
     status = 'completed',
     completed_at = NOW(),
     updated_at = NOW()
-WHERE user_id = $1
-  AND task_id = $2
+WHERE ut.user_id = $1
+  AND ut.task_id = $2
+  AND ut.updated_at >= CURRENT_DATE AND 
+ut.updated_at < CURRENT_DATE + INTERVAL '1 day'
 `
 
 type UpdateUserTaskCompletedParams struct {
