@@ -37,5 +37,6 @@ func (c *controller) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	middleware.ClearAuthCookies(w, r)
 	w.WriteHeader(http.StatusNoContent)
 }

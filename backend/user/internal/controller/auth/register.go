@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/httpx"
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/middleware"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 	"go.uber.org/zap"
 )
@@ -39,6 +40,7 @@ func (c *controller) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	middleware.SetAuthCookies(w, r, tokens, c.cookieConf)
 	httpx.WriteJSON(w, http.StatusCreated, tokensResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,

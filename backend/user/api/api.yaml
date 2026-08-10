@@ -35,7 +35,12 @@ paths:
               password: strong-password
       responses:
         '201':
-          description: Пользователь зарегистрирован
+          description: Пользователь зарегистрирован. Дополнительно сервис выставляет `Set-Cookie` для `access_token` и `refresh_token`.
+          headers:
+            Set-Cookie:
+              description: HttpOnly cookies с `access_token` и `refresh_token`.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -63,7 +68,12 @@ paths:
               password: strong-password
       responses:
         '200':
-          description: Вход выполнен
+          description: Вход выполнен. Дополнительно сервис выставляет `Set-Cookie` для `access_token` и `refresh_token`.
+          headers:
+            Set-Cookie:
+              description: HttpOnly cookies с `access_token` и `refresh_token`.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -90,7 +100,12 @@ paths:
               refresh_token: eyJhbGciOiJIUzI1NiJ9...
       responses:
         '200':
-          description: Токены обновлены
+          description: Токены обновлены. Дополнительно сервис выставляет `Set-Cookie` для `access_token` и `refresh_token`.
+          headers:
+            Set-Cookie:
+              description: HttpOnly cookies с `access_token` и `refresh_token`.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -117,7 +132,12 @@ paths:
               refresh_token: eyJhbGciOiJIUzI1NiJ9...
       responses:
         '204':
-          description: Сессия завершена или уже была завершена
+          description: Сессия завершена или уже была завершена. Сервис очищает cookies `access_token` и `refresh_token`.
+          headers:
+            Set-Cookie:
+              description: Очистка HttpOnly cookies `access_token` и `refresh_token`.
+              schema:
+                type: string
         '401':
           $ref: '#/components/responses/Unauthorized'
         '422':

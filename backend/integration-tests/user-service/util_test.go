@@ -347,13 +347,13 @@ func seedRewardDefinitions(t *testing.T, cfg *config) {
 	t.Helper()
 
 	_, err := cfg.db.ExecContext(t.Context(), `
-		INSERT INTO users.reward_definitions (code, name, description)
+		INSERT INTO users.reward_definitions (code, name, description, earned_description, redeemed_description)
 		VALUES
-			('DELIVERY_DISCOUNT_10', 'Скидка 10% на доставку', 'Скидка 10% на одну покупку с Авито Доставкой'),
-			('FREE_LISTING_PROMOTION', 'Бесплатное продвижение', 'Одно бесплатное продвижение выбранного объявления'),
-			('AUTOTEKA_DISCOUNT_20', 'Скидка 20% на Автотеку', 'Скидка 20% на один отчёт об истории автомобиля'),
-			('FREE_LISTING_HIGHLIGHT', 'Выделение объявления', 'Бесплатное визуальное выделение одного объявления на ограниченный срок'),
-			('LISTING_DISCOUNT_15', 'Скидка 15% на размещение', 'Скидка 15% на одно платное размещение объявления')
+			('DELIVERY_DISCOUNT_10', 'Скидка 10% на доставку', 'Скидка 10% на одну покупку с Авито Доставкой', '', ''),
+			('FREE_LISTING_PROMOTION', 'Бесплатное продвижение', 'Одно бесплатное продвижение выбранного объявления', '', ''),
+			('AUTOTEKA_DISCOUNT_20', 'Скидка 20% на Автотеку', 'Скидка 20% на один отчёт об истории автомобиля', '', ''),
+			('FREE_LISTING_HIGHLIGHT', 'Выделение объявления', 'Бесплатное визуальное выделение одного объявления на ограниченный срок', '', ''),
+			('LISTING_DISCOUNT_15', 'Скидка 15% на размещение', 'Скидка 15% на одно платное размещение объявления', '', '')
 		ON CONFLICT (code) DO NOTHING
 	`)
 	require.NoError(t, err)

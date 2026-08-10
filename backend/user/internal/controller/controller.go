@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/auth"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/middleware"
@@ -29,9 +30,11 @@ func NewController(
 	userService user.Service,
 	rewardService reward.Service,
 	tokenValidator middleware.AccessTokenValidator,
+	accessTokenTTL time.Duration,
+	refreshTokenTTL time.Duration,
 ) *controller {
 	return &controller{
-		auth:           auth.NewController(logger, authService),
+		auth:           auth.NewController(logger, authService, accessTokenTTL, refreshTokenTTL),
 		user:           user.NewController(logger, userService),
 		reward:         reward.NewController(logger, rewardService),
 		tokenValidator: tokenValidator,
