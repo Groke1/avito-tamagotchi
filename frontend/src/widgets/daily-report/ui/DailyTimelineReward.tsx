@@ -12,7 +12,7 @@ export const DailyTimelineReward = ({ reward }: DailyTimelineRewardProps) => {
   return (
     <div className="bg-purple-500/10 border border-purple-500/20 p-4.5 rounded-card">
       <div className="flex items-start justify-between gap-4 flex-wrap sm:flex-nowrap">
-        <div className="flex items-start gap-3.5 min-w-0">
+        <div className="flex items-start gap-3.5 min-w-0 flex-wrap sm:flex-nowrap">
           <div className="size-10 rounded-full bg-purple-500 text-white flex items-center justify-center shrink-0 shadow-xs">
             <Gift className="size-5" />
           </div>
