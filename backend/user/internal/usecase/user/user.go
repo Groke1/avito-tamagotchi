@@ -118,6 +118,7 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 				PromoCode:    reward.PromoCode,
 				Name:         reward.Definition.Name,
 				Description:  reward.Definition.Description,
+				Status:       string(entity.StatusActive),
 				FinishedDesc: reward.Definition.EarnedDescription,
 				CreatedTime:  reward.CreatedAt,
 			})
@@ -130,6 +131,7 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 				PromoCode:    reward.PromoCode,
 				Name:         reward.Definition.Name,
 				Description:  reward.Definition.Description,
+				Status:       string(entity.StatusExpired),
 				FinishedDesc: reward.Definition.RedeemedDescription,
 				CreatedTime:  *reward.RedeemedAt,
 			})

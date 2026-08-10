@@ -117,11 +117,11 @@ paths:
 
   /api/v1/auth/logout:
     post:
-      tags: [ Auth ]
+      tags: [Auth]
       operationId: logoutUser
       summary: Завершить текущую сессию
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -168,7 +168,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
 
   /api/v1/rewards:
     get:
@@ -319,8 +318,15 @@ paths:
                   - promo_code: DELIVERYDISC-X8K2M7Q9WP
                     name: Скидка 10% на доставку
                     description: Скидка 10% на одну покупку с Авито Доставкой
+                    status: active
                     finished_desc: Получена скидка 10% на доставку
                     created_time: '2026-08-09T12:30:00Z'
+                  - promo_code: AUTOTEKA-X8K2M7Q9WP
+                    name: Скидка 20% на Автотеку
+                    description: Скидка 20% на один отчёт об истории автомобиля
+                    status: redeemed
+                    finished_desc: Использована скидка 20% на отчёт Автотеки
+                    created_time: '2026-08-09T18:45:00Z'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -533,7 +539,7 @@ components:
     LogoutRequest:
       type: object
       additionalProperties: false
-      required: [ refresh_token ]
+      required: [refresh_token]
       properties:
         refresh_token:
           type: string
@@ -624,7 +630,6 @@ components:
           format: int64
           minimum: 0
           readOnly: true
-
 
     RewardStatus:
       type: string
@@ -812,10 +817,15 @@ components:
           format: date-time
           readOnly: true
 
+    DailyRewardStatus:
+      type: string
+      description: Статус события с наградой в дневной статистике.
+      enum: [active, redeemed]
+
     DailyRewardStat:
       type: object
       additionalProperties: false
-      required: [promo_code, name, description, finished_desc, created_time]
+      required: [promo_code, name, description, status, finished_desc, created_time]
       properties:
         promo_code:
           type: string
@@ -826,6 +836,14 @@ components:
         description:
           type: string
           readOnly: true
+        status:
+          allOf:
+            - $ref: '#/components/schemas/DailyRewardStatus'
+          readOnly: true
+          description: >
+            Статус события с наградой:
+            `active` — награда была получена,
+            `redeemed` — награда была использована.
         finished_desc:
           type: string
           readOnly: true
@@ -928,7 +946,6 @@ components:
           example:
             code: INSUFFICIENT_COINS
             message: Недостаточно монет
-
 
     RewardNotFound:
       description: Награда не найдена либо не принадлежит текущему пользователю

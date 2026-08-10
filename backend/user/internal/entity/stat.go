@@ -28,6 +28,7 @@ type TasksStat struct {
 type RewardsStat struct {
 	PromoCode    string    `json:"promo_code"`
 	Name         string    `json:"name"`
+	Status       string    `json:"status"`
 	Description  string    `json:"description"`
 	FinishedDesc string    `json:"finished_desc"`
 	CreatedTime  time.Time `json:"created_time"`
