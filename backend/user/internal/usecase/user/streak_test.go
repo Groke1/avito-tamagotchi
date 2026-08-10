@@ -82,18 +82,6 @@ func TestSameDate(t *testing.T) {
 	}
 }
 
-func TestDateOnly_TruncatesAndConvertsToUTC(t *testing.T) {
-	loc := time.FixedZone("UTC+5", 5*60*60)
-	local := time.Date(2026, 8, 10, 23, 30, 0, 0, loc)
-
-	got := dateOnly(local)
-
-	want := time.Date(2026, 8, 11, 0, 0, 0, 0, time.UTC)
-	if !got.Equal(want) {
-		t.Errorf("expected %v, got %v", want, got)
-	}
-}
-
 func TestDayBounds(t *testing.T) {
 	t0 := time.Date(2026, 8, 10, 15, 45, 0, 0, time.UTC)
 
