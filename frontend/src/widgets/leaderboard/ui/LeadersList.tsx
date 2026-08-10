@@ -7,16 +7,18 @@ export interface LeadersListProps {
   currentUserRank?: number
   currentUserName?: string
   isLoading?: boolean
+  limit: number
 }
 
 export const LeadersList: FC<LeadersListProps> = ({
   leaders,
   currentUserRank,
   currentUserName,
+  limit,
   isLoading,
 }) => {
   if (isLoading) {
-    return <LeadersListSkeleton count={10} />
+    return <LeadersListSkeleton count={limit} />
   }
 
   return (

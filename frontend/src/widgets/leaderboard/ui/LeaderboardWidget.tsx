@@ -38,6 +38,7 @@ export const LeaderboardWidget = () => {
           </div>
           <LeadersList
             leaders={data?.items}
+            limit={limit}
             currentUserRank={data?.current_user?.rank}
             currentUserName={data?.current_user?.user_name}
             isLoading={isLoading}
