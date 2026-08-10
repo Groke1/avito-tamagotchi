@@ -17,7 +17,7 @@ export const useHandleFeed = () => {
     try {
       const updatedPet = await feedPet().unwrap()
       dispatch(setPet(updatedPet))
-      toast.success('Вы покормили питомца! 🍎 (+5 сытости, +2 XP)')
+      toast.success('Вы покормили питомца! 🍎 (+5 сытости, +4 XP)')
     } catch (error: unknown) {
       if (isFetchBaseQueryError(error) && isApiError(error.data)) {
         if ('retry_after' in error.data) {

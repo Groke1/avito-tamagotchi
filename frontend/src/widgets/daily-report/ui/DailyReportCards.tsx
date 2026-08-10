@@ -1,70 +1,69 @@
 import type { DailyStatResponse } from '@/entities/user'
 import { getDaysPlural } from '@/shared/lib/utils'
 import { CheckSquare, Flame, Gift, Sparkles } from 'lucide-react'
-import { useMemo } from 'react'
+import { useDailyReportCards } from '../model/useDailyReportCards'
 
 interface DailyReportCardsProps {
   data: DailyStatResponse
 }
 
 export const DailyReportCards = ({ data }: DailyReportCardsProps) => {
-  const completedTasksCount = data.tasks?.length ?? 0
-  const earnedRewardsCount = data.rewards?.length ?? 0
-  const totalCoinsEarned = useMemo(
-    () => data.tasks?.reduce((sum, task) => sum + task.reward_coins, 0) ?? 0,
-    [data.tasks],
-  )
-  const totalXp = data.pet?.daily_gained_xp ?? 0
+  const { completedTasksCount, earnedRewardsCount, totalCoinsEarned, totalXp } =
+    useDailyReportCards(data)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="bg-surface-lowest rounded-card p-5 flex items-center gap-4 shadow-level-1">
-        <div className="size-14 flex items-center justify-center shrink-0 bg-avito-yellow/20 text-avito-yellow rounded-full">
-          <Sparkles className="size-6" />
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="bg-surface-lowest rounded-card p-3.5 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-level-1">
+        <div className="size-10 sm:size-14 flex items-center justify-center shrink-0 bg-avito-yellow/20 text-avito-yellow rounded-full">
+          <Sparkles className="size-5 sm:size-6" />
         </div>
-        <div>
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] sm:text-xs font-semibold text-on-surface-variant uppercase tracking-wider truncate">
             Заработано
           </p>
-          <p className="text-2xl font-extrabold text-on-surface mt-0.5">+{totalXp} XP</p>
+          <p className="text-lg sm:text-2xl font-extrabold text-on-surface mt-0.5">+{totalXp} XP</p>
         </div>
       </div>
-      <div className="bg-surface-lowest rounded-card p-5 flex items-center gap-4 shadow-level-1">
-        <div className="size-14 flex items-center justify-center shrink-0 bg-avito-blue/20 text-avito-blue rounded-full">
-          <CheckSquare className="size-6" />
+      <div className="bg-surface-lowest rounded-card p-3.5 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-level-1">
+        <div className="size-10 sm:size-14 flex items-center justify-center shrink-0 bg-avito-blue/20 text-avito-blue rounded-full">
+          <CheckSquare className="size-5 sm:size-6" />
         </div>
-        <div>
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] sm:text-xs font-semibold text-on-surface-variant uppercase tracking-wider truncate">
             Выполнено заданий
           </p>
-          <p className="text-2xl font-extrabold text-on-surface mt-0.5">
+          <p className="text-lg sm:text-2xl font-extrabold text-on-surface mt-0.5">
             {completedTasksCount}{' '}
             {totalCoinsEarned > 0 && (
-              <span className="text-xs font-bold text-avito-yellow">+{totalCoinsEarned} монет</span>
+              <span className="text-xs font-bold text-avito-yellow block sm:inline mt-0.5 sm:mt-0">
+                +{totalCoinsEarned} монет
+              </span>
             )}
           </p>
         </div>
       </div>
-      <div className="bg-surface-lowest rounded-card p-5 flex items-center gap-4 shadow-level-1">
-        <div className="size-14 flex items-center justify-center shrink-0 bg-purple-500/20 text-purple-500 rounded-full">
-          <Gift className="size-6" />
+      <div className="bg-surface-lowest rounded-card p-3.5 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-level-1">
+        <div className="size-10 sm:size-14 flex items-center justify-center shrink-0 bg-purple-500/20 text-purple-500 rounded-full">
+          <Gift className="size-5 sm:size-6" />
         </div>
-        <div>
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] sm:text-xs font-semibold text-on-surface-variant uppercase tracking-wider truncate">
             Получено наград
           </p>
-          <p className="text-2xl font-extrabold text-on-surface mt-0.5">{earnedRewardsCount}</p>
+          <p className="text-lg sm:text-2xl font-extrabold text-on-surface mt-0.5">
+            {earnedRewardsCount}
+          </p>
         </div>
       </div>
-      <div className="bg-surface-lowest rounded-card p-5 flex items-center gap-4 shadow-level-1">
-        <div className="size-14 flex items-center justify-center shrink-0 bg-avito-red/20 text-avito-red rounded-full">
-          <Flame className="size-6" />
+      <div className="bg-surface-lowest rounded-card p-3.5 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-level-1">
+        <div className="size-10 sm:size-14 flex items-center justify-center shrink-0 bg-avito-red/20 text-avito-red rounded-full">
+          <Flame className="size-5 sm:size-6" />
         </div>
-        <div>
-          <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] sm:text-xs font-semibold text-on-surface-variant uppercase tracking-wider truncate">
             Серия дней
           </p>
-          <p className="text-2xl font-extrabold text-on-surface mt-0.5">
+          <p className="text-lg sm:text-2xl font-extrabold text-on-surface mt-0.5">
             {data.streak} {getDaysPlural(data.streak)}
           </p>
         </div>

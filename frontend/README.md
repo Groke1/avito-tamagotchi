@@ -1,17 +1,18 @@
-# 🐥 Тамагочи Авито — Клиентское веб-приложение
+# Тамагочи Авито — Клиентское веб-приложение (Frontend)
 
-Игровая система лояльности и мотивации для пользователей Авито. Веб-клиент разработан в рамках хакатона на современном технологическом стеке с использованием архитектуры **Feature-Sliced Design (FSD)**.
+Игровой веб-клиент системы лояльности и мотивации для пользователей Авито. Приложение разработано в рамках хакатона на современном технологическом стеке с использованием архитектуры **Feature-Sliced Design (FSD)**.
 
 ---
 
-## 🛠️ Технологический стек
+## 🛠️ Технологический стек Frontend
 
 - **Ядро:** React 19, TypeScript
-- **Сборка:** Vite 8 (нативная поддержка TS-путей)
+- **Сборка:** Vite 8 (нативная поддержка TS-алиасов `@/...`)
 - **Архитектура:** Feature-Sliced Design (FSD)
-- **Стилизация:** Tailwind CSS v4 (`@tailwindcss/vite`), shadcn/ui (Slate / New York)
+- **Стилизация:** Tailwind CSS v4 (`@tailwindcss/vite`), CSS Variable Design Tokens
 - **Стейт-менеджмент & API:** Redux Toolkit 2, RTK Query (`@reduxjs/toolkit/query/react`)
-- **Маршрутизация:** React Router DOM v7
+- **Маршрутизация:** React Router DOM v7 (с авторизационными гардами)
+- **Тестирование:** Vitest, React Testing Library, `@testing-library/jest-dom`, JSDOM
 - **Иконки & Утилиты:** `lucide-react`, `clsx`, `tailwind-merge`, `class-variance-authority`
 - **Качество кода:** ESLint, Prettier
 
@@ -19,61 +20,78 @@
 
 ## 📐 Архитектура проекта (Feature-Sliced Design)
 
-Исходный код расположен в `src/` и структурирован строго по слоям FSD:
+Исходный код расположен в `src/` и строго разделен по слоям архитектуры FSD:
 
 ```
 src/
-├── app/            # Инициализация приложения (Providers, Store, Router, Глобальные стили)
-├── pages/          # Компоненты страниц (HomePage, PetPage, LeaderboardPage)
-├── widgets/        # Крупные блоки интерфейса (Header, PetCardWidget, DailySummary)
-├── features/       # Действия пользователя (feed-pet, complete-task, claim-reward)
-├── entities/       # Бизнес-сущности (pet, user, task, reward, leaderboard)
-└── shared/         # Переиспользуемый код без бизнес-логики
-    ├── api/        # Базовый RTK Query slice
-    ├── config/     # Константы и конфигурация
-    ├── lib/        # Утилиты (cn helper, formatters)
-    ├── types/      # Глобальные TS типы
-    └── ui/         # Атомарные UI-компоненты (shadcn/ui: Button, Card, Dialog и т.д.)
+├── app/            # Инициализация (Providers, Redux Store, Router)
+├── pages/          # Страницы приложения (HomePage, DailyReportPage, TasksPage, RewardsPage, LeaderboardPage, AuthPages)
+├── widgets/        # Крупные блоки интерфейса (Header, PetDashboard, DailyReport, Leaderboard, TasksList, RewardsList)
+├── features/       # Интерактивные сценарии (pet-actions, auth)
+├── entities/       # Бизнес-сущности и модель данных (pet, user, task, reward, leaderboard)
+└── shared/         # Независимый переиспользуемый код
+    ├── api/        # Базовый RTK Query slice и WebSocket клиенты
+    ├── config/     # Маршруты, темы и константы
+    ├── lib/        # Утилиты, форматирование дат, валидаторы, guards
+    └── ui/         # Атомарные UI-компоненты (Button, Input, Card, Skeleton, Dialog, Tabs)
 ```
+
+## ✨ Особенности реализации Frontend
+
+1. **Адаптивный Mobile-First дизайн:**
+   - Полная отзывчивость всех страниц и виджетов (мобильные устройства от 320px, планшеты, десктопы).
+
+2. **WebSocket & Реальное время:**
+   - Поддержка синхронизации состояния питомца (опыт, уровень, монеты, стрик) между вкладками и клиентами в реальном времени.
+
+3. **Авторизация и защищенные маршруты:**
+   - Кастомные React Router гарды (`AuthGuard`, `GuestGuard`) для предотвращения несанкционированного доступа.
+   - лоадер (`rootLoader`) для проверки авторизации пользователя
+
+4. **Интерактивные механики и анимации:**
+   - Визуальные эффекты при кормлении и поглаживании питомца с анимациями, прогресс-барами.
+
+5. **Надежное автоматическое тестирование (Vitest):**
+   - Набор из тестов, покрывающих Redux-слайсы, бизнес-хуки (`useHandleFeed`, `useHandleStroke`, `useDailyReportCards`), схемы валидации Zod/Form и UI-компоненты.
 
 ---
 
-## 🚀 Команды для локальной разработки
+## 🚀 Команды для локальной разработки и тестирования
 
-Установка зависимостей:
+### 1. Установка зависимостей:
 
 ```bash
+cd frontend
 npm install
 ```
 
-Запуск сервера разработки:
+### 2. Запуск сервера разработки:
 
 ```bash
 npm run dev
 ```
 
-Проверка типов и сборка production-бандла:
+### 3. Запуск модульных и компонентных тестов (Vitest):
+
+```bash
+npm run test:run
+```
+
+Запуск тестов в режиме наблюдения (watch mode):
+
+```bash
+npm run test
+```
+
+### 4. Проверка типов и сборка Production-бандла:
 
 ```bash
 npm run build
 ```
 
-Проверка кода линтером:
+### 5. Проверка линтером и форматирование:
 
 ```bash
 npm run lint
-```
-
-Автоматическое форматирование кода и сортировка импортов:
-
-```bash
 npm run format
 ```
-
----
-
-## 📚 Документация и Контракты
-
-- Контракт API: [`docs/api-spec.yaml`](../docs/api-spec.yaml)
-- Регламент Git Flow: [`docs/GIT_FLOW.md`](../docs/GIT_FLOW.md)
-- Инструкции для AI-агентов: [`AGENTS.md`](./AGENTS.md)

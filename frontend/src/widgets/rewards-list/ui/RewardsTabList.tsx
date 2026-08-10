@@ -24,8 +24,8 @@ export const RewardsTabList = ({
   }
 
   return (
-    <div className="w-full">
-      <TabsList className="gap-4 flex-wrap">
+    <div className="w-full overflow-x-auto scrollbar-none pb-1">
+      <TabsList className="gap-2 sm:gap-4 flex-nowrap sm:flex-wrap min-w-max">
         {TABS.map(({ id, label }) => (
           <RewardsTabItem
             key={id}

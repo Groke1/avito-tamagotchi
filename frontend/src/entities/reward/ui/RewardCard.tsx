@@ -26,48 +26,48 @@ export const RewardCard = ({ reward, onRedeem, isRedeeming = false }: RewardCard
   return (
     <div
       className={cn(
-        'p-5 rounded-card border bg-surface-lowest transition-all flex flex-col justify-between gap-4 shadow-level-1 relative',
+        'p-3.5 sm:p-5 rounded-card border bg-surface-lowest transition-all flex flex-col justify-between gap-3 sm:gap-4 shadow-level-1 relative min-w-0',
         isActive && 'border-surface-highest',
         isRedeemed && 'border-surface-highest opacity-75 grayscale-[0.2]',
         isExpired && 'border-rose-200 bg-rose-50/20 opacity-70',
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-avito-blue/10 text-avito-blue-dark">
-          <Gift className="size-6 stroke-2" />
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shrink-0 bg-avito-blue/10 text-avito-blue-dark">
+          <Gift className="size-5 sm:size-6 stroke-2" />
         </div>
         <div>
           {isActive && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-avito-green/20 text-avito-green-dark border border-avito-green/30">
+            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-avito-green/20 text-avito-green-dark border border-avito-green/30">
               Активен
             </span>
           )}
           {isRedeemed && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-surface-high text-on-surface-variant border border-surface-highest">
+            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-surface-high text-on-surface-variant border border-surface-highest">
               Использован
             </span>
           )}
           {isExpired && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
+            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
               Истёк
             </span>
           )}
         </div>
       </div>
-      <div className="space-y-1">
-        <h4 className="font-extrabold text-base text-on-surface leading-tight">{name}</h4>
-        <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-2">
+      <div className="space-y-1 min-w-0">
+        <h4 className="font-extrabold text-sm sm:text-base text-on-surface leading-tight wrap-break-word">{name}</h4>
+        <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-2 wrap-break-word">
           {description}
         </p>
       </div>
-      <div className="p-2.5 rounded-xl bg-surface-high/70 border border-dashed border-outline-variant/60 flex items-center justify-between gap-2">
-        <div className="flex flex-col">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-on-surface-variant/70">
+      <div className="p-2 sm:p-2.5 rounded-xl bg-surface-high/70 border border-dashed border-outline-variant/60 flex items-center justify-between gap-2 min-w-0">
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-on-surface-variant/70 truncate">
             Промокод
           </span>
           <span
             className={cn(
-              'font-mono font-extrabold text-sm text-on-surface tracking-widest select-all',
+              'font-mono font-extrabold text-xs sm:text-sm text-on-surface tracking-wider sm:tracking-widest select-all truncate',
               (isRedeemed || isExpired) && 'select-none',
             )}
           >
@@ -79,7 +79,7 @@ export const RewardCard = ({ reward, onRedeem, isRedeeming = false }: RewardCard
           onClick={handleCopyCode}
           disabled={hasCopied || isRedeemed || isExpired}
           className={cn(
-            'p-2 rounded-lg bg-surface-lowest text-on-surface-variant transition-all border border-surface-highest',
+            'p-1.5 sm:p-2 rounded-lg bg-surface-lowest text-on-surface-variant transition-all border border-surface-highest shrink-0',
             !hasCopied &&
               'hover:bg-avito-blue/10 hover:text-avito-blue active:scale-95 cursor-pointer',
             hasCopied && 'cursor-default bg-emerald-50/80 border-emerald-200 text-emerald-600',
@@ -88,16 +88,16 @@ export const RewardCard = ({ reward, onRedeem, isRedeeming = false }: RewardCard
           title={hasCopied ? 'Скопировано' : 'Скопировать промокод'}
         >
           {hasCopied ? (
-            <Check className="size-4 text-emerald-600 stroke-[2.5]" />
+            <Check className="size-3.5 sm:size-4 text-emerald-600 stroke-[2.5]" />
           ) : (
-            <Copy className="size-4" />
+            <Copy className="size-3.5 sm:size-4" />
           )}
         </button>
       </div>
-      <div className="flex items-center justify-between text-xs text-on-surface-variant">
-        <span className="inline-flex items-center gap-1.5 font-medium">
-          <Clock className="size-3.5" />
-          {isRedeemed ? 'Использован' : `Срок: ${formatTaskDate(expires_at)}`}
+      <div className="flex items-center justify-between text-[11px] sm:text-xs text-on-surface-variant min-w-0">
+        <span className="inline-flex items-center gap-1.5 font-medium min-w-0 truncate">
+          <Clock className="size-3.5 shrink-0" />
+          <span className="truncate">{isRedeemed ? 'Использован' : `Срок: ${formatTaskDate(expires_at)}`}</span>
         </span>
       </div>
       {isActive ? (

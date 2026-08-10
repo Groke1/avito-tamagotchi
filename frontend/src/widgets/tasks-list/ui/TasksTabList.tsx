@@ -23,16 +23,18 @@ export const TasksTabList = ({
   }
 
   return (
-    <TabsList className="gap-2">
-      {TABS.map(({ id, label }) => (
-        <TasksTabItem
-          key={id}
-          id={id}
-          label={label}
-          count={getTabCount(id)}
-          showCount={showCounts}
-        />
-      ))}
-    </TabsList>
+    <div className="w-full overflow-x-auto sm:overflow-x-visible scrollbar-none">
+      <TabsList className="gap-2 sm:gap-4 flex-nowrap sm:flex-wrap">
+        {TABS.map(({ id, label }) => (
+          <TasksTabItem
+            key={id}
+            id={id}
+            label={label}
+            count={getTabCount(id)}
+            showCount={showCounts}
+          />
+        ))}
+      </TabsList>
+    </div>
   )
 }

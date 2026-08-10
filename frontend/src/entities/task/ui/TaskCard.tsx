@@ -48,7 +48,7 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
   return (
     <div
       className={cn(
-        'p-4 rounded-card border bg-surface-lowest transition-all flex flex-col justify-between gap-3 shadow-level-1 relative',
+        'p-3.5 sm:p-4 rounded-card border bg-surface-lowest transition-all flex flex-col justify-between gap-3 shadow-level-1 relative min-w-0',
         isCompleted ? 'border-avito-green/40 bg-avito-green/5' : 'border-surface-highest',
       )}
     >
@@ -68,21 +68,21 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
         )}
       </div>
 
-      <div className="space-y-1">
-        <h4 className="font-extrabold text-sm sm:text-base text-on-surface leading-snug">
+      <div className="space-y-1 min-w-0">
+        <h4 className="font-extrabold text-sm sm:text-base text-on-surface leading-snug wrap-break-word">
           {category.emoji} {title}
         </h4>
-        <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-2">
+        <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-2 wrap-break-word">
           {description}
         </p>
       </div>
 
       <div className="flex items-center gap-2 pt-0.5 flex-wrap">
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-avito-yellow/15 text-yellow-700">
-          <Coins className="w-3 h-3 text-yellow-600" />+{reward_coins} 🪙
+          <Coins className="w-3 h-3 text-yellow-600 shrink-0" />+{reward_coins} 🪙
         </span>
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-avito-blue/10 text-avito-blue-dark">
-          <Sparkles className="w-3 h-3 text-avito-blue" />+{reward_xp} XP
+          <Sparkles className="w-3 h-3 text-avito-blue shrink-0" />+{reward_xp} XP
         </span>
       </div>
 
@@ -96,6 +96,7 @@ export const TaskCard = ({ task, onComplete, isCompleting = false }: TaskCardPro
           onClick={() => onComplete?.(id)}
           disabled={isCompleting}
           isLoading={isCompleting}
+          className="w-full"
         >
           Выполнить
         </Button>
