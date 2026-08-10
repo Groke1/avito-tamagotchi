@@ -1,20 +1,15 @@
 import type { DailyStatResponse } from '@/entities/user'
 import { getDaysPlural } from '@/shared/lib/utils'
 import { CheckSquare, Flame, Gift, Sparkles } from 'lucide-react'
-import { useMemo } from 'react'
+import { useDailyReportCards } from '../model/useDailyReportCards'
 
 interface DailyReportCardsProps {
   data: DailyStatResponse
 }
 
 export const DailyReportCards = ({ data }: DailyReportCardsProps) => {
-  const completedTasksCount = data.tasks?.length ?? 0
-  const earnedRewardsCount = data.rewards?.length ?? 0
-  const totalCoinsEarned = useMemo(
-    () => data.tasks?.reduce((sum, task) => sum + task.reward_coins, 0) ?? 0,
-    [data.tasks],
-  )
-  const totalXp = data.pet?.daily_gained_xp ?? 0
+  const { completedTasksCount, earnedRewardsCount, totalCoinsEarned, totalXp } =
+    useDailyReportCards(data)
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
