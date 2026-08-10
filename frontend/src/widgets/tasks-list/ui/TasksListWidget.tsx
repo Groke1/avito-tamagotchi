@@ -14,7 +14,7 @@ export const TasksListWidget = () => {
 
   return (
     <section>
-      <Tabs value={activeTab} onValueChange={handleSetTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleSetTab}>
         <TasksTabList
           itemsCount={items.length}
           activeCount={activeCount}
