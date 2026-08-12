@@ -1,25 +1,33 @@
 package domain
 
-import "context"
-
-type JourneyResult struct {
-	Location  string
-	Events    []string
-	Reward    JourneyReward
-	FinalMood string
-}
+import "encoding/json"
 
 type JourneyReward struct {
-	Coins int
-	Item  string
+	Coins int    `json:"coins"`
+	Item  string `json:"item,omitempty"`
+}
+
+type JourneyResult struct {
+	Location string        `json:"location"`
+	Events   []string      `json:"events"`
+	Reward   JourneyReward `json:"reward"`
 }
 
 type JourneyStory struct {
-	Title  string
-	Text   string
-	Teaser string
+	Title  string `json:"title"`
+	Story  string `json:"story"`
+	Teaser string `json:"teaser"`
 }
 
-type JourneyStoryGenerator interface {
-	Generate(ctx context.Context, journey JourneyResult) (JourneyStory, error)
+type PetMemory struct {
+	Personality string          `json:"personality"`
+	Summary     string          `json:"summary"`
+	Characters  json.RawMessage `json:"characters,omitempty"`
+	Storylines  json.RawMessage `json:"storylines,omitempty"`
+}
+
+type JourneyGenerationInput struct {
+	Journey       JourneyResult
+	Memory        PetMemory
+	RecentStories []JourneyStory // ожидается 2–3 последних, не больше
 }
