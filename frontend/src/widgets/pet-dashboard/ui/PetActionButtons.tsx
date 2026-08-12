@@ -35,11 +35,7 @@ export const PetActionButtons = () => {
       >
         🖐️ Погладить
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        className="col-span-1 xl:col-span-2  bg-avito-blue-dark text-surface-lowest border-none hover:bg-avito-blue-dark/90 hover:text-surface-lowest transition-all duration-200"
-      >
+      <Button size="sm" className="col-span-1 xl:col-span-2">
         🧭 Отправить в путешествие
       </Button>
     </div>

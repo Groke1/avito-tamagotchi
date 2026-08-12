@@ -12,7 +12,7 @@ export const RootLayout = () => {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-surface-bg">
       <MobileNav />
-      <div className="hidden lg:block shrink-0 basis-64">
+      <div className="hidden lg:block shrink-0 basis-64 h-screen sticky top-0">
         <Sidebar />
       </div>
       <main className="flex-1 min-w-0 px-4 py-5 pb-24 lg:px-8 lg:py-6 lg:pb-8">
