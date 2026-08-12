@@ -18,5 +18,9 @@ func NewLevelPolicy() *LevelPolicy {
 }
 
 func (lp *LevelPolicy) GetCode(level int) string {
-	return lp.configs[level]
+	if level == 1 {
+		return ""
+	}
+
+	return lp.configs[(level-2)%(len(lp.configs)-1)+2]
 }

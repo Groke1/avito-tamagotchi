@@ -8,12 +8,12 @@ import (
 )
 
 type WSHandler struct {
-	client        *websocket.ClientManager
+	client        *websocket.UserManager
 	ticketManager *websocket.TicketManager
 	service       *service.PetService
 }
 
-func NewWSHandler(client *websocket.ClientManager, ticketManager *websocket.TicketManager, petService *service.PetService) *WSHandler {
+func NewWSHandler(client *websocket.UserManager, ticketManager *websocket.TicketManager, petService *service.PetService) *WSHandler {
 	return &WSHandler{client: client, ticketManager: ticketManager, service: petService}
 }
 

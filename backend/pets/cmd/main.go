@@ -1,5 +1,11 @@
 package main
 
+// TODO: фикс вебсокета // done
+// TODO: еженедельный лидерборд и выдача награды
+// TODO: наград за стрик
+// TODO: фиксировать действия через user service // done
+// TODO: обновить ручку internal/rewards // done
+
 import (
 	"log"
 	"net/http"
