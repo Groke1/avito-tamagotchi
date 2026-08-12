@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon.pkg/dates"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 )
 
@@ -14,7 +15,7 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 		return fmt.Errorf("parse occurredAt: %w", err)
 	}
 
-	businessDate := dateOnly(eventTime)
+	businessDate := dates.DateOnly(eventTime)
 
 	var isStreakChanged bool
 	var streak *entity.Streak
@@ -40,30 +41,30 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 	}
 
 	if isStreakChanged {
-		if err = s.petClient.SendDailyBonus(ctx, streak.UserID, streak.CurrentStreak); err != nil {
+		err = s.petClient.SendDailyBonus(ctx, streak.UserID, streak.CurrentStreak)
+		if err != nil {
 			return fmt.Errorf("send daily bonus: %w", err)
+		}
+
+		err = s.eventRepository.AddUserEvent(ctx, entity.UserEvent{
+			UserID: streak.UserID,
+			Type:   entity.StreakReward,
+			Coins:  getBonusCoins(streak.CurrentStreak),
+			Streak: &streak.CurrentStreak,
+		})
+		if err != nil {
+			return fmt.Errorf("add streak event: %w", err)
 		}
 	}
 	return nil
 }
 
-func dateOnly(t time.Time) time.Time {
-	t = t.UTC()
-
-	return time.Date(
-		t.Year(), t.Month(), t.Day(),
-		0, 0, 0, 0, time.UTC,
-	)
-}
-
 func updateStreak(streak *entity.Streak, currentDate time.Time) bool {
-	if sameDate(streak.LastActiveDate, currentDate) {
+	if dates.SameDate(streak.LastActiveDate, currentDate) {
 		return false
 	}
 
-	yesterday := currentDate.AddDate(0, 0, -1)
-
-	if sameDate(streak.LastActiveDate, yesterday) {
+	if dates.SameDate(streak.LastActiveDate, dates.DayBefore(currentDate)) {
 		streak.CurrentStreak++
 	} else {
 		streak.CurrentStreak = 1
@@ -74,8 +75,11 @@ func updateStreak(streak *entity.Streak, currentDate time.Time) bool {
 	return true
 }
 
-func sameDate(a, b time.Time) bool {
-	return a.Year() == b.Year() &&
-		a.Month() == b.Month() &&
-		a.Day() == b.Day()
+func getBonusCoins(currentStreak int32) int32 {
+	const week = 7
+	const weekCoins = 20
+	if currentStreak%week != 0 {
+		return 0
+	}
+	return currentStreak / week * weekCoins
 }

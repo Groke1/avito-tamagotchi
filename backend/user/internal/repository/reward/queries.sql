@@ -2,7 +2,7 @@
 SELECT
     ur.id, ur.user_id, ur.promo_code,
     rd.name, rd.description,
-    ur.status, ur.redeemed_at,
+    ur.status, ur.earned_reason, ur.redeemed_at,
     ur.expires_at
 FROM users.user_rewards AS ur
          JOIN users.reward_definitions AS rd
@@ -13,7 +13,7 @@ ORDER BY ur.created_at DESC;
 -- name: GetActiveRewardsByUserID :many
 SELECT ur.id, ur.user_id, ur.promo_code,
        rd.name, rd.description,
-       ur.status, ur.redeemed_at,
+       ur.status, ur.earned_reason, ur.redeemed_at,
        ur.expires_at
 FROM users.user_rewards ur JOIN users.reward_definitions rd
                                 ON ur.reward_id = rd.id
@@ -55,7 +55,7 @@ ORDER BY GREATEST(
 -- name: GetRewardByUserIDAndRewardID :one
 SELECT ur.id, ur.user_id, ur.promo_code,
        rd.name, rd.description,
-       ur.status, ur.redeemed_at,
+       ur.status, ur.earned_reason, ur.redeemed_at,
        ur.expires_at
 FROM users.user_rewards ur JOIN users.reward_definitions rd
                                 ON ur.reward_id = rd.id
@@ -76,15 +76,16 @@ FROM users.reward_definitions;
 -- name: AddUserReward :one
 INSERT INTO users.user_rewards (
     user_id, reward_id,
-    promo_code, expires_at
+    promo_code, earned_reason, expires_at
 )
 VALUES (
        sqlc.arg(user_id),
        sqlc.arg(reward_id),
        sqlc.arg(promo_code),
+       sqlc.arg(earned_reason),
        sqlc.narg(expires_at)
        )
-RETURNING id, user_id, promo_code, status, redeemed_at, expires_at;
+RETURNING id, user_id, promo_code, status, redeemed_at, earned_reason, expires_at;
 
 -- name: RedeemUserReward :one
 UPDATE users.user_rewards

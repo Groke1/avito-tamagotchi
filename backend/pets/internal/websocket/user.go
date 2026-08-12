@@ -7,11 +7,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type UserConnections struct {
+	clients map[*ClientConnection]struct{}
+	cancel  context.CancelFunc
+}
+
 type ClientConnection struct {
 	userID string
 	conn   *websocket.Conn
 	mu     sync.Mutex
-	cancel context.CancelFunc
 }
 
 func (cc *ClientConnection) WriteJSON(v any) error {

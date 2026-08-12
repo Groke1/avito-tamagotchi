@@ -35,6 +35,7 @@ func (c *controller) InitRoutes(
 ) {
 	protected := api.NewRoute().Subrouter()
 	protected.Use(authMiddleware)
+	protected.HandleFunc("/action", c.ProtectedAction).Methods(http.MethodPost)
 	protected.HandleFunc("/profile", c.Profile).Methods(http.MethodGet)
 	protected.HandleFunc("/daily-stat", c.DailyStat).Methods(http.MethodGet)
 

@@ -9,11 +9,12 @@ import (
 )
 
 func main() {
-	logger, err := zap.NewProduction()
+	logger, err := zap.NewDevelopment()
 
 	if err != nil {
 		log.Fatalf("can not initialize logger: %s", err)
 	}
+	defer logger.Sync()
 
 	cfg, err := config.New()
 
