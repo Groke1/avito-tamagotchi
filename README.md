@@ -63,8 +63,9 @@
 │   ├── pets/               # Сервис питомцев и игровой логики
 │   ├── users/              # Сервис пользователей и аутентификации
 │   ├── tasks/              # Сервис заданий
-│   └── pkg/                # Общие компоненты
-│       └── .golangci.yaml  # Линтер
+│   ├── pkg/                # Общие компоненты
+│   ├── integration-tests/  # Интеграционные тесты
+│   └── .golangci.yaml      # Линтер
 ├── frontend/
 │   └── src/
 │       ├── app/            # Инициализация: Providers, Redux Store, Router, Layouts
@@ -77,7 +78,6 @@
 │       ├── config/         # Маршруты, темы и константы
 │       ├── lib/            # Утилиты, форматирование дат, валидаторы, guards
 │       └── ui/             # UI-компоненты: Button, Input, Card, Skeleton, Tabs
-├── integration-tests/      # Интеграционные тесты
 ├── docker-compose.yml
 └── README.md
 ```

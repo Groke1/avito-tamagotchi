@@ -15,7 +15,7 @@ type Service interface {
 	GetReward(ctx context.Context, userID, rewardID string) (*entity.UserReward, error)
 	RedeemReward(ctx context.Context, userID, promoCode string) error
 	GetDefinition(ctx context.Context, code string) (*entity.RewardDefinition, error)
-	GrantReward(ctx context.Context, userID, code string) (*entity.UserReward, error)
+	GrantReward(ctx context.Context, userID, code, earnedReason string) (*entity.UserReward, error)
 }
 
 type controller struct {

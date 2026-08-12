@@ -37,7 +37,7 @@ type (
 	}
 
 	rewardService interface {
-		GrantReward(ctx context.Context, userID string, code string) (*entity.UserReward, error)
+		GrantReward(ctx context.Context, userID, code, earnedReason string) (*entity.UserReward, error)
 	}
 
 	transactor interface {
@@ -114,7 +114,7 @@ func (s *authService) Register(ctx context.Context, user entity.User) (*entity.J
 			return err
 		}
 
-		_, err = s.rewardService.GrantReward(ctx, userID, randRewardDef.Code)
+		_, err = s.rewardService.GrantReward(ctx, userID, randRewardDef.Code, "Награда за регистрацию")
 		if err != nil {
 			return err
 		}
