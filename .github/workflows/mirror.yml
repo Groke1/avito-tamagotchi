@@ -17,5 +17,5 @@ jobs:
       - name: Mirror to GitLab
         uses: pixta-dev/repository-mirroring-action@v1
         with:
-          target_repo_url: 'git@gitlab.com:fnkdnm/avito-tamagotchi2.git'
+          target_repo_url: 'git@gitlab.com:group2/avito-tamagotchi2.git'
           ssh_private_key: ${{ secrets.GITLAB_SSH_PRIVATE_KEY }}
