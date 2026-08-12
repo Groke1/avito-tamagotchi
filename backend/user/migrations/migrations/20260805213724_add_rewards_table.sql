@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS users.user_rewards (
     reward_id INTEGER NOT NULL REFERENCES users.reward_definitions(id),
     promo_code TEXT NOT NULL UNIQUE,
     status users.reward_status NOT NULL DEFAULT 'active',
+    earned_reason TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     redeemed_at TIMESTAMPTZ,
     expires_at TIMESTAMPTZ

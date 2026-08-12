@@ -14,31 +14,34 @@ import (
 const addUserReward = `-- name: AddUserReward :one
 INSERT INTO users.user_rewards (
     user_id, reward_id,
-    promo_code, expires_at
+    promo_code, earned_reason, expires_at
 )
 VALUES (
        $1,
        $2,
        $3,
-       $4
+       $4,
+       $5
        )
-RETURNING id, user_id, promo_code, status, redeemed_at, expires_at
+RETURNING id, user_id, promo_code, status, redeemed_at, earned_reason, expires_at
 `
 
 type AddUserRewardParams struct {
-	UserID    pgtype.UUID        `json:"user_id"`
-	RewardID  int32              `json:"reward_id"`
-	PromoCode string             `json:"promo_code"`
-	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	RewardID     int32              `json:"reward_id"`
+	PromoCode    string             `json:"promo_code"`
+	EarnedReason string             `json:"earned_reason"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
 }
 
 type AddUserRewardRow struct {
-	ID         pgtype.UUID        `json:"id"`
-	UserID     pgtype.UUID        `json:"user_id"`
-	PromoCode  string             `json:"promo_code"`
-	Status     UsersRewardStatus  `json:"status"`
-	RedeemedAt pgtype.Timestamptz `json:"redeemed_at"`
-	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	PromoCode    string             `json:"promo_code"`
+	Status       UsersRewardStatus  `json:"status"`
+	RedeemedAt   pgtype.Timestamptz `json:"redeemed_at"`
+	EarnedReason string             `json:"earned_reason"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
 }
 
 func (q *Queries) AddUserReward(ctx context.Context, arg AddUserRewardParams) (AddUserRewardRow, error) {
@@ -46,6 +49,7 @@ func (q *Queries) AddUserReward(ctx context.Context, arg AddUserRewardParams) (A
 		arg.UserID,
 		arg.RewardID,
 		arg.PromoCode,
+		arg.EarnedReason,
 		arg.ExpiresAt,
 	)
 	var i AddUserRewardRow
@@ -55,6 +59,7 @@ func (q *Queries) AddUserReward(ctx context.Context, arg AddUserRewardParams) (A
 		&i.PromoCode,
 		&i.Status,
 		&i.RedeemedAt,
+		&i.EarnedReason,
 		&i.ExpiresAt,
 	)
 	return i, err
@@ -63,7 +68,7 @@ func (q *Queries) AddUserReward(ctx context.Context, arg AddUserRewardParams) (A
 const getActiveRewardsByUserID = `-- name: GetActiveRewardsByUserID :many
 SELECT ur.id, ur.user_id, ur.promo_code,
        rd.name, rd.description,
-       ur.status, ur.redeemed_at,
+       ur.status, ur.earned_reason, ur.redeemed_at,
        ur.expires_at
 FROM users.user_rewards ur JOIN users.reward_definitions rd
                                 ON ur.reward_id = rd.id
@@ -76,14 +81,15 @@ ORDER BY ur.created_at DESC
 `
 
 type GetActiveRewardsByUserIDRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      pgtype.UUID        `json:"user_id"`
-	PromoCode   string             `json:"promo_code"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Status      UsersRewardStatus  `json:"status"`
-	RedeemedAt  pgtype.Timestamptz `json:"redeemed_at"`
-	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	PromoCode    string             `json:"promo_code"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
+	Status       UsersRewardStatus  `json:"status"`
+	EarnedReason string             `json:"earned_reason"`
+	RedeemedAt   pgtype.Timestamptz `json:"redeemed_at"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
 }
 
 func (q *Queries) GetActiveRewardsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetActiveRewardsByUserIDRow, error) {
@@ -102,6 +108,7 @@ func (q *Queries) GetActiveRewardsByUserID(ctx context.Context, userID pgtype.UU
 			&i.Name,
 			&i.Description,
 			&i.Status,
+			&i.EarnedReason,
 			&i.RedeemedAt,
 			&i.ExpiresAt,
 		); err != nil {
@@ -118,7 +125,7 @@ func (q *Queries) GetActiveRewardsByUserID(ctx context.Context, userID pgtype.UU
 const getRewardByUserIDAndRewardID = `-- name: GetRewardByUserIDAndRewardID :one
 SELECT ur.id, ur.user_id, ur.promo_code,
        rd.name, rd.description,
-       ur.status, ur.redeemed_at,
+       ur.status, ur.earned_reason, ur.redeemed_at,
        ur.expires_at
 FROM users.user_rewards ur JOIN users.reward_definitions rd
                                 ON ur.reward_id = rd.id
@@ -131,14 +138,15 @@ type GetRewardByUserIDAndRewardIDParams struct {
 }
 
 type GetRewardByUserIDAndRewardIDRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      pgtype.UUID        `json:"user_id"`
-	PromoCode   string             `json:"promo_code"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Status      UsersRewardStatus  `json:"status"`
-	RedeemedAt  pgtype.Timestamptz `json:"redeemed_at"`
-	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	PromoCode    string             `json:"promo_code"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
+	Status       UsersRewardStatus  `json:"status"`
+	EarnedReason string             `json:"earned_reason"`
+	RedeemedAt   pgtype.Timestamptz `json:"redeemed_at"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
 }
 
 func (q *Queries) GetRewardByUserIDAndRewardID(ctx context.Context, arg GetRewardByUserIDAndRewardIDParams) (GetRewardByUserIDAndRewardIDRow, error) {
@@ -151,6 +159,7 @@ func (q *Queries) GetRewardByUserIDAndRewardID(ctx context.Context, arg GetRewar
 		&i.Name,
 		&i.Description,
 		&i.Status,
+		&i.EarnedReason,
 		&i.RedeemedAt,
 		&i.ExpiresAt,
 	)
@@ -305,7 +314,7 @@ const getUserRewardsByUserID = `-- name: GetUserRewardsByUserID :many
 SELECT
     ur.id, ur.user_id, ur.promo_code,
     rd.name, rd.description,
-    ur.status, ur.redeemed_at,
+    ur.status, ur.earned_reason, ur.redeemed_at,
     ur.expires_at
 FROM users.user_rewards AS ur
          JOIN users.reward_definitions AS rd
@@ -315,14 +324,15 @@ ORDER BY ur.created_at DESC
 `
 
 type GetUserRewardsByUserIDRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      pgtype.UUID        `json:"user_id"`
-	PromoCode   string             `json:"promo_code"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Status      UsersRewardStatus  `json:"status"`
-	RedeemedAt  pgtype.Timestamptz `json:"redeemed_at"`
-	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	PromoCode    string             `json:"promo_code"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
+	Status       UsersRewardStatus  `json:"status"`
+	EarnedReason string             `json:"earned_reason"`
+	RedeemedAt   pgtype.Timestamptz `json:"redeemed_at"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
 }
 
 func (q *Queries) GetUserRewardsByUserID(ctx context.Context, userID pgtype.UUID) ([]GetUserRewardsByUserIDRow, error) {
@@ -341,6 +351,7 @@ func (q *Queries) GetUserRewardsByUserID(ctx context.Context, userID pgtype.UUID
 			&i.Name,
 			&i.Description,
 			&i.Status,
+			&i.EarnedReason,
 			&i.RedeemedAt,
 			&i.ExpiresAt,
 		); err != nil {

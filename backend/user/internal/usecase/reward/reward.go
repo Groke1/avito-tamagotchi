@@ -18,19 +18,34 @@ type (
 		GetRewardByUserIDAndRewardID(ctx context.Context, userID, rewardID string) (*entity.UserReward, error)
 		GetRewardDefinitionByCode(ctx context.Context, code string) (*entity.RewardDefinition, error)
 		RedeemUserReward(ctx context.Context, userID, promoCode string) error
-		AddUserReward(ctx context.Context, userID string, promoCode string, rewardID int32, expiresAt *time.Time) (*entity.UserReward, error)
+		AddUserReward(ctx context.Context, userID string, promoCode string, earnedReason string,
+			rewardID int32, expiresAt *time.Time) (*entity.UserReward, error)
+	}
+
+	eventRepository interface {
+		AddUserEvent(ctx context.Context, event entity.UserEvent) error
+	}
+
+	transactor interface {
+		WithTx(ctx context.Context, f func(ctx context.Context) error) error
 	}
 )
 
 type rewardService struct {
 	rewardRepository rewardRepository
+	eventRepository  eventRepository
+	transactor       transactor
 }
 
 func NewRewardService(
 	rewardRepository rewardRepository,
+	eventRepository eventRepository,
+	transactor transactor,
 ) *rewardService {
 	return &rewardService{
 		rewardRepository: rewardRepository,
+		eventRepository:  eventRepository,
+		transactor:       transactor,
 	}
 }
 
@@ -86,7 +101,7 @@ func (s *rewardService) GetDefinition(ctx context.Context, code string) (*entity
 	return definition, nil
 }
 
-func (s *rewardService) GrantReward(ctx context.Context, userID string, code string) (*entity.UserReward, error) {
+func (s *rewardService) GrantReward(ctx context.Context, userID, code, earnedReason string) (*entity.UserReward, error) {
 	definition, err := s.rewardRepository.GetRewardDefinitionByCode(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("grant reward: get definition: %w", err)
@@ -100,7 +115,26 @@ func (s *rewardService) GrantReward(ctx context.Context, userID string, code str
 		}
 
 		var reward *entity.UserReward
-		reward, err = s.rewardRepository.AddUserReward(ctx, userID, promoCode, definition.ID, nil)
+
+		err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
+			reward, err = s.rewardRepository.AddUserReward(ctx, userID, promoCode, earnedReason, definition.ID, nil)
+			if err != nil {
+				return fmt.Errorf("grant reward: %w", err)
+			}
+			err = s.eventRepository.AddUserEvent(ctx, entity.UserEvent{
+				UserID:       userID,
+				Type:         entity.NewReward,
+				UserRewardID: &reward.ID,
+			})
+
+			if err != nil {
+				return fmt.Errorf("add reward event: %w", err)
+			}
+
+			return nil
+
+		})
+
 		if err == nil {
 			reward.Definition = *definition
 			return reward, nil

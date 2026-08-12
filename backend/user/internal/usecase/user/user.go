@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon.pkg/dates"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 )
 
@@ -25,6 +26,10 @@ type (
 
 	rewardRepository interface {
 		GetRewardsByUserIDAndPeriod(ctx context.Context, userID string, from, to time.Time) ([]entity.UserReward, error)
+	}
+
+	eventRepository interface {
+		AddUserEvent(ctx context.Context, event entity.UserEvent) error
 	}
 
 	transactor interface {
@@ -48,12 +53,14 @@ type userService struct {
 	transactor       transactor
 	petClient        petClient
 	tasksClient      tasksClient
+	eventRepository  eventRepository
 }
 
 func NewUserService(
 	userRepository userRepository,
 	streakRepository streakRepository,
 	rewardRepository rewardRepository,
+	eventRepository eventRepository,
 	transactor transactor,
 	petClient petClient,
 	tasksClient tasksClient,
@@ -62,6 +69,7 @@ func NewUserService(
 		userRepository:   userRepository,
 		streakRepository: streakRepository,
 		rewardRepository: rewardRepository,
+		eventRepository:  eventRepository,
 		transactor:       transactor,
 		petClient:        petClient,
 		tasksClient:      tasksClient,
@@ -101,7 +109,18 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 		return nil, fmt.Errorf("get daily stat: %w", err)
 	}
 
-	from, to := dayBounds(time.Now())
+	now := time.Now()
+	currentStreak := streak.CurrentStreak
+
+	today := dates.DateOnly(now)
+
+	lastActiveDay := dates.DateOnly(streak.LastActiveDate)
+
+	if lastActiveDay.Before(dates.DayBefore(today)) {
+		currentStreak = 0
+	}
+
+	from, to := dates.DayBounds(now)
 
 	rewards, err := s.rewardRepository.GetRewardsByUserIDAndPeriod(ctx, userID, from, to)
 
@@ -150,19 +169,9 @@ func (s *userService) GetDailyStat(ctx context.Context, userID string) (*entity.
 
 	return &entity.DailyStat{
 		UserID:  userID,
-		Streak:  streak.CurrentStreak,
+		Streak:  currentStreak,
 		Rewards: rewardStats,
 		Tasks:   tasks,
 		Pet:     *pet,
 	}, nil
-}
-
-func dayBounds(t time.Time) (time.Time, time.Time) {
-	t = t.UTC()
-
-	from := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-
-	to := from.AddDate(0, 0, 1)
-
-	return from, to
 }

@@ -30,3 +30,7 @@ func (c *controller) Action(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (c *controller) ProtectedAction(w http.ResponseWriter, r *http.Request) {
+	
+}

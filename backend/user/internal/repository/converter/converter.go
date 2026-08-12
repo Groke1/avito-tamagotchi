@@ -37,3 +37,27 @@ func TimeToTimestamptz(t *time.Time) pgtype.Timestamptz {
 		Valid: true,
 	}
 }
+
+func PgInt4ToInt32(pgInt pgtype.Int4) *int32 {
+	if !pgInt.Valid {
+		return nil
+	}
+	return &pgInt.Int32
+}
+
+func Int32ToPgInt4(val *int32) pgtype.Int4 {
+	if val != nil {
+		return pgtype.Int4{
+			Int32: *val,
+			Valid: true,
+		}
+	}
+	return pgtype.Int4{}
+}
+
+func PgUUIDtoString(pgUUID pgtype.UUID) *string {
+	if !pgUUID.Valid {
+		return nil
+	}
+	return new(pgUUID.String())
+}

@@ -14,7 +14,7 @@ func (c *controller) GrantReward(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reward, err := c.service.GrantReward(r.Context(), req.UserID, req.Code)
+	reward, err := c.service.GrantReward(r.Context(), req.UserID, req.Code, req.EarnedReason)
 
 	if err != nil {
 		c.logger.Error("failed to grant reward", zap.String("user_id", req.UserID),

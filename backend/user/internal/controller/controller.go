@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/auth"
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/event"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/middleware"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/reward"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/user"
@@ -20,6 +21,7 @@ type controller struct {
 	auth   controllerInterface
 	user   controllerInterface
 	reward controllerInterface
+	event  controllerInterface
 
 	tokenValidator middleware.AccessTokenValidator
 }
@@ -29,6 +31,7 @@ func NewController(
 	authService auth.Service,
 	userService user.Service,
 	rewardService reward.Service,
+	eventService event.Service,
 	tokenValidator middleware.AccessTokenValidator,
 	accessTokenTTL time.Duration,
 	refreshTokenTTL time.Duration,
@@ -37,6 +40,7 @@ func NewController(
 		auth:           auth.NewController(logger, authService, accessTokenTTL, refreshTokenTTL),
 		user:           user.NewController(logger, userService),
 		reward:         reward.NewController(logger, rewardService),
+		event:          event.NewController(logger, eventService),
 		tokenValidator: tokenValidator,
 	}
 }
@@ -49,4 +53,5 @@ func (c *controller) InitRoutes(router *mux.Router) {
 	c.auth.InitRoutes(api, internal, requireAccessToken)
 	c.user.InitRoutes(api, internal, requireAccessToken)
 	c.reward.InitRoutes(api, internal, requireAccessToken)
+	c.event.InitRoutes(api, internal, requireAccessToken)
 }

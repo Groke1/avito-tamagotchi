@@ -22,12 +22,13 @@ type RewardDefinition struct {
 }
 
 type UserReward struct {
-	ID         string
-	UserID     string
-	PromoCode  string
-	Status     Status
-	Definition RewardDefinition
-	CreatedAt  time.Time
-	ExpiresAt  *time.Time
-	RedeemedAt *time.Time
+	ID           string
+	UserID       string
+	PromoCode    string
+	Status       Status
+	Definition   RewardDefinition
+	EarnedReason string
+	CreatedAt    time.Time
+	ExpiresAt    *time.Time
+	RedeemedAt   *time.Time
 }
