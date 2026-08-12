@@ -37,6 +37,20 @@ export const useWebSocket = () => {
               dispatch(baseApi.util.invalidateTags(['Pet', 'Rewards', 'Leaderboard']))
             } else if (data.event_type === 'leaderboard.position_updated') {
               dispatch(baseApi.util.invalidateTags(['Pet', 'User', 'Leaderboard']))
+            } else if (data.event_type === 'pet.leveled_up') {
+              dispatch(baseApi.util.invalidateTags(['Pet', 'Rewards', 'Leaderboard']))
+
+              const reward = data.payload
+              const rewardDesc = reward?.Description || reward?.description
+
+              toast.success('Уровень питомца повышен! 🎉', {
+                position: 'top-center',
+                duration: 10000,
+                closeButton: true,
+                description: rewardDesc
+                  ? `Вы получили награду: ${rewardDesc}`
+                  : 'Поздравляем с повышением уровня!',
+              })
             }
           } catch {
             toast.error('Ошибка при обработке сообщения сервера')

@@ -10,7 +10,7 @@ export const PetShowcase = () => {
   if (!pet) return <PetShowcaseSkeleton />
 
   const { name, level, happiness, satiety, xp, next_level_xp } = pet
-  const totalLevelXp = xp + next_level_xp
+  const remainingXp = next_level_xp - xp
 
   return (
     <div className="bg-surface-lowest rounded-card shadow-level-1">
@@ -24,14 +24,14 @@ export const PetShowcase = () => {
           <div className="space-y-2 pb-4 border-b border-b-surface-high">
             <h2 className="font-extrabold text-5xl text-on-surface truncate">{name}</h2>
             <p className="text-sm text-on-surface-variant">
-              Level {level} ({xp}/{totalLevelXp} XP) — До Level {level + 1} осталось {next_level_xp}{' '}
+              Level {level} ({xp}/{next_level_xp} XP) — До Level {level + 1} осталось {remainingXp}{' '}
               XP!
             </p>
           </div>
           <PetVitalityBars
             happiness={happiness}
             satiety={satiety}
-            totalLevelXp={totalLevelXp}
+            totalLevelXp={next_level_xp}
             xp={xp}
           />
           <PetActionButtons />
