@@ -37,7 +37,7 @@ type (
 	}
 
 	petClient interface {
-		SendDailyBonus(ctx context.Context, userID string, streak int32) error
+		SendDailyBonus(ctx context.Context, userID string, streak, coins int32) error
 		GetPetDailyStat(ctx context.Context, userID string) (*entity.PetStat, error)
 	}
 

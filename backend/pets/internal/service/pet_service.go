@@ -188,7 +188,7 @@ func (ps *PetService) GetLeaderboard(ctx context.Context, userID string, limit i
 		}
 	}
 
-	topRecords := append([]domain.LeaderboardItem{}, records[:limit]...)
+	topRecords := append([]domain.LeaderboardItem{}, records[:min(limit, len(records))]...)
 	currentUserItem.UserName = userMap[currentUserItem.UserID]
 
 	return topRecords, currentUserItem, nil

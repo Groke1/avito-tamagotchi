@@ -5,6 +5,7 @@ type profileResponse struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Coins    uint64 `json:"coins"`
+	Streak   uint64 `json:"streak"`
 }
 
 type usernamesRequest struct {

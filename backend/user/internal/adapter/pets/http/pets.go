@@ -33,10 +33,11 @@ func NewPetClient(addr string, httpClient *http.Client) (*client, error) {
 	}, nil
 }
 
-func (c *client) SendDailyBonus(ctx context.Context, userID string, streak int32) error {
+func (c *client) SendDailyBonus(ctx context.Context, userID string, streak, coins int32) error {
 	payload := dailyBonusRequest{
 		UserID: userID,
 		Streak: streak,
+		Coins:  coins,
 	}
 
 	endpoint := c.baseURL.ResolveReference(
