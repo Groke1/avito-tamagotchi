@@ -18,9 +18,6 @@ type chatCompletionRequest struct {
 	Model       string        `json:"model"`
 	Messages    []chatMessage `json:"messages"`
 	Temperature float64       `json:"temperature,omitempty"`
-	// GigaChat умеет строгий JSON-режим ответа не так надёжно, как
-	// некоторые другие провайдеры, поэтому формат дополнительно
-	// задаётся текстом в system-промпте и парсится вручную.
 }
 
 type chatCompletionResponse struct {
@@ -28,8 +25,6 @@ type chatCompletionResponse struct {
 		Message chatMessage `json:"message"`
 	} `json:"choices"`
 }
-
-// --- ошибки API ---
 
 type gigachatAPIError struct {
 	StatusCode int    `json:"-"`

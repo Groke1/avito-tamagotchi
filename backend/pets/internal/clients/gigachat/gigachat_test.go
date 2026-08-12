@@ -2,10 +2,10 @@ package gigachat
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -27,19 +27,17 @@ func newTestServer(
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/oauth", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/v1/chat/completions", func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
 		t.Logf(
 			"[MOCK GIGACHAT] %s %s",
 			r.Method,
 			r.URL.Path,
 		)
 
-		t.Logf(
-			"[MOCK GIGACHAT] scope=%q",
-			r.FormValue("scope"),
-		)
-
-		oauthHandler(w, r)
+		completionsHandler(w, r)
 	})
 
 	mux.HandleFunc("/chat/completions", func(w http.ResponseWriter, r *http.Request) {
@@ -152,19 +150,16 @@ func sampleInput() domain.JourneyGenerationInput {
 }
 
 func TestClient_Generate_Integration(t *testing.T) {
-	if os.Getenv("GIGACHAT_INTEGRATION_TEST") != "1" {
-		t.Skip("set GIGACHAT_INTEGRATION_TEST=1 to run real GigaChat request")
-	}
+	clientID := "019ff31b-9ef9-7821-aa84-e35733478eae"
+	clientSecret := "1dac2187-4836-4785-8b61-03b2a6e301a6"
 
-	authKey := os.Getenv("GIGACHAT_AUTH_KEY")
-	if authKey == "" {
-		t.Fatal("GIGACHAT_AUTH_KEY is required")
-	}
-
+	var authKeyReal = base64.StdEncoding.EncodeToString(
+		[]byte(clientID + ":" + clientSecret),
+	)
 	cfg := &Config{
-		AuthKey:        authKey,
+		AuthKey:        authKeyReal,
 		Scope:          "GIGACHAT_API_PERS",
-		Model:          "GigaChat",
+		Model:          "GigaChat-2",
 		OAuthURL:       "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
 		APIBaseURL:     "https://api.giga.chat",
 		RequestTimeout: 30 * time.Second,

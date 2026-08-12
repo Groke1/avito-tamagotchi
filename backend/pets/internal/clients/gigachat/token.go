@@ -12,10 +12,6 @@ import (
 	"time"
 )
 
-// tokenManager кэширует access_token GigaChat и обновляет его по мере
-// истечения срока действия. Использовать напрямую refresh token тут не
-// нужно — GigaChat выдаёт короткоживущий access_token сразу по client
-// credentials, каждый раз заново.
 type tokenManager struct {
 	cfg    *Config
 	client *http.Client
@@ -29,13 +25,11 @@ func newTokenManager(cfg *Config, client *http.Client) *tokenManager {
 	return &tokenManager{cfg: cfg, client: client}
 }
 
-// getToken возвращает валидный access_token, обновляя его при необходимости.
-// forceRefresh используется, когда предыдущий токен был отклонён (401).
 func (tm *tokenManager) getToken(ctx context.Context, forceRefresh bool) (string, error) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	//nolint:mnd // обновляем токен заранее, за минуту до истечения
+	//nolint:mnd
 	if !forceRefresh && tm.token != "" && time.Now().Before(tm.expiresAt.Add(-1*time.Minute)) {
 		return tm.token, nil
 	}
@@ -83,8 +77,6 @@ func (tm *tokenManager) fetchToken(ctx context.Context) (string, time.Time, erro
 	return tokenResp.AccessToken, time.UnixMilli(tokenResp.ExpiresAt), nil
 }
 
-// newRqUID генерирует уникальный идентификатор запроса в формате UUID v4,
-// который GigaChat требует на каждый вызов /oauth.
 func newRqUID() string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)

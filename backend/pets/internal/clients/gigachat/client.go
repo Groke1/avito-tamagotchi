@@ -15,10 +15,6 @@ import (
 //nolint:mnd // сколько последних историй реально стоит класть в промпт
 const maxRecentStories = 3
 
-// Client — реализация service.JourneyStoryGenerator поверх GigaChat.
-// Клиент НЕ придумывает игровые события/награды — он только превращает
-// уже посчитанный JourneyResult в текст. Список фактов передаётся ему
-// как готовый JSON, а не восстанавливается моделью самостоятельно.
 type Client struct {
 	cfg    *Config
 	http   *http.Client
@@ -80,7 +76,8 @@ func (c *Client) generate(ctx context.Context, input domain.JourneyGenerationInp
 		return domain.JourneyStory{}, fmt.Errorf("gigachat: failed to marshal request: %w", err)
 	}
 
-	url := c.cfg.APIBaseURL + "/chat/completions"
+	url := strings.TrimRight(c.cfg.APIBaseURL, "/") + "/v1/chat/completions"
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return domain.JourneyStory{}, err
@@ -132,9 +129,6 @@ func isUnauthorized(err error) bool {
 	return false
 }
 
-// parseStory достаёт JSON из ответа модели. GigaChat иногда оборачивает
-// JSON в ```json ... ``` несмотря на просьбу этого не делать — на всякий
-// случай подчищаем такие обёртки перед парсингом.
 func parseStory(content string) (domain.JourneyStory, error) {
 	cleaned := strings.TrimSpace(content)
 	cleaned = strings.TrimPrefix(cleaned, "```json")
@@ -155,9 +149,9 @@ func parseStory(content string) (domain.JourneyStory, error) {
 }
 
 func systemPrompt() string {
-	return "Ты — рассказчик виртуального питомца в мобильном приложении. " +
-		"Тебе дают JSON с уже посчитанными игровыми фактами о завершённом путешествии питомца: " +
-		"локация, список событий, награда, финальное настроение, а также память питомца " +
+	return "Ты — виртуальный питомец в мобильном приложении. " +
+		"Тебе дают JSON с уже посчитанными игровыми фактами о твоем завершённом путешествии: " +
+		"локация, список событий, награда, а также память питомца " +
 		"(личность, краткое summary истории, персонажи, незавершённые сюжетные линии) и 2-3 последние истории. " +
 		"Твоя единственная задача — превратить эти факты в тёплый, живой рассказ от первого лица питомца. " +
 		"СТРОГО ЗАПРЕЩЕНО придумывать новые события, награды, предметы или менять переданные факты — " +
@@ -167,7 +161,7 @@ func systemPrompt() string {
 		"со следующими и только следующими полями: " +
 		`{"title": string, "story": string, "teaser": string}. ` +
 		"title — короткий заголовок истории. story — сам рассказ, 2-5 предложений, от первого лица. " +
-		"teaser — одна короткая интригующая фраза, зовущая пользователя в следующее путешествие."
+		"teaser — одна короткая интригующая фраза, зовущая пользователя в следующее путешествие без конкретной локации, без упоминания награды и без спойлеров"
 }
 
 func userPrompt(input domain.JourneyGenerationInput) string {

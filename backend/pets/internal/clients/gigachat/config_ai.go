@@ -1,6 +1,7 @@
 package gigachat
 
 import (
+	"net/http"
 	"os"
 	"time"
 )
@@ -16,6 +17,7 @@ type Config struct {
 	RequestTimeout time.Duration
 
 	InsecureSkipVerify bool
+	HTTPClient         *http.Client
 }
 
 func NewConfigFromEnv() *Config {
@@ -24,9 +26,9 @@ func NewConfigFromEnv() *Config {
 		Scope:              envOrDefault("GIGACHAT_SCOPE", "GIGACHAT_API_PERS"),
 		Model:              envOrDefault("GIGACHAT_MODEL", "GigaChat"),
 		OAuthURL:           envOrDefault("GIGACHAT_OAUTH_URL", "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"),
-		APIBaseURL:         envOrDefault("GIGACHAT_API_BASE_URL", "https://gigachat.devices.sberbank.ru/api/v1"),
+		APIBaseURL:         envOrDefault("GIGACHAT_API_BASE_URL", "https://api.giga.chat"),
 		RequestTimeout:     15 * time.Second,
-		InsecureSkipVerify: os.Getenv("GIGACHAT_INSECURE_SKIP_VERIFY") == "true",
+		InsecureSkipVerify: envOrDefault("GIGACHAT_INSECURE_SKIP_VERIFY", "false") == "true",
 	}
 }
 
