@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,10 +13,6 @@ import (
 	"time"
 )
 
-// tokenManager кэширует access_token GigaChat и обновляет его по мере
-// истечения срока действия. Использовать напрямую refresh token тут не
-// нужно — GigaChat выдаёт короткоживущий access_token сразу по client
-// credentials, каждый раз заново.
 type tokenManager struct {
 	cfg    *Config
 	client *http.Client
@@ -29,13 +26,10 @@ func newTokenManager(cfg *Config, client *http.Client) *tokenManager {
 	return &tokenManager{cfg: cfg, client: client}
 }
 
-// getToken возвращает валидный access_token, обновляя его при необходимости.
-// forceRefresh используется, когда предыдущий токен был отклонён (401).
 func (tm *tokenManager) getToken(ctx context.Context, forceRefresh bool) (string, error) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	//nolint:mnd // обновляем токен заранее, за минуту до истечения
 	if !forceRefresh && tm.token != "" && time.Now().Before(tm.expiresAt.Add(-1*time.Minute)) {
 		return tm.token, nil
 	}
@@ -55,9 +49,14 @@ func (tm *tokenManager) fetchToken(ctx context.Context) (string, time.Time, erro
 	form := url.Values{}
 	form.Set("scope", tm.cfg.Scope)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tm.cfg.OAuthURL, strings.NewReader(form.Encode()))
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		tm.cfg.OAuthURL,
+		strings.NewReader(form.Encode()),
+	)
 	if err != nil {
-		return "", time.Time{}, err
+		return "", time.Time{}, fmt.Errorf("create gigachat oauth request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -72,24 +71,41 @@ func (tm *tokenManager) fetchToken(ctx context.Context) (string, time.Time, erro
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", time.Time{}, fmt.Errorf("gigachat oauth failed: status %d", resp.StatusCode)
+		body, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return "", time.Time{}, fmt.Errorf(
+				"gigachat oauth failed: status=%d; read response: %w",
+				resp.StatusCode,
+				readErr,
+			)
+		}
+
+		return "", time.Time{}, fmt.Errorf(
+			"gigachat oauth failed: status=%d body=%s",
+			resp.StatusCode,
+			string(body),
+		)
 	}
 
 	var tokenResp oauthTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return "", time.Time{}, fmt.Errorf("failed to decode gigachat oauth response: %w", err)
+		return "", time.Time{}, fmt.Errorf(
+			"decode gigachat oauth response: %w",
+			err,
+		)
+	}
+
+	if tokenResp.AccessToken == "" {
+		return "", time.Time{}, fmt.Errorf("gigachat oauth returned empty access token")
 	}
 
 	return tokenResp.AccessToken, time.UnixMilli(tokenResp.ExpiresAt), nil
 }
 
-// newRqUID генерирует уникальный идентификатор запроса в формате UUID v4,
-// который GigaChat требует на каждый вызов /oauth.
 func newRqUID() string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 
-	// проставляем версию (4) и вариант (RFC 4122), как того требует формат UUID
 	b[6] = (b[6] & 0x0f) | 0x40
 	b[8] = (b[8] & 0x3f) | 0x80
 

@@ -18,6 +18,7 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 	businessDate := dates.DateOnly(eventTime)
 
 	var isStreakChanged bool
+	var bonusCoins int32
 	var streak *entity.Streak
 	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
 		streak, err = s.streakRepository.GetStreakByUserIDForUpdate(ctx, userID)
@@ -27,9 +28,14 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 		}
 
 		isStreakChanged = updateStreak(streak, businessDate)
+		bonusCoins = getBonusCoins(streak.CurrentStreak)
 
 		if isStreakChanged {
 			err = s.streakRepository.UpdateStreak(ctx, streak)
+			if err != nil {
+				return err
+			}
+			_, err = s.userRepository.UpdateCoins(ctx, userID, int64(bonusCoins))
 			if err != nil {
 				return err
 			}
@@ -49,7 +55,7 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 		err = s.eventRepository.AddUserEvent(ctx, entity.UserEvent{
 			UserID: streak.UserID,
 			Type:   entity.StreakReward,
-			Coins:  getBonusCoins(streak.CurrentStreak),
+			Coins:  bonusCoins,
 			Streak: &streak.CurrentStreak,
 		})
 		if err != nil {

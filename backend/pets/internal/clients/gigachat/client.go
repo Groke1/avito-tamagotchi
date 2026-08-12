@@ -3,7 +3,6 @@ package gigachat
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,10 +14,6 @@ import (
 //nolint:mnd // сколько последних историй реально стоит класть в промпт
 const maxRecentStories = 3
 
-// Client — реализация service.JourneyStoryGenerator поверх GigaChat.
-// Клиент НЕ придумывает игровые события/награды — он только превращает
-// уже посчитанный JourneyResult в текст. Список фактов передаётся ему
-// как готовый JSON, а не восстанавливается моделью самостоятельно.
 type Client struct {
 	cfg    *Config
 	http   *http.Client
@@ -30,13 +25,6 @@ func NewClient(cfg *Config) *Client {
 		Timeout: cfg.RequestTimeout,
 	}
 
-	if cfg.InsecureSkipVerify {
-		httpClient.Transport = &http.Transport{
-			//nolint:gosec // временный обход недоверенного сертификата НУЦ Минцифры, см. Config.InsecureSkipVerify
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-	}
-
 	return &Client{
 		cfg:    cfg,
 		http:   httpClient,
@@ -44,7 +32,6 @@ func NewClient(cfg *Config) *Client {
 	}
 }
 
-// Generate реализует service.JourneyStoryGenerator.
 func (c *Client) Generate(ctx context.Context, input domain.JourneyGenerationInput) (domain.JourneyStory, error) {
 	story, err := c.generate(ctx, input, false)
 	if err == nil {
@@ -52,7 +39,6 @@ func (c *Client) Generate(ctx context.Context, input domain.JourneyGenerationInp
 	}
 
 	if isUnauthorized(err) {
-		// токен мог протухнуть между проверкой в кэше и самим запросом — форсим обновление один раз
 		return c.generate(ctx, input, true)
 	}
 
@@ -132,9 +118,6 @@ func isUnauthorized(err error) bool {
 	return false
 }
 
-// parseStory достаёт JSON из ответа модели. GigaChat иногда оборачивает
-// JSON в ```json ... ``` несмотря на просьбу этого не делать — на всякий
-// случай подчищаем такие обёртки перед парсингом.
 func parseStory(content string) (domain.JourneyStory, error) {
 	cleaned := strings.TrimSpace(content)
 	cleaned = strings.TrimPrefix(cleaned, "```json")

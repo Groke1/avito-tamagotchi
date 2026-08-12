@@ -14,7 +14,12 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/pets ./cmd
 
 FROM alpine:3.20
 WORKDIR /app
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata curl
+
+RUN curl -k \
+    https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt \
+    -o /usr/local/share/ca-certificates/russian_trusted_root_ca.crt \
+    && update-ca-certificates
 
 COPY --from=builder /bin/pets /app/pets
 
