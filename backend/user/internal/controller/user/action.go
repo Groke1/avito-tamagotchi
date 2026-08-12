@@ -3,8 +3,10 @@ package user
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/httpx"
+	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller/middleware"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/entity"
 	"go.uber.org/zap"
 )
@@ -32,5 +34,24 @@ func (c *controller) Action(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *controller) ProtectedAction(w http.ResponseWriter, r *http.Request) {
-	
+	userID, ok := middleware.UserIDFromContext(r.Context())
+	if !ok {
+		httpx.WriteError(w, http.StatusUnauthorized, httpx.ErrUnauthorized)
+		return
+	}
+
+	err := c.service.UpdateStreak(r.Context(), userID, time.Now().UTC().Format(time.RFC3339))
+	if err != nil {
+		if errors.Is(err, entity.ErrUserNotFound) {
+			httpx.WriteError(w, http.StatusNotFound, httpx.ErrUserNotFound)
+			return
+		}
+
+		c.logger.Error("failed to update streak", zap.String("user_id", userID), zap.Error(err))
+		httpx.WriteError(w, http.StatusInternalServerError, httpx.ErrInternal)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
 }

@@ -166,6 +166,7 @@ paths:
                 username: ivan
                 email: ivan@example.com
                 coins: 150
+                streak: 7
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -374,25 +375,48 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-  /internal/action:
+  /api/v1/user/action:
+    post:
+      tags:
+        - Events
+      operationId: registerCurrentUserAction
+      summary: Зарегистрировать действие текущего пользователя
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Действие учтено, стрик пользователя обновлён
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /internal/daily-bonus:
     post:
       tags:
         - Internal
-      operationId: registerUserAction
-      summary: Зарегистрировать действие пользователя
-      description: Обновляет стрик пользователя на основании времени совершения действия.
+      operationId: grantDailyBonus
+      summary: Начислить ежедневный бонус пользователю
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ActionRequest'
+              $ref: '#/components/schemas/DailyBonusRequest'
             example:
               user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
-              occurred_at: '2026-08-06T19:07:12Z'
+              streak: 7
+              coins: 50
       responses:
-        '204':
-          description: Действие учтено, стрик пользователя обновлён
+        '200':
+          description: Ежедневный бонус начислен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyBonusResponse'
+              example:
+                coins: 50
         '404':
           $ref: '#/components/responses/UserNotFound'
         '422':
@@ -611,6 +635,7 @@ components:
         - username
         - email
         - coins
+        - streak
       properties:
         user_id:
           type: string
@@ -623,6 +648,11 @@ components:
           type: integer
           format: int64
           minimum: 0
+        streak:
+          type: integer
+          format: int32
+          minimum: 0
+          readOnly: true
     EventResponse:
       type: object
       additionalProperties: false
@@ -810,6 +840,36 @@ components:
           type: string
           minLength: 1
           example: DELIVERYDISC-X8K2M7Q9WP
+    DailyBonusRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - user_id
+        - streak
+        - coins
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        streak:
+          type: integer
+          format: int32
+          minimum: 1
+        coins:
+          type: integer
+          format: int64
+          minimum: 0
+    DailyBonusResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - coins
+      properties:
+        coins:
+          type: integer
+          format: int64
+          minimum: 0
+          readOnly: true
     ActionRequest:
       type: object
       additionalProperties: false
