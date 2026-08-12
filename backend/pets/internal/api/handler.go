@@ -14,16 +14,14 @@ import (
 )
 
 type PetHandler struct {
-	petService  *service.PetService
-	tripService *service.TripService
-	validator   *validator.Validate
+	service   *service.PetService
+	validator *validator.Validate
 }
 
-func NewPetHandler(service *service.PetService, tripService *service.TripService) *PetHandler {
+func NewPetHandler(service *service.PetService) *PetHandler {
 	return &PetHandler{
-		petService:  service,
-		tripService: tripService,
-		validator:   validator.New(),
+		service:   service,
+		validator: validator.New(),
 	}
 }
 
@@ -36,7 +34,7 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pet, err := ph.petService.GetPet(ctx, userID)
+	pet, err := ph.service.GetPet(ctx, userID)
 	if err != nil {
 		writeError(w, ErrPetNotFound)
 		return
@@ -73,7 +71,7 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pet, err := ph.petService.CreatePet(ctx, userID, req.Name)
+	pet, err := ph.service.CreatePet(ctx, userID, req.Name)
 	if err != nil {
 		writeError(w, ErrPetAlreadyExists)
 		return
@@ -103,7 +101,7 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 
 	var actionUnavailableError *domain.ActionUnavailableError
 
-	pet, err := ph.petService.FeedPet(ctx, userID)
+	pet, err := ph.service.FeedPet(ctx, userID)
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
@@ -136,7 +134,7 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 
 	var actionUnavailableError *domain.ActionUnavailableError
 
-	pet, err := ph.petService.StrokePet(ctx, userID)
+	pet, err := ph.service.StrokePet(ctx, userID)
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
@@ -176,7 +174,7 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	leaderboardItems, currentUser, err := ph.petService.GetLeaderboard(ctx, userID, limit)
+	leaderboardItems, currentUser, err := ph.service.GetLeaderboard(ctx, userID, limit)
 	if err != nil {
 		log.Printf("[GET LEADERBOARD] %v", err)
 		writeError(w, ErrInternalError)
@@ -213,11 +211,12 @@ func (ph *PetHandler) DailyBonusForStreak(w http.ResponseWriter, r *http.Request
 
 	var req BonusXpRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
 		writeError(w, ErrValidationError)
 		return
 	}
 
-	err := ph.petService.ClaimDailyBonusForStreak(ctx, req.UserID, req.Streak)
+	err := ph.service.ClaimDailyBonusForStreak(ctx, req.UserID, req.Streak, req.Coins)
 	if err != nil {
 		log.Printf("[DAILY BONUS] %v", err)
 		writeError(w, ErrInternalError)
@@ -237,7 +236,7 @@ func (ph *PetHandler) UpdateXP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := ph.petService.GrantXP(ctx, req.UserID, req.XP)
+	_, err := ph.service.GrantXP(ctx, req.UserID, req.XP)
 	if err != nil {
 		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
@@ -259,7 +258,7 @@ func (ph *PetHandler) DailyGainedXP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gainedXP, err := ph.petService.ClaimDailyGainedXP(ctx, req.UserID)
+	gainedXP, err := ph.service.ClaimDailyGainedXP(ctx, req.UserID)
 	if err != nil {
 		log.Printf("[DAILY GAINED XP] %v", err)
 		writeError(w, ErrInternalError)
@@ -283,7 +282,7 @@ func (ph *PetHandler) GetNextRewardDescription(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	reward, err := ph.petService.GetNextRewardDescription(ctx, userID)
+	reward, err := ph.service.GetNextRewardDescription(ctx, userID)
 	if err != nil {
 		log.Printf("[NEXT REWARD DESCRIPTION] %v", err)
 		writeError(w, ErrInternalError)
@@ -317,7 +316,7 @@ func (ph *PetHandler) GetWeeklyLeaderboard(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	leaderboardItems, currentUser, err := ph.petService.GetWeeklyLeaderboard(ctx, userID, limit)
+	leaderboardItems, currentUser, err := ph.service.GetWeeklyLeaderboard(ctx, userID, limit)
 	if err != nil {
 		log.Printf("[GET WEEKLY LEADERBOARD] %v", err)
 		writeError(w, ErrInternalError)
@@ -347,19 +346,4 @@ func (ph *PetHandler) GetWeeklyLeaderboard(w http.ResponseWriter, r *http.Reques
 	}
 
 	writeJSONResponse(w, http.StatusOK, leaderboardResponse)
-}
-
-func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	userID, err := GetUserIDFromContext(ctx)
-	if err != nil {
-		writeError(w, ErrUnauthorized)
-		return
-	}
-
-	_ = userID
-
-	// TODO вызов сервиса
-
 }

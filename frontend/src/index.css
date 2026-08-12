@@ -44,3 +44,24 @@ body {
   color: var(--color-on-surface-variant);
   background-color: var(--color-surface-bg);
 }
+
+[data-sonner-toast] [data-close-button] {
+  top: 10px !important;
+  right: 10px !important;
+  left: auto !important;
+  transform: none !important;
+  background-color: var(--color-surface-low) !important;
+  border-color: var(--color-surface-container) !important;
+  color: var(--color-on-surface) !important;
+  transition: background-color 0.15s ease;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background-color: var(--color-surface-high) !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: var(--color-on-surface) !important;
+  opacity: 0.9 !important;
+  font-weight: 500 !important;
+}
