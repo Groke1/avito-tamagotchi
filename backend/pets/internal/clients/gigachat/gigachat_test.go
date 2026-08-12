@@ -149,9 +149,18 @@ func sampleInput() domain.JourneyGenerationInput {
 	}
 }
 
+const authKey = ""
+const clientSecret = ""
+const clientID = ""
+
 func TestClient_Generate_Integration(t *testing.T) {
-	clientID := "019ff31b-9ef9-7821-aa84-e35733478eae"
-	clientSecret := "1dac2187-4836-4785-8b61-03b2a6e301a6"
+	//if os.Getenv("GIGACHAT_INTEGRATION_TEST") != "1" {
+	//	t.Skip("set GIGACHAT_INTEGRATION_TEST=1 to run real GigaChat request")
+	//}
+
+	//if authKey == "" {
+	//	t.Fatal("GIGACHAT_AUTH_KEY is required")
+	//}
 
 	var authKeyReal = base64.StdEncoding.EncodeToString(
 		[]byte(clientID + ":" + clientSecret),
@@ -161,7 +170,7 @@ func TestClient_Generate_Integration(t *testing.T) {
 		Scope:          "GIGACHAT_API_PERS",
 		Model:          "GigaChat-2",
 		OAuthURL:       "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-		APIBaseURL:     "https://api.giga.chat",
+		APIBaseURL:     "https://api.giga.chat/v1",
 		RequestTimeout: 30 * time.Second,
 	}
 

@@ -1,13 +1,9 @@
 package gigachat
 
-// --- OAuth ---
-
 type oauthTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	ExpiresAt   int64  `json:"expires_at"` // unix-время в миллисекундах
 }
-
-// --- Chat Completions ---
 
 type chatMessage struct {
 	Role    string `json:"role"` // system | user | assistant

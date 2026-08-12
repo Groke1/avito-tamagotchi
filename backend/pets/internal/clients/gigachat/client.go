@@ -3,7 +3,6 @@ package gigachat
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -26,13 +25,6 @@ func NewClient(cfg *Config) *Client {
 		Timeout: cfg.RequestTimeout,
 	}
 
-	if cfg.InsecureSkipVerify {
-		httpClient.Transport = &http.Transport{
-			//nolint:gosec // временный обход недоверенного сертификата НУЦ Минцифры, см. Config.InsecureSkipVerify
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-	}
-
 	return &Client{
 		cfg:    cfg,
 		http:   httpClient,
@@ -40,7 +32,6 @@ func NewClient(cfg *Config) *Client {
 	}
 }
 
-// Generate реализует service.JourneyStoryGenerator.
 func (c *Client) Generate(ctx context.Context, input domain.JourneyGenerationInput) (domain.JourneyStory, error) {
 	story, err := c.generate(ctx, input, false)
 	if err == nil {
@@ -48,7 +39,6 @@ func (c *Client) Generate(ctx context.Context, input domain.JourneyGenerationInp
 	}
 
 	if isUnauthorized(err) {
-		// токен мог протухнуть между проверкой в кэше и самим запросом — форсим обновление один раз
 		return c.generate(ctx, input, true)
 	}
 
