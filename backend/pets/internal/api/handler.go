@@ -211,11 +211,12 @@ func (ph *PetHandler) DailyBonusForStreak(w http.ResponseWriter, r *http.Request
 
 	var req BonusXpRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
 		writeError(w, ErrValidationError)
 		return
 	}
 
-	err := ph.petService.ClaimDailyBonusForStreak(ctx, req.UserID, req.Streak)
+	err := ph.petService.ClaimDailyBonusForStreak(ctx, req.UserID, req.Streak, req.Coins)
 	if err != nil {
 		log.Printf("[DAILY BONUS] %v", err)
 		writeError(w, ErrInternalError)

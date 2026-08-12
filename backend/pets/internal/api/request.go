@@ -7,6 +7,7 @@ type CreatePetRequest struct {
 type BonusXpRequest struct {
 	UserID string `json:"user_id"`
 	Streak int    `json:"streak"`
+	Coins  int    `json:"coins"`
 }
 
 type UpdateXPRequest struct {
