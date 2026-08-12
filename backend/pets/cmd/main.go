@@ -1,11 +1,5 @@
 package main
 
-// TODO: фикс вебсокета // done
-// TODO: еженедельный лидерборд и выдача награды
-// TODO: наград за стрик
-// TODO: фиксировать действия через user service // done
-// TODO: обновить ручку internal/rewards // done
-
 import (
 	"log"
 	"net/http"
@@ -66,6 +60,7 @@ func main() {
 				r.Post("/feed", petHandler.FeedPet)
 				r.Post("/stroke", petHandler.StrokePet)
 				r.Post("/ws-ticket", wsHandler.CreateWSTicket)
+				r.Post("/trip", petHandler.MakeTrip)
 			})
 
 			r.Route("/leaderboard", func(r chi.Router) {
