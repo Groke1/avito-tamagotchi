@@ -232,12 +232,19 @@ func (ps *PetService) GrantXP(ctx context.Context, userID string, amount int) (*
 	return pet, nil
 }
 
-func (ps *PetService) ClaimDailyBonusForStreak(ctx context.Context, userID string, streak int) error {
+func (ps *PetService) ClaimDailyBonusForStreak(ctx context.Context, userID string, streak int, coins int) error {
 	amount := XPperStreak * streak
 	_, err := ps.GrantXP(ctx, userID, amount)
 	if err != nil {
 		return err
 	}
+
+	payload := map[string]int{
+		"coins": coins,
+		"xp":    amount,
+	}
+
+	ps.eventNotifier.SendToClient(userID, domain.EventStreakReward, payload)
 
 	return nil
 }
