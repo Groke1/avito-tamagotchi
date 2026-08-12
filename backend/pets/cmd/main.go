@@ -66,6 +66,7 @@ func main() {
 				r.Post("/feed", petHandler.FeedPet)
 				r.Post("/stroke", petHandler.StrokePet)
 				r.Post("/ws-ticket", wsHandler.CreateWSTicket)
+				r.Post("/trip", petHandler.MakeTrip)
 			})
 
 			r.Route("/leaderboard", func(r chi.Router) {

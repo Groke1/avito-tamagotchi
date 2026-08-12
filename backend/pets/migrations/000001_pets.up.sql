@@ -25,3 +25,23 @@ CREATE TABLE IF NOT EXISTS pets_daily_xp (
 
 CREATE INDEX IF NOT EXISTS idx_pets_daily_xp_leaderboard 
 ON pets_daily_xp (date, gained_xp DESC);
+
+CREATE TABLE pet_trips (
+    id BIGSERIAL PRIMARY KEY,
+    pet_id BIGSERIAL NOT NULL REFERENCES pets(id),
+
+    location VARCHAR(100) NOT NULL DEFAULT 'Zootopia',
+
+    started_at TIMESTAMP NOT NULL,
+    ended_at TIMESTAMP NOT NULL,
+
+    status VARCHAR(20) NOT NULL,
+
+    reward_xp INT 700,
+    reward_coins INT 50,
+
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_pet_trips_pet_id_started_at
+    ON pet_trips (pet_id, started_at DESC);
