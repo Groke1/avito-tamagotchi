@@ -98,12 +98,15 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	if levelUp {
-		if err := ps.levelUp(ctx, userID, pet); err != nil {
+	for _, level := range levelUp {
+		if err = ps.levelUp(ctx, userID, level); err != nil {
 			return nil, err
 		}
 	}
 
+	if err = ps.client.NotifyActionDone(ctx, userID, time.Now().UTC()); err != nil {
+		log.Printf("Action notification failed of user '%s' with %v", userID, err)
+	}
 	ps.eventNotifier.BroadcastLeaderboard()
 
 	return pet, nil
@@ -137,12 +140,15 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	if levelUp {
-		if err := ps.levelUp(ctx, userID, pet); err != nil {
+	for _, level := range levelUp {
+		if err = ps.levelUp(ctx, userID, level); err != nil {
 			return nil, err
 		}
 	}
 
+	if err = ps.client.NotifyActionDone(ctx, userID, time.Now().UTC()); err != nil {
+		log.Printf("Action notification failed of user '%s' with %v", userID, err)
+	}
 	ps.eventNotifier.BroadcastLeaderboard()
 
 	return pet, nil
@@ -154,13 +160,13 @@ func (ps *PetService) GetLeaderboard(ctx context.Context, userID string, limit i
 		return nil, nil, err
 	}
 
-	var currentUserItem domain.LeaderboardItem
+	if len(records) == 0 {
+		return []domain.LeaderboardItem{}, nil, nil
+	}
+
 	var userIDs = make([]string, len(records))
 	for i := range records {
 		userIDs[i] = records[i].UserID
-		if records[i].UserID == userID {
-			currentUserItem = records[i]
-		}
 	}
 
 	userMap, err := ps.client.GetUsernamesByIDs(ctx, userIDs)
@@ -168,16 +174,24 @@ func (ps *PetService) GetLeaderboard(ctx context.Context, userID string, limit i
 		return nil, nil, err
 	}
 
+	var currentUserItem *domain.LeaderboardItem
 	for i := range records {
-		if name, ok := userMap[records[i].UserID]; ok {
-			records[i].UserName = name
-		} else {
-			return nil, nil, err
+		name, ok := userMap[records[i].UserID]
+		if !ok {
+			continue
+		}
+
+		records[i].UserName = name
+
+		if records[i].UserID == userID {
+			currentUserItem = &records[i]
 		}
 	}
+
+	topRecords := append([]domain.LeaderboardItem{}, records[:limit]...)
 	currentUserItem.UserName = userMap[currentUserItem.UserID]
 
-	return records, &currentUserItem, nil
+	return topRecords, currentUserItem, nil
 }
 
 func (ps *PetService) GrantXP(ctx context.Context, userID string, amount int) (*domain.Pet, error) {
@@ -207,8 +221,8 @@ func (ps *PetService) GrantXP(ctx context.Context, userID string, amount int) (*
 
 	ps.eventNotifier.SendToClient(userID, "pet.updated", pet)
 
-	if levelUp {
-		if err := ps.levelUp(ctx, userID, pet); err != nil {
+	for _, level := range levelUp {
+		if err = ps.levelUp(ctx, userID, level); err != nil {
 			return nil, err
 		}
 	}
@@ -268,8 +282,8 @@ func (ps *PetService) ClaimDailyGainedXP(ctx context.Context, userID string) (in
 	return gainedXP, nil
 }
 
-func (ps *PetService) levelUp(ctx context.Context, userID string, pet *domain.Pet) error {
-	code := ps.levelPolicy.GetCode(pet.Level)
+func (ps *PetService) levelUp(ctx context.Context, userID string, level int) error {
+	code := ps.levelPolicy.GetCode(level)
 	reward, err := ps.client.ClaimReward(ctx, userID, code)
 	if err != nil {
 		return err
@@ -301,13 +315,13 @@ func (ps *PetService) GetWeeklyLeaderboard(ctx context.Context, userID string, l
 		return nil, nil, err
 	}
 
-	var currentUserItem domain.LeaderboardItem
+	if len(records) == 0 {
+		return []domain.LeaderboardItem{}, nil, nil
+	}
+
 	var userIDs = make([]string, len(records))
 	for i := range records {
 		userIDs[i] = records[i].UserID
-		if records[i].UserID == userID {
-			currentUserItem = records[i]
-		}
 	}
 
 	userMap, err := ps.client.GetUsernamesByIDs(ctx, userIDs)
@@ -315,14 +329,22 @@ func (ps *PetService) GetWeeklyLeaderboard(ctx context.Context, userID string, l
 		return nil, nil, err
 	}
 
+	var currentUserItem *domain.LeaderboardItem
 	for i := range records {
-		if name, ok := userMap[records[i].UserID]; ok {
-			records[i].UserName = name
-		} else {
-			return nil, nil, err
+		name, ok := userMap[records[i].UserID]
+		if !ok {
+			continue
+		}
+
+		records[i].UserName = name
+
+		if records[i].UserID == userID {
+			currentUserItem = &records[i]
 		}
 	}
+
+	topRecords := append([]domain.LeaderboardItem{}, records[:limit]...)
 	currentUserItem.UserName = userMap[currentUserItem.UserID]
 
-	return records, &currentUserItem, nil
+	return topRecords, currentUserItem, nil
 }

@@ -52,32 +52,32 @@ const (
 	XPCriticalMultiplier = 0.5
 )
 
-func (p *Pet) Feed() (bool, int, error) {
+func (p *Pet) Feed() ([]int, int, error) {
 	if p.Satiety >= MaxStatValue {
-		return false, 0, ErrPetIsFull
+		return []int{}, 0, ErrPetIsFull
 	} else if p.LastFeedAt != nil && time.Since(*p.LastFeedAt) < FeedCooldown {
-		return false, 0, &ActionUnavailableError{
+		return []int{}, 0, &ActionUnavailableError{
 			RetryAfter: FeedCooldown - time.Since(*p.LastFeedAt),
 		}
 	}
 
 	p.Satiety = min(p.Satiety+FeedSatietyIncrease, MaxStatValue)
-	levelUp := p.AddXP(FeedXPAmount)
+	levelUps := p.AddXP(FeedXPAmount)
 	p.LastFeedAt = new(time.Now())
 
-	return levelUp, FeedCost, nil
+	return levelUps, FeedCost, nil
 }
 
-func (p *Pet) Stroke() (bool, error) {
+func (p *Pet) Stroke() ([]int, error) {
 	switch {
 	case p.Happiness >= MaxStatValue:
-		return false, ErrPetIsTooHappy
+		return []int{}, ErrPetIsTooHappy
 
 	case p.Satiety < HungrySatietyThreshold:
-		return false, ErrPetIsTooHungry // TODO frontend integration
+		return []int{}, ErrPetIsTooHungry // TODO frontend integration
 
 	case p.LastStrokeAt != nil && time.Since(*p.LastStrokeAt) < StrokeCooldown:
-		return false, &ActionUnavailableError{
+		return []int{}, &ActionUnavailableError{
 			RetryAfter: StrokeCooldown - time.Since(*p.LastStrokeAt),
 		}
 	}
@@ -109,18 +109,21 @@ func (p *Pet) computeXP(amount int) int {
 	return int(float64(amount) * p.xpMultiplier())
 }
 
-func (p *Pet) AddXP(baseAmount int) bool {
+func (p *Pet) AddXP(baseAmount int) []int {
 	amount := p.computeXP(baseAmount)
 
 	p.XP += amount
 	p.LastGainedXP = amount
-	if p.XP >= p.NextLevelXP {
+
+	var levelUps []int
+
+	for p.XP >= p.NextLevelXP {
 		p.Level++
-		p.NextLevelXP *= p.Level * p.Level // Note: мне кажется, что это жестоко по отношению к пользователю
-		return true
+		p.NextLevelXP = 100 * p.Level * (p.Level + 1) / 2
+		levelUps = append(levelUps, p.Level)
 	}
 
-	return false
+	return levelUps
 }
 
 func (p *Pet) RecalculateState(now time.Time) bool {
