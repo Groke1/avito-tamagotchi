@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	cors "github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/ai"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/api"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/config"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
@@ -33,11 +34,21 @@ func main() {
 	}
 	defer db.Close()
 
+	var storyGenerator domain.JourneyStoryGenerator
+	templateGenerator := ai.NewTemplateStoryGenerator()
+	gigaGenerator, err := ai.NewGigaChatStoryGenerator(cfg.GigaChatClientID, cfg.GigaChatClientSecret, cfg.GigaChatScope)
+	if err != nil {
+		log.Printf("[MAIN] GigaChat disabled, using template-only story generator: %v", err)
+		storyGenerator = templateGenerator
+	} else {
+		storyGenerator = ai.NewSafeStoryGenerator(gigaGenerator, templateGenerator)
+	}
+
 	repository := repository.NewPetRepository(db)
 	wsClientManager := websocket.NewClient()
 	wsTicketManager := websocket.NewTicketManager()
 	levelPolicy := domain.NewLevelPolicy()
-	service := service.NewPetService(repository, cfg.UserServiceURL, wsClientManager, levelPolicy)
+	service := service.NewPetService(repository, cfg.UserServiceURL, wsClientManager, levelPolicy, storyGenerator)
 	petHandler := api.NewPetHandler(service)
 	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, service)
 

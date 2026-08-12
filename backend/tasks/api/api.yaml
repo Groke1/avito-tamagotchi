@@ -11,7 +11,7 @@ servers:
 tags:
   - name: Tasks
     description: Работа с задачами пользователя
-  - name: Internal Tasks
+  - name: Internal
     description: Внутренние методы для работы с задачами
 
 security:
@@ -170,7 +170,7 @@ paths:
   /internal/tasks/{user_id}:
     get:
       tags:
-        - Internal Tasks
+        - Internal
       summary: Получить задачи, выполненные сегодня
       description: Возвращает задачи, выполненные указанным пользователем сегодня.
       operationId: getTodayCompletedTasksForInternal

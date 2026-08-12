@@ -21,18 +21,20 @@ type EventNotifier interface {
 }
 
 type PetService struct {
-	petRepository *repository.PetRepository
-	client        *clients.UserClient
-	eventNotifier EventNotifier
-	levelPolicy   *domain.LevelPolicy
+	petRepository  *repository.PetRepository
+	client         *clients.UserClient
+	eventNotifier  EventNotifier
+	levelPolicy    *domain.LevelPolicy
+	storyGenerator domain.JourneyStoryGenerator
 }
 
-func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier, levelPolicy *domain.LevelPolicy) *PetService {
+func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier, levelPolicy *domain.LevelPolicy, storyGenerator domain.JourneyStoryGenerator) *PetService {
 	return &PetService{
-		petRepository: petRepository,
-		client:        clients.NewUserClient(userServiceURL + "/internal"),
-		eventNotifier: eventNotifier,
-		levelPolicy:   levelPolicy,
+		petRepository:  petRepository,
+		client:         clients.NewUserClient(userServiceURL + "/internal"),
+		eventNotifier:  eventNotifier,
+		levelPolicy:    levelPolicy,
+		storyGenerator: storyGenerator,
 	}
 }
 
