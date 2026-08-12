@@ -117,7 +117,8 @@ func (s *rewardService) GrantReward(ctx context.Context, userID, code, earnedRea
 		var reward *entity.UserReward
 
 		err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
-			reward, err = s.rewardRepository.AddUserReward(ctx, userID, promoCode, earnedReason, definition.ID, nil)
+			expiresAt := time.Now().UTC().Add(2 * time.Minute)
+			reward, err = s.rewardRepository.AddUserReward(ctx, userID, promoCode, earnedReason, definition.ID, &expiresAt)
 			if err != nil {
 				return fmt.Errorf("grant reward: %w", err)
 			}
