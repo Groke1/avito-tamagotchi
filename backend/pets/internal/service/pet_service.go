@@ -219,7 +219,7 @@ func (ps *PetService) GrantXP(ctx context.Context, userID string, amount int) (*
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	ps.eventNotifier.SendToClient(userID, "pet.updated", pet)
+	ps.eventNotifier.SendToClient(userID, domain.EventPetUpdated, pet)
 
 	for _, level := range levelUp {
 		if err = ps.levelUp(ctx, userID, level); err != nil {
