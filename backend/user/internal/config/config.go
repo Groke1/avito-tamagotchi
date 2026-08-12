@@ -44,6 +44,7 @@ type (
 			RefreshTokenTTL         time.Duration `env:"REFRESH_TOKEN_TTL" envDefault:"720h"`
 			SessionStore            SessionStore  `env:"SESSION_STORE" envDefault:"postgres"`
 			TokenCleanupInterval    time.Duration `env:"TOKEN_CLEANUP_INTERVAL" envDefault:"24h"`
+			EventsCleanupInterval   time.Duration `env:"EVENTS_CLEANUP_INTERVAL" envDefault:"24h"`
 			ShutdownTimeout         time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"5s"`
 			JWTSecret               string        `env:"JWT_SECRET,required"`
 			PGHealthCheckPeriod     time.Duration `env:"POSTGRES_HEALTH_CHECK_PERIOD" envDefault:"30s"`

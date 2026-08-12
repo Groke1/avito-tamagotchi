@@ -17,7 +17,10 @@ export interface DailyRewardStat {
   description: string
   finished_desc: string
   created_time: string
+  status: DailyRewardStatStatus
 }
+
+export type DailyRewardStatStatus = 'active' | 'redeemed'
 
 export interface DailyStatResponse {
   user_id: string

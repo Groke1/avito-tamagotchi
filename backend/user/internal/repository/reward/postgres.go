@@ -48,8 +48,9 @@ func (r *rewardRepository) GetUserRewardsByUserID(ctx context.Context, userID st
 				Name:        row.Name,
 				Description: row.Description,
 			},
-			ExpiresAt:  converter.TimestamptzToTime(row.ExpiresAt),
-			RedeemedAt: converter.TimestamptzToTime(row.RedeemedAt),
+			EarnedReason: row.EarnedReason,
+			ExpiresAt:    converter.TimestamptzToTime(row.ExpiresAt),
+			RedeemedAt:   converter.TimestamptzToTime(row.RedeemedAt),
 		})
 	}
 
@@ -78,8 +79,9 @@ func (r *rewardRepository) GetActiveRewardsByUserID(ctx context.Context, userID 
 				Name:        row.Name,
 				Description: row.Description,
 			},
-			ExpiresAt:  converter.TimestamptzToTime(row.ExpiresAt),
-			RedeemedAt: converter.TimestamptzToTime(row.RedeemedAt),
+			EarnedReason: row.EarnedReason,
+			ExpiresAt:    converter.TimestamptzToTime(row.ExpiresAt),
+			RedeemedAt:   converter.TimestamptzToTime(row.RedeemedAt),
 		})
 	}
 
@@ -161,8 +163,9 @@ func (r *rewardRepository) GetRewardByUserIDAndRewardID(ctx context.Context, use
 			Name:        reward.Name,
 			Description: reward.Description,
 		},
-		ExpiresAt:  converter.TimestamptzToTime(reward.ExpiresAt),
-		RedeemedAt: converter.TimestamptzToTime(reward.RedeemedAt),
+		EarnedReason: reward.EarnedReason,
+		ExpiresAt:    converter.TimestamptzToTime(reward.ExpiresAt),
+		RedeemedAt:   converter.TimestamptzToTime(reward.RedeemedAt),
 	}, nil
 }
 
@@ -200,7 +203,7 @@ func (r *rewardRepository) GetRewardDefinitions(ctx context.Context) ([]entity.R
 	return definitions, nil
 }
 
-func (r *rewardRepository) AddUserReward(ctx context.Context, userID, promoCode string,
+func (r *rewardRepository) AddUserReward(ctx context.Context, userID, promoCode, earnedReason string,
 	rewardID int32, expiresAt *time.Time) (*entity.UserReward, error) {
 	userUUID, err := converter.StringToUUID(userID)
 	if err != nil {
@@ -208,19 +211,21 @@ func (r *rewardRepository) AddUserReward(ctx context.Context, userID, promoCode 
 	}
 
 	reward, err := r.getQueries(ctx).AddUserReward(ctx, sqlcreward.AddUserRewardParams{
-		UserID:    userUUID,
-		RewardID:  rewardID,
-		PromoCode: promoCode,
-		ExpiresAt: converter.TimeToTimestamptz(expiresAt),
+		UserID:       userUUID,
+		RewardID:     rewardID,
+		PromoCode:    promoCode,
+		EarnedReason: earnedReason,
+		ExpiresAt:    converter.TimeToTimestamptz(expiresAt),
 	})
 	if err == nil {
 		return &entity.UserReward{
-			ID:         reward.ID.String(),
-			UserID:     reward.UserID.String(),
-			PromoCode:  reward.PromoCode,
-			Status:     entity.Status(reward.Status),
-			ExpiresAt:  converter.TimestamptzToTime(reward.ExpiresAt),
-			RedeemedAt: converter.TimestamptzToTime(reward.RedeemedAt),
+			ID:           reward.ID.String(),
+			UserID:       reward.UserID.String(),
+			PromoCode:    reward.PromoCode,
+			Status:       entity.Status(reward.Status),
+			EarnedReason: reward.EarnedReason,
+			ExpiresAt:    converter.TimestamptzToTime(reward.ExpiresAt),
+			RedeemedAt:   converter.TimestamptzToTime(reward.RedeemedAt),
 		}, nil
 	}
 

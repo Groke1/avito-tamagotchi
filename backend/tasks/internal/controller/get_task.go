@@ -24,10 +24,10 @@ type TaskDTO struct {
 	TaskType    string        `json:"task_type"`
 }
 type GetTaskHandler struct {
-	taskRepo *postgres.TaskRepository
+	taskRepo postgres.TaskRepoInterface
 }
 
-func NewGetTaskHandler(repo *postgres.TaskRepository) *GetTaskHandler {
+func NewGetTaskHandler(repo postgres.TaskRepoInterface) *GetTaskHandler {
 	return &GetTaskHandler{taskRepo: repo}
 }
 

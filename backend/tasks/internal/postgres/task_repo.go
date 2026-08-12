@@ -20,6 +20,13 @@ const (
 	MinTaskLimit   = 3
 )
 
+type TaskRepoInterface interface {
+	FindByIDForUser(ctx context.Context, userID, taskID string) (*entity.UserTask, error)
+	ListForUser(ctx context.Context, userID string) ([]entity.UserTask, error)
+	CompleteTask(ctx context.Context, userID, taskID string) (*entity.UserTask, error)
+	ListCompletedToday(ctx context.Context, userID string) ([]sqlctask.GetTodayCompletedTasksForUserRow, error)
+}
+
 type TaskRepository struct {
 	pool    *pgxpool.Pool
 	queries *sqlctask.Queries

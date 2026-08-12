@@ -2,9 +2,9 @@ openapi: 3.0.3
 info:
   title: User Service API
   version: 1.0.0
-  description: |
-    API микросервиса пользователей.
+  description: 'API микросервиса пользователей.
 
+    '
 tags:
   - name: Auth
     description: Регистрация и управление сессией
@@ -14,13 +14,15 @@ tags:
     description: Награды текущего пользователя
   - name: Statistics
     description: Дневная статистика текущего пользователя
+  - name: Events
+    description: Новые события текущего пользователя
   - name: Internal
     description: Внутренние методы межсервисного взаимодействия
-
 paths:
   /api/v1/auth/register:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: registerUser
       summary: Зарегистрировать пользователя
       requestBody:
@@ -51,10 +53,10 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /api/v1/auth/login:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: loginUser
       summary: Выполнить вход
       requestBody:
@@ -84,10 +86,10 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /api/v1/auth/refresh:
     post:
-      tags: [Auth]
+      tags:
+        - Auth
       operationId: refreshTokens
       summary: Обновить пару токенов
       requestBody:
@@ -114,14 +116,14 @@ paths:
           $ref: '#/components/responses/InvalidRefreshToken'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /api/v1/auth/logout:
     post:
-      tags: [ Auth ]
+      tags:
+        - Auth
       operationId: logoutUser
       summary: Завершить текущую сессию
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -144,10 +146,10 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /api/v1/profile:
     get:
-      tags: [Profile]
+      tags:
+        - Profile
       operationId: getProfile
       summary: Получить профиль текущего пользователя
       security:
@@ -168,14 +170,14 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
-
   /api/v1/rewards:
     get:
-      tags: [Rewards]
+      tags:
+        - Rewards
       operationId: getAllRewards
       summary: Получить все награды текущего пользователя
-      description: Возвращает активные, использованные и истекшие награды. Поля `expires_at` и `redeemed-at` могут быть `null` - значит у промокода нет ограничения по времени или он еще не использован соответственно
+      description: Возвращает активные, использованные и истекшие награды. Поля `expires_at` и `redeemed-at` могут быть `null`
+        - значит у промокода нет ограничения по времени или он еще не использован соответственно
       security:
         - bearerAuth: []
       responses:
@@ -189,13 +191,14 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /api/v1/rewards/active:
     get:
-      tags: [Rewards]
+      tags:
+        - Rewards
       operationId: getActiveRewards
       summary: Получить доступные награды текущего пользователя
-      description: Возвращает награды со статусом `active`. Поля `expires_at` и `redeemed-at` могут быть `null` - значит у промокода нет ограничения по времени или он еще не использован соответственно
+      description: Возвращает награды со статусом `active`. Поля `expires_at` и `redeemed-at` могут быть `null` - значит у
+        промокода нет ограничения по времени или он еще не использован соответственно
       security:
         - bearerAuth: []
       responses:
@@ -209,10 +212,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /api/v1/rewards/{reward_id}:
     get:
-      tags: [Rewards]
+      tags:
+        - Rewards
       operationId: getReward
       summary: Получить награду текущего пользователя
       description: Возвращает награду только в том случае, если она принадлежит пользователю из access token.
@@ -260,10 +263,10 @@ paths:
           $ref: '#/components/responses/RewardNotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /api/v1/rewards/redeem:
     post:
-      tags: [Rewards]
+      tags:
+        - Rewards
       operationId: redeemReward
       summary: Использовать промокод текущего пользователя
       description: Помечает доступную награду использованной. Пользователь определяется по access token.
@@ -288,10 +291,10 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /api/v1/daily-stat:
     get:
-      tags: [Statistics]
+      tags:
+        - Statistics
       operationId: getDailyStat
       summary: Получить статистику текущего пользователя за день
       security:
@@ -319,16 +322,62 @@ paths:
                   - promo_code: DELIVERYDISC-X8K2M7Q9WP
                     name: Скидка 10% на доставку
                     description: Скидка 10% на одну покупку с Авито Доставкой
+                    status: active
                     finished_desc: Получена скидка 10% на доставку
                     created_time: '2026-08-09T12:30:00Z'
+                  - promo_code: AUTOTEKA-X8K2M7Q9WP
+                    name: Скидка 20% на Автотеку
+                    description: Скидка 20% на один отчёт об истории автомобиля
+                    status: redeemed
+                    finished_desc: Использована скидка 20% на отчёт Автотеки
+                    created_time: '2026-08-09T18:45:00Z'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
+  /api/v1/user/events:
+    get:
+      tags:
+        - Events
+      operationId: getNewEvents
+      summary: Получить новые события текущего пользователя
+      description: Возвращает новые события пользователя, которые еще не были доставлены. Пользователь определяется по access
+        token.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список новых событий пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEventsResponse'
+              example:
+                user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
+                items:
+                  - type: streak_reward
+                    xp: 80
+                    streak: 5
+                    created_at: '2026-08-12T02:30:00Z'
+                  - type: new_reward
+                    reward:
+                      reward_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                      promo_code: DELIVERYDISC-X8K2M7Q9WP
+                      name: Скидка 10% на доставку
+                      description: Скидка 10% на одну покупку с Авито Доставкой
+                      status: active
+                      earned_reason: За достижение 5 уровня
+                      expires_at: '2026-09-06T19:07:12Z'
+                      redeemed_at: null
+                    created_at: '2026-08-12T02:31:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /internal/action:
     post:
-      tags: [Internal]
+      tags:
+        - Internal
       operationId: registerUserAction
       summary: Зарегистрировать действие пользователя
       description: Обновляет стрик пользователя на основании времени совершения действия.
@@ -350,10 +399,10 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /internal/rewards:
     post:
-      tags: [Internal]
+      tags:
+        - Internal
       operationId: grantReward
       summary: Выдать награду пользователю
       requestBody:
@@ -376,10 +425,10 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /internal/rewards/{code}:
     get:
-      tags: [Internal]
+      tags:
+        - Internal
       operationId: getRewardDefinition
       summary: Получить описание награды по коду
       parameters:
@@ -402,10 +451,10 @@ paths:
           $ref: '#/components/responses/RewardDefinitionNotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /internal/usernames:
     post:
-      tags: [Internal]
+      tags:
+        - Internal
       operationId: getUsernames
       summary: Получить имена пользователей по идентификаторам
       description: Принимает от 1 до 1000 идентификаторов пользователей.
@@ -436,10 +485,10 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /internal/update-coins:
     put:
-      tags: [Internal]
+      tags:
+        - Internal
       operationId: updateUserCoins
       summary: Изменить баланс монет пользователя
       requestBody:
@@ -477,20 +526,21 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
-
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: "Access token в заголовке `Authorization: Bearer <token>`."
-
+      description: 'Access token в заголовке `Authorization: Bearer <token>`.'
   schemas:
     RegisterRequest:
       type: object
       additionalProperties: false
-      required: [username, email, password]
+      required:
+        - username
+        - email
+        - password
       properties:
         username:
           type: string
@@ -505,11 +555,12 @@ components:
           format: password
           writeOnly: true
           description: От 8 до 72 байт в UTF-8 представлении.
-
     LoginRequest:
       type: object
       additionalProperties: false
-      required: [email, password]
+      required:
+        - email
+        - password
       properties:
         email:
           type: string
@@ -519,31 +570,32 @@ components:
           format: password
           minLength: 1
           writeOnly: true
-
     RefreshRequest:
       type: object
       additionalProperties: false
-      required: [refresh_token]
+      required:
+        - refresh_token
       properties:
         refresh_token:
           type: string
           minLength: 1
           writeOnly: true
-
     LogoutRequest:
       type: object
       additionalProperties: false
-      required: [ refresh_token ]
+      required:
+        - refresh_token
       properties:
         refresh_token:
           type: string
           minLength: 1
           writeOnly: true
-
     AuthResponse:
       type: object
       additionalProperties: false
-      required: [access_token, refresh_token]
+      required:
+        - access_token
+        - refresh_token
       properties:
         access_token:
           type: string
@@ -551,11 +603,14 @@ components:
         refresh_token:
           type: string
           readOnly: true
-
     ProfileResponse:
       type: object
       additionalProperties: false
-      required: [user_id, username, email, coins]
+      required:
+        - user_id
+        - username
+        - email
+        - coins
       properties:
         user_id:
           type: string
@@ -568,11 +623,58 @@ components:
           type: integer
           format: int64
           minimum: 0
-
+    EventResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - created_at
+      properties:
+        type:
+          type: string
+          enum:
+            - new_reward
+            - streak_reward
+          example: streak_reward
+        xp:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Начисленный XP. Поле отсутствует, если неприменимо к событию.
+        coins:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Начисленные монеты. Поле отсутствует, если неприменимо к событию.
+        streak:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Текущий стрик. Поле отсутствует, если неприменимо к событию.
+        reward:
+          $ref: '#/components/schemas/UserRewardResponse'
+        created_at:
+          type: string
+          format: date-time
+    ListEventsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - user_id
+        - items
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
     UsernamesRequest:
       type: object
       additionalProperties: false
-      required: [user_ids]
+      required:
+        - user_ids
       properties:
         user_ids:
           type: array
@@ -580,27 +682,27 @@ components:
           maxItems: 1000
           items:
             type: string
-
     Username:
       type: object
       additionalProperties: false
-      required: [id, username]
+      required:
+        - id
+        - username
       properties:
         id:
           type: string
         username:
           type: string
-
     UsernamesResponse:
       type: object
       additionalProperties: false
-      required: [users]
+      required:
+        - users
       properties:
         users:
           type: array
           items:
             $ref: '#/components/schemas/Username'
-
     UpdateCoinsRequest:
       type: object
       additionalProperties: false
@@ -610,11 +712,12 @@ components:
         delta:
           type: integer
           format: int64
-
     UpdateCoinsResponse:
       type: object
       additionalProperties: false
-      required: [user_id, coins]
+      required:
+        - user_id
+        - coins
       properties:
         user_id:
           type: string
@@ -624,13 +727,13 @@ components:
           format: int64
           minimum: 0
           readOnly: true
-
-
     RewardStatus:
       type: string
       description: Эффективный статус награды. Значение `expired` вычисляется по `expires_at`.
-      enum: [active, redeemed, expired]
-
+      enum:
+        - active
+        - redeemed
+        - expired
     UserRewardResponse:
       type: object
       additionalProperties: false
@@ -642,12 +745,14 @@ components:
         status: active
         expires_at: '2026-09-06T19:07:12Z'
         redeemed_at: null
+        earned_reason: За достижение 5 уровня
       required:
         - reward_id
         - promo_code
         - name
         - description
         - status
+        - earned_reason
         - expires_at
         - redeemed_at
       properties:
@@ -681,31 +786,36 @@ components:
           format: date-time
           nullable: true
           readOnly: true
-
+        earned_reason:
+          type: string
+          readOnly: true
+          example: За достижение 5 уровня
     UserRewardsResponse:
       type: object
       additionalProperties: false
-      required: [items]
+      required:
+        - items
       properties:
         items:
           type: array
           items:
             $ref: '#/components/schemas/UserRewardResponse'
-
     RedeemRewardRequest:
       type: object
       additionalProperties: false
-      required: [promo_code]
+      required:
+        - promo_code
       properties:
         promo_code:
           type: string
           minLength: 1
           example: DELIVERYDISC-X8K2M7Q9WP
-
     ActionRequest:
       type: object
       additionalProperties: false
-      required: [user_id, occurred_at]
+      required:
+        - user_id
+        - occurred_at
       properties:
         user_id:
           type: string
@@ -713,11 +823,12 @@ components:
         occurred_at:
           type: string
           format: date-time
-
     GrantRewardRequest:
       type: object
       additionalProperties: false
-      required: [user_id, code]
+      required:
+        - user_id
+        - code
       properties:
         user_id:
           type: string
@@ -726,11 +837,13 @@ components:
           type: string
           minLength: 1
           example: DELIVERY_DISCOUNT_10
-
     RewardDefinitionResponse:
       type: object
       additionalProperties: false
-      required: [code, name, description]
+      required:
+        - code
+        - name
+        - description
       properties:
         code:
           type: string
@@ -744,11 +857,15 @@ components:
           type: string
           readOnly: true
           example: Скидка 10% на одну покупку с Авито Доставкой
-
     DailyStatResponse:
       type: object
       additionalProperties: false
-      required: [user_id, streak, tasks, pet, rewards]
+      required:
+        - user_id
+        - streak
+        - tasks
+        - pet
+        - rewards
       properties:
         user_id:
           type: string
@@ -772,22 +889,27 @@ components:
           readOnly: true
           items:
             $ref: '#/components/schemas/DailyRewardStat'
-
     DailyPetStat:
       type: object
       additionalProperties: false
-      required: [daily_gained_xp]
+      required:
+        - daily_gained_xp
       properties:
         daily_gained_xp:
           type: integer
           format: int64
           readOnly: true
           description: Количество XP, полученное питомцем за текущий день.
-
     DailyTaskStat:
       type: object
       additionalProperties: false
-      required: [id, title, reward_coins, reward_xp, finished_desc, updated_at]
+      required:
+        - id
+        - title
+        - reward_coins
+        - reward_xp
+        - finished_desc
+        - updated_at
       properties:
         id:
           type: string
@@ -811,11 +933,22 @@ components:
           type: string
           format: date-time
           readOnly: true
-
+    DailyRewardStatus:
+      type: string
+      description: Статус события с наградой в дневной статистике.
+      enum:
+        - active
+        - redeemed
     DailyRewardStat:
       type: object
       additionalProperties: false
-      required: [promo_code, name, description, finished_desc, created_time]
+      required:
+        - promo_code
+        - name
+        - description
+        - status
+        - finished_desc
+        - created_time
       properties:
         promo_code:
           type: string
@@ -826,6 +959,13 @@ components:
         description:
           type: string
           readOnly: true
+        status:
+          allOf:
+            - $ref: '#/components/schemas/DailyRewardStatus'
+          readOnly: true
+          description: 'Статус события с наградой: `active` — награда была получена, `redeemed` — награда была использована.
+
+            '
         finished_desc:
           type: string
           readOnly: true
@@ -835,11 +975,12 @@ components:
           format: date-time
           readOnly: true
           description: Время события с наградой.
-
     ErrorResponse:
       type: object
       additionalProperties: false
-      required: [code, message]
+      required:
+        - code
+        - message
       properties:
         code:
           type: string
@@ -857,7 +998,6 @@ components:
             - NOT_FOUND_DEFINITION
         message:
           type: string
-
   responses:
     ValidationError:
       description: Некорректное тело запроса или данные не прошли валидацию
@@ -868,7 +1008,6 @@ components:
           example:
             code: VALIDATION_ERROR
             message: Проверьте переданные данные
-
     UserAlreadyExists:
       description: Пользователь с таким именем или email уже существует
       content:
@@ -878,7 +1017,6 @@ components:
           example:
             code: USER_ALREADY_EXISTS
             message: Пользователь с такими данными уже существует
-
     InvalidCredentials:
       description: Неверный email или пароль
       content:
@@ -888,7 +1026,6 @@ components:
           example:
             code: INVALID_CREDENTIALS
             message: Неверный email или пароль
-
     InvalidRefreshToken:
       description: Refresh token отсутствует, недействителен или не найден
       content:
@@ -898,7 +1035,6 @@ components:
           example:
             code: INVALID_REFRESH_TOKEN
             message: Сессия истекла. Выполните вход снова
-
     Unauthorized:
       description: Access token отсутствует или недействителен либо пользователь не найден
       content:
@@ -908,7 +1044,6 @@ components:
           example:
             code: UNAUTHORIZED
             message: Требуется повторная авторизация
-
     UserNotFound:
       description: Пользователь не найден
       content:
@@ -918,7 +1053,6 @@ components:
           example:
             code: USER_NOT_FOUND
             message: Пользователь не найден
-
     InsufficientCoins:
       description: На балансе недостаточно монет для списания
       content:
@@ -928,8 +1062,6 @@ components:
           example:
             code: INSUFFICIENT_COINS
             message: Недостаточно монет
-
-
     RewardNotFound:
       description: Награда не найдена либо не принадлежит текущему пользователю
       content:
@@ -939,7 +1071,6 @@ components:
           example:
             code: REWARD_NOT_FOUND
             message: Награда не найдена
-
     RewardUnavailable:
       description: Промокод не найден, принадлежит другому пользователю, уже использован или просрочен
       content:
@@ -949,7 +1080,6 @@ components:
           example:
             code: REWARD_UNAVAILABLE
             message: Награда недоступна
-
     RewardDefinitionNotFound:
       description: Описание награды с указанным кодом не найдено
       content:
@@ -959,7 +1089,6 @@ components:
           example:
             code: NOT_FOUND_DEFINITION
             message: Награда не найдена
-
     InternalError:
       description: Внутренняя ошибка сервера
       content:

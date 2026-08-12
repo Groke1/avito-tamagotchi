@@ -16,10 +16,10 @@ type GetCompletedTasksResponse struct {
 }
 
 type GetCompletedTasksHandler struct {
-	taskRepo *postgres.TaskRepository
+	taskRepo postgres.TaskRepoInterface
 }
 
-func NewGetCompletedTasksHandler(repo *postgres.TaskRepository) *GetCompletedTasksHandler {
+func NewGetCompletedTasksHandler(repo postgres.TaskRepoInterface) *GetCompletedTasksHandler {
 	return &GetCompletedTasksHandler{taskRepo: repo}
 }
 

@@ -17,10 +17,10 @@ type TodayTasksResponse struct {
 }
 
 type GetTodayTasksHandler struct {
-	taskRepo *postgres.TaskRepository
+	taskRepo postgres.TaskRepoInterface
 }
 
-func NewGetTodayTasksHandler(repo *postgres.TaskRepository) *GetTodayTasksHandler {
+func NewGetTodayTasksHandler(repo postgres.TaskRepoInterface) *GetTodayTasksHandler {
 	return &GetTodayTasksHandler{taskRepo: repo}
 }
 
