@@ -11,8 +11,9 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 )
 
-var (
-	XPperStreak = 7
+const (
+	XPperStreak  = 7
+	TripDuration = 10 * time.Hour
 )
 
 type EventNotifier interface {
@@ -21,18 +22,25 @@ type EventNotifier interface {
 }
 
 type PetService struct {
-	petRepository *repository.PetRepository
-	client        *clients.UserClient
-	eventNotifier EventNotifier
-	levelPolicy   *domain.LevelPolicy
+	petRepository  *repository.PetRepository
+	tripRepository *repository.TripRepository
+	client         *clients.UserClient
+	eventNotifier  EventNotifier
+	levelPolicy    *domain.LevelPolicy
 }
 
-func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier, levelPolicy *domain.LevelPolicy) *PetService {
+func NewPetService(
+	petRepository *repository.PetRepository,
+	tripRepository *repository.TripRepository,
+	userServiceURL string,
+	eventNotifier EventNotifier,
+	levelPolicy *domain.LevelPolicy) *PetService {
 	return &PetService{
-		petRepository: petRepository,
-		client:        clients.NewUserClient(userServiceURL + "/internal"),
-		eventNotifier: eventNotifier,
-		levelPolicy:   levelPolicy,
+		petRepository:  petRepository,
+		tripRepository: tripRepository,
+		client:         clients.NewUserClient(userServiceURL + "/internal"),
+		eventNotifier:  eventNotifier,
+		levelPolicy:    levelPolicy,
 	}
 }
 
@@ -66,6 +74,15 @@ func (ps *PetService) CreatePet(ctx context.Context, userID string, petName stri
 }
 
 func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, error) {
+	trip, err := ps.tripRepository.GetTrip(ctx, userID)
+	if err != nil {
+		return nil, err
+	} else if trip == nil {
+		return nil, &domain.ActionUnavailableError{
+			RetryAfter: TripDuration,
+		}
+	}
+
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -113,6 +130,15 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 }
 
 func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet, error) {
+	trip, err := ps.tripRepository.GetTrip(ctx, userID)
+	if err != nil {
+		return nil, err
+	} else if trip == nil {
+		return nil, &domain.ActionUnavailableError{
+			RetryAfter: TripDuration,
+		}
+	}
+
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)

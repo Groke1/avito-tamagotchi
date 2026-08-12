@@ -14,14 +14,16 @@ import (
 )
 
 type PetHandler struct {
-	petService *service.PetService
-	validator  *validator.Validate
+	petService  *service.PetService
+	tripService *service.TripService
+	validator   *validator.Validate
 }
 
-func NewPetHandler(service *service.PetService) *PetHandler {
+func NewPetHandler(service *service.PetService, tripService *service.TripService) *PetHandler {
 	return &PetHandler{
-		petService: service,
-		validator:  validator.New(),
+		petService:  service,
+		tripService: tripService,
+		validator:   validator.New(),
 	}
 }
 
