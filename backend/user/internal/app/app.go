@@ -13,12 +13,14 @@ import (
 	httptasks "github.com/cayman444/avito-gamification-hackathon.user/internal/adapter/tasks/http"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/config"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/controller"
+	eventrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/event"
 	rewardrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/reward"
 	streakrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/streak"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/repository/token/postgres"
 	tokenrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/token/redis"
 	userrepo "github.com/cayman444/avito-gamification-hackathon.user/internal/repository/user"
 	authserv "github.com/cayman444/avito-gamification-hackathon.user/internal/usecase/auth"
+	eventserv "github.com/cayman444/avito-gamification-hackathon.user/internal/usecase/event"
 	rewardserv "github.com/cayman444/avito-gamification-hackathon.user/internal/usecase/reward"
 	userserv "github.com/cayman444/avito-gamification-hackathon.user/internal/usecase/user"
 	"github.com/cayman444/avito-gamification-hackathon.user/internal/worker"
@@ -73,11 +75,12 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 	userRepo := userrepo.NewUserRepository(dbPool)
 	streakRepo := streakrepo.NewStreakRepository(dbPool)
 	rewardRepo := rewardrepo.NewRewardRepository(dbPool)
+	eventRepo := eventrepo.NewEventRepository(dbPool)
 	transactor := db.NewTransactor(dbPool)
 
 	var (
 		tokenRepo    authserv.TokenRepository
-		tokenCleaner worker.Cleaner
+		tokenCleaner worker.TokenCleaner
 		redisClient  *redis.Client
 	)
 
@@ -107,7 +110,7 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 		return errors.New("unsupported session store")
 	}
 
-	rewardService := rewardserv.NewRewardService(rewardRepo)
+	rewardService := rewardserv.NewRewardService(rewardRepo, eventRepo, transactor)
 
 	authService := authserv.NewAuthService(userRepo, tokenRepo, transactor,
 		rewardRepo, streakRepo, rewardService, authserv.Config{
@@ -116,11 +119,13 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 			RefreshTokenTTL:        cfg.Settings.RefreshTokenTTL,
 			RegistrationBonusCoins: cfg.Settings.RegistrationBonusCoins,
 		})
-	userService := userserv.NewUserService(userRepo, streakRepo, rewardRepo, transactor, petClient, tasksClient)
+	userService := userserv.NewUserService(userRepo, streakRepo, rewardRepo, eventRepo, transactor, petClient, tasksClient)
+	eventService := eventserv.NewEventService(eventRepo, rewardRepo)
 
 	router := mux.NewRouter()
 	contr := controller.NewController(logger, authService,
-		userService, rewardService, authService, cfg.Settings.AccessTokenTTL, cfg.Settings.RefreshTokenTTL)
+		userService, rewardService, eventService, authService,
+		cfg.Settings.AccessTokenTTL, cfg.Settings.RefreshTokenTTL)
 	contr.InitRoutes(router)
 
 	handler := middleware.CorsHandler(router)
@@ -133,6 +138,8 @@ func Run(logger *zap.Logger, cfg *config.Config) error {
 	if tokenCleaner != nil {
 		go worker.StartTokenCleaner(ctx, logger, tokenCleaner, cfg.Settings.TokenCleanupInterval)
 	}
+
+	go worker.StartEventsCleaner(ctx, logger, eventRepo, cfg.Settings.EventsCleanupInterval)
 
 	serverErr := make(chan error, 1)
 	go func() {
