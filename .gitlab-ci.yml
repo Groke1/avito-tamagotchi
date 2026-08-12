@@ -4,9 +4,11 @@ stages:
 mirror_to_github:
   stage: sync
   image: alpine/git:latest
+
   script:
     - git config --global user.email "gitlab-ci@example.com"
     - git config --global user.name "GitLab CI"
-    - git push --prune "https://fnkdnm:${GITHUB_TOKEN}@github.com/nektosomebody/avito-tamagotchi.git" "HEAD:refs/heads/${CI_COMMIT_REF_NAME}"
+    - git push "https://fnkdnm:${GITHUB_TOKEN}@github.com/nektosomebody/avito-tamagotchi.git" "HEAD:refs/heads/${CI_COMMIT_REF_NAME}"
+
   only:
     - branches
