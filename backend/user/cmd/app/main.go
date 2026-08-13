@@ -14,7 +14,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("can not initialize logger: %s", err)
 	}
-	defer logger.Sync()
 
 	cfg, err := config.New()
 
