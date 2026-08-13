@@ -10,7 +10,7 @@ export const useHeaderTasks = () => {
 
   const totalCount = tasksData?.items.length ?? 0
   const completedCount = tasksData?.items.filter((t) => t.status === 'completed').length ?? 0
-  const formattedDate = formatTaskDate(tasksData?.date)
+  const formattedDate = formatTaskDate({ dateStr: tasksData?.date })
 
   return {
     coins: user?.coins ?? 0,

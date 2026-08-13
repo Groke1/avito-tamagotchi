@@ -5,7 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const formatTaskDate = (dateStr?: string | null) => {
+export const formatTaskDate = ({
+  dateStr,
+  hasMinutes = false,
+}: {
+  dateStr?: string | null
+  hasMinutes?: boolean
+}) => {
   if (!dateStr) return ''
 
   try {
@@ -14,6 +20,8 @@ export const formatTaskDate = (dateStr?: string | null) => {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
+      hour: hasMinutes ? 'numeric' : undefined,
+      minute: hasMinutes ? 'numeric' : undefined,
     })
   } catch {
     return dateStr
