@@ -40,6 +40,10 @@ func (f *fakeCoinsClient) UpdateCoins(ctx context.Context, req UpdateCoinsReques
 	return f.updateCoinsFn(ctx, req)
 }
 
+func (f *fakeCoinsClient) NotifyActionDone(ctx context.Context, req NotifyActionRequest) error {
+	return nil
+}
+
 type fakeXPClient struct {
 	updateXPFn func(ctx context.Context, req UpdateXPRequest) error
 	calls      []UpdateXPRequest

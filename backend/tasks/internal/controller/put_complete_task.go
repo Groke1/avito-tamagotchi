@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/entity"
@@ -12,6 +13,7 @@ import (
 type (
 	coinsClient interface {
 		UpdateCoins(ctx context.Context, req UpdateCoinsRequest) (*UpdateCoinsResponse, error)
+		NotifyActionDone(ctx context.Context, req NotifyActionRequest) error
 	}
 	xpClient interface {
 		UpdateXP(ctx context.Context, req UpdateXPRequest) error
@@ -84,6 +86,16 @@ func (h *CompleteTaskHandler) Handle(ctx context.Context, query CompleteTaskQuer
 			},
 			Balance: &BalanceDTO{Coins: coinsResp.Coins},
 		}
+
+		err = h.coinsClient.NotifyActionDone(ctx, NotifyActionRequest{
+			UserID:     query.UserID,
+			OccurredAt: time.Now().UTC(),
+		})
+		if err != nil {
+			log.Println("AA", err)
+			return fmt.Errorf("notify action: %w", ErrUserServiceUnavailable)
+		}
+
 		return nil
 	})
 	if err != nil {

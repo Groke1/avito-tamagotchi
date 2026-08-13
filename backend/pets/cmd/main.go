@@ -40,12 +40,12 @@ func main() {
 	defer db.Close()
 
 	repository := repository.NewPetRepository(db)
-	wsClientManager := websocket.NewClient()
+	wsUserManager := websocket.NewUserManager()
 	wsTicketManager := websocket.NewTicketManager()
 	levelPolicy := domain.NewLevelPolicy()
-	service := service.NewPetService(repository, cfg.UserServiceURL, wsClientManager, levelPolicy)
+	service := service.NewPetService(repository, cfg.UserServiceURL, wsUserManager, levelPolicy)
 	petHandler := api.NewPetHandler(service)
-	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, service)
+	wsHandler := api.NewWSHandler(wsUserManager, wsTicketManager, service)
 
 	r := chi.NewRouter()
 
