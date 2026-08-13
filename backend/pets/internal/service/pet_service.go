@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	XPperStreak  = 7
-	TripDuration = 10 * time.Hour
+	XPperStreak = 7
 )
 
 type EventNotifier interface {
@@ -92,7 +91,7 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 		return nil, err
 	} else if trip.Status == domain.InProgress {
 		return nil, &domain.ActionUnavailableError{
-			RetryAfter: TripDuration,
+			RetryAfter: time.Duration(trip.EndedAt.Sub(time.Now().UTC()).Seconds()),
 		}
 	}
 
@@ -148,7 +147,7 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 		return nil, err
 	} else if trip.Status == domain.InProgress {
 		return nil, &domain.ActionUnavailableError{
-			RetryAfter: TripDuration,
+			RetryAfter: time.Duration(trip.EndedAt.Sub(time.Now().UTC()).Seconds()),
 		}
 	}
 
@@ -322,7 +321,27 @@ func (ps *PetService) levelUp(ctx context.Context, userID string, level int) err
 		return err
 	}
 
-	_ = ps.eventNotifier.SendToClient(userID, domain.EventLevelUp, reward)
+	wsReward := struct {
+		ID           string     `json:"id"`
+		PromoCode    string     `json:"promo_code"`
+		Name         string     `json:"name"`
+		Description  string     `json:"description"`
+		Status       string     `json:"status"`
+		ExpiresAt    string     `json:"expires_at"`
+		EarnedReason string     `json:"earned_reason"`
+		RedeemedAt   *time.Time `json:"redeemed_at"`
+	}{
+		ID:           reward.ID,
+		PromoCode:    reward.PromoCode,
+		Name:         reward.Name,
+		Description:  reward.Description,
+		Status:       reward.Status,
+		ExpiresAt:    reward.ExpiresAt,
+		EarnedReason: reward.EarnedReason,
+		RedeemedAt:   reward.RedeemedAt,
+	}
+
+	_ = ps.eventNotifier.SendToClient(userID, domain.EventLevelUp, wsReward)
 
 	return nil
 }

@@ -384,7 +384,7 @@ func (ph *PetHandler) LastTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trip, err := ph.tripService.GetLastTrip(ctx, userID)
+	trip, reward, err := ph.tripService.GetLastTrip(ctx, userID)
 	if errors.Is(err, domain.ErrNotPendingTrip) {
 		writeJSONResponse(w, http.StatusNoContent, struct{}{})
 		return
@@ -393,8 +393,25 @@ func (ph *PetHandler) LastTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var rewardResponse *RewardResponse
+	if reward != nil {
+		rewardResponse = &RewardResponse{
+			ID:           reward.ID,
+			PromoCode:    reward.PromoCode,
+			Name:         reward.Name,
+			Description:  reward.Description,
+			Status:       reward.Status,
+			ExpiresAt:    reward.ExpiresAt,
+			EarnedReason: reward.EarnedReason,
+			RedeemedAt:   reward.RedeemedAt,
+		}
+	}
+
 	resp := &TripResponse{
-		Story: trip.Story,
+		Story:  trip.Story,
+		Coins:  *trip.RewardCoins,
+		XP:     *trip.RewardXP,
+		Reward: rewardResponse,
 	}
 
 	writeJSONResponse(w, http.StatusOK, resp)

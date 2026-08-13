@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"time"
 
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/clients"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 )
@@ -38,6 +39,8 @@ type TripService struct {
 	tripRepository repository.TripRepositoryInterface
 	petRepository  *repository.PetRepository
 	eventNotifier  EventNotifier
+	userClient     *clients.UserClient
+	rewardPolicy   *domain.RewardPolicy
 }
 
 func NewTripService(
@@ -46,6 +49,7 @@ func NewTripService(
 	tripRepository repository.TripRepositoryInterface,
 	petRepository *repository.PetRepository,
 	eventNotifier EventNotifier,
+	baseURl string,
 ) *TripService {
 	return &TripService{
 		storyGenerator: storyGenerator,
@@ -53,6 +57,8 @@ func NewTripService(
 		tripRepository: tripRepository,
 		petRepository:  petRepository,
 		eventNotifier:  eventNotifier,
+		userClient:     clients.NewUserClient(baseURl),
+		rewardPolicy:   domain.NewRewardPolicy(),
 	}
 }
 
@@ -79,10 +85,7 @@ func (s *TripService) generateAndSave(ctx context.Context, dto TripDTO) error {
 	journey := domain.JourneyResult{
 		Location: defaultLocation,
 		Events:   shuffleEvents,
-		Reward: domain.JourneyReward{
-			RewardXP:    int32(IsNegativeInt * rand.IntN(100)),
-			RewardCoins: int32(IsNegativeInt*rand.IntN(50) + 30),
-		},
+		Reward:   s.rewardPolicy.GenerateReward(IsNegativeInt == 1),
 	}
 
 	memory, err := s.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
@@ -106,6 +109,7 @@ func (s *TripService) generateAndSave(ctx context.Context, dto TripDTO) error {
 		Location:    journey.Location,
 		RewardXP:    &journey.Reward.RewardXP,
 		RewardCoins: &journey.Reward.RewardCoins,
+		RewardCode:  journey.Reward.RewardCode,
 		Story:       story.Story,
 		StartedAt:   now,
 		EndedAt:     now.Add(60 * time.Second), // TODO: заменить на реальное время окончания путешествия
@@ -154,20 +158,28 @@ func (ts *TripService) CompleteTrip(ctx context.Context, trip *domain.PetTrip) (
 	return trip, nil
 }
 
-func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.PetTrip, error) {
+func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.PetTrip, *domain.Reward, error) {
 	pet, err := ts.petRepository.GetPet(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	trip, err := ts.tripRepository.GetLastTripByPetID(ctx, pet.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if trip.Status == domain.PendingDelivery {
-		return trip, nil
+		var reward *domain.Reward
+		if trip.RewardCode != nil {
+			reward, err = ts.userClient.ClaimReward(ctx, trip.UserID, *trip.RewardCode)
+			if err != nil {
+				log.Printf("[LAST TRIP] lost reward trip `%d`", trip.ID)
+			}
+		}
+
+		return trip, reward, nil
 	}
 
-	return nil, domain.ErrNotPendingTrip
+	return nil, nil, domain.ErrNotPendingTrip
 }

@@ -54,7 +54,7 @@ func main() {
 	trip_repo := repository.NewTripRepository(db)
 	tripRepository := repository.NewTripRepository(db)
 
-	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo, petRepository, wsClientManager)
+	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo, petRepository, wsClientManager, cfg.UserServiceURL)
 	petService := service.NewPetService(petRepository, tripRepository, cfg.UserServiceURL, wsClientManager, levelPolicy)
 	petHandler := api.NewPetHandler(petService, tripService)
 	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, petService)
