@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand/v2"
@@ -74,11 +75,15 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 
 	// проверить что нет активных путешествий
 	petTripReturned, err := s.tripRepository.GetLastTripByPetID(ctx, dto.PetID)
-	if err != nil && err != domain.ErrTripNotFound {
+	switch {
+	case errors.Is(err, domain.ErrTripNotFound):
+
+	case err != nil:
 		return err
-	}
-	if petTripReturned.EndedAt.After(time.Now()) && petTripReturned.Status != domain.Delivered {
-		fmt.Println("ErrPetAlreadyTravelling")
+
+	case petTripReturned != nil &&
+		petTripReturned.EndedAt.After(time.Now()) &&
+		petTripReturned.Status != domain.Delivered:
 		return domain.ErrPetAlreadyTravelling
 	}
 	fmt.Println("[trip_service] активных путешествий нет")
@@ -122,8 +127,9 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 		memory[i] = lastPetTrips[i].Story
 	}
 	input := domain.JourneyGenerationInput{
-		Journey: journey,
-		Memory:  memory,
+		Location: journey.Location,
+		Events:   journey.Events,
+		Memory:   memory,
 	}
 
 	story, err := s.storyGenerator.Generate(ctx, input)

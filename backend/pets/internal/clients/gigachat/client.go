@@ -149,7 +149,7 @@ func parseStory(content string) (domain.JourneyStory, error) {
 func systemPrompt() string {
 	return "Ты — виртуальный питомец в мобильном приложении. " +
 		"Тебе дают JSON с уже посчитанными игровыми фактами о твоем завершённом путешествии: " +
-		"локация, список событий, награда, а также 1-2 последние истории. " +
+		"локация, список событий, а также 1-2 последние истории. " +
 		"Твоя единственная задача — превратить эти факты в тёплый, живой рассказ от первого лица питомца. " +
 		"СТРОГО ЗАПРЕЩЕНО придумывать новые события, награды, предметы или менять переданные факты — " +
 		"используй только то, что дано во входном JSON. " +
@@ -158,15 +158,24 @@ func systemPrompt() string {
 		"со следующими и только следующими полями: " +
 		`{"title": string, "story": string}. ` +
 		"title — короткий заголовок истории. story — сам рассказ, 2-5 предложений, от первого лица. " +
-		"teaser — одна короткая интригующая фраза, зовущая пользователя в следующее путешествие."
+		"последнее предложение в story - одна короткая интригующая фраза, зовущая пользователя в следующее путешествие."
+}
+
+type journeyTmp struct {
+	Events   []string `json:"events"`
+	Location string   `json:"location"`
 }
 
 func userPrompt(input domain.JourneyGenerationInput) string {
-	journeyJSON, _ := json.Marshal(input.Journey)
+	j := journeyTmp{
+		Location: input.Location,
+		Events:   input.Events,
+	}
+	journeyJSON, _ := json.Marshal(j)
 	recentJSON, _ := json.Marshal(input.Memory)
 
 	return fmt.Sprintf(
-		"Факты о новом путешествии (JourneyResult):\n%s\n\n"+
+		"Факты о новом путешествии:\n%s\n\n"+
 			"Последние истории (для стиля и продолжения сюжета):\n%s\n\n"+
 			"Сгенерируй JSON по описанному формату.",
 		journeyJSON, recentJSON,
