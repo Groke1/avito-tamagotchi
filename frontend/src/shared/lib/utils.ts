@@ -18,7 +18,7 @@ export const formatTaskDate = ({
     const date = new Date(dateStr)
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
-      month: 'long',
+      month: 'numeric',
       year: 'numeric',
       hour: hasMinutes ? 'numeric' : undefined,
       minute: hasMinutes ? 'numeric' : undefined,

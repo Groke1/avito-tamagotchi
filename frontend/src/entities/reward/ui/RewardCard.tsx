@@ -103,7 +103,7 @@ export const RewardCard = ({ reward, onRedeem, isRedeeming = false }: RewardCard
         <span className="inline-flex items-center gap-1.5 font-medium min-w-0 truncate">
           <Clock className="size-3.5 shrink-0" />
           <span className="truncate" title={formattedExpiresAt}>
-            {isRedeemed ? 'Использован' : `Срок до: ${formattedExpiresAt}`}
+            {isRedeemed ? 'Использован' : `Срок: ${formattedExpiresAt}`}
           </span>
         </span>
       </div>
