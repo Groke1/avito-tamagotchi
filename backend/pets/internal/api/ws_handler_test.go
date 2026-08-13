@@ -12,7 +12,7 @@ import (
 
 func TestWSHandlerCreateWSTicket(t *testing.T) {
 	t.Run("unauthorized", func(t *testing.T) {
-		handler := NewWSHandler(websocket.NewClient(), websocket.NewTicketManager(), nil)
+		handler := NewWSHandler(websocket.NewUserManager(), websocket.NewTicketManager(), nil)
 
 		req := httptest.NewRequest(http.MethodPost, "/ws-ticket", nil)
 		rec := httptest.NewRecorder()
@@ -26,7 +26,7 @@ func TestWSHandlerCreateWSTicket(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ticketManager := websocket.NewTicketManager()
-		handler := NewWSHandler(websocket.NewClient(), ticketManager, nil)
+		handler := NewWSHandler(websocket.NewUserManager(), ticketManager, nil)
 
 		req := httptest.NewRequest(http.MethodPost, "/ws-ticket", nil)
 		req = req.WithContext(context.WithValue(req.Context(), userIDKey, "user-1"))

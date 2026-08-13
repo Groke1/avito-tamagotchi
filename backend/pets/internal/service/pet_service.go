@@ -16,7 +16,7 @@ var (
 )
 
 type EventNotifier interface {
-	SendToClient(userID string, eventType string, v any)
+	SendToClient(userID string, eventType domain.WsEvent, v any) bool
 	BroadcastLeaderboard()
 }
 
