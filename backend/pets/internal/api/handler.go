@@ -211,7 +211,6 @@ func (ph *PetHandler) DailyBonusForStreak(w http.ResponseWriter, r *http.Request
 
 	var req BonusXpRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-
 		writeError(w, ErrValidationError)
 		return
 	}
