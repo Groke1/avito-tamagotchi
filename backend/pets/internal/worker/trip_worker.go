@@ -42,7 +42,7 @@ func (tw *TripWorker) processExpiredTrips(ctx context.Context) {
 	}
 
 	for _, trip := range trips {
-		err := tw.tripService.CompleteTrip(ctx, trip)
+		err := tw.tripService.CompleteTrip(ctx, &trip)
 		if err != nil {
 			log.Println("log")
 			continue

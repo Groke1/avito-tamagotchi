@@ -17,7 +17,7 @@ const (
 )
 
 type EventNotifier interface {
-	SendToClient(userID string, eventType string, v any)
+	SendToClient(userID string, eventType domain.WsEvent, v any) bool
 	BroadcastLeaderboard()
 }
 
@@ -74,15 +74,6 @@ func (ps *PetService) CreatePet(ctx context.Context, userID string, petName stri
 }
 
 func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, error) {
-	trip, err := ps.tripRepository.GetTrip(ctx, userID)
-	if err != nil {
-		return nil, err
-	} else if trip == nil {
-		return nil, &domain.ActionUnavailableError{
-			RetryAfter: TripDuration,
-		}
-	}
-
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -94,6 +85,15 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
 		return nil, domain.ErrPetNotFound
+	}
+
+	trip, err := ps.tripRepository.GetLastTripByPetID(ctx, pet.ID)
+	if err != nil {
+		return nil, err
+	} else if trip.Status == domain.InProgress {
+		return nil, &domain.ActionUnavailableError{
+			RetryAfter: TripDuration,
+		}
 	}
 
 	pet.RecalculateState(time.Now())
@@ -130,15 +130,6 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 }
 
 func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet, error) {
-	trip, err := ps.tripRepository.GetTrip(ctx, userID)
-	if err != nil {
-		return nil, err
-	} else if trip == nil {
-		return nil, &domain.ActionUnavailableError{
-			RetryAfter: TripDuration,
-		}
-	}
-
 	tx, err := ps.petRepository.BeginTx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -150,6 +141,15 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
 		return nil, domain.ErrPetNotFound
+	}
+
+	trip, err := ps.tripRepository.GetLastTripByPetID(ctx, pet.ID)
+	if err != nil {
+		return nil, err
+	} else if trip.Status == domain.InProgress {
+		return nil, &domain.ActionUnavailableError{
+			RetryAfter: TripDuration,
+		}
 	}
 
 	pet.RecalculateState(time.Now())
@@ -245,7 +245,7 @@ func (ps *PetService) GrantXP(ctx context.Context, userID string, amount int) (*
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	ps.eventNotifier.SendToClient(userID, domain.EventPetUpdated, pet)
+	_ = ps.eventNotifier.SendToClient(userID, domain.EventPetUpdated, pet)
 
 	for _, level := range levelUp {
 		if err = ps.levelUp(ctx, userID, level); err != nil {
@@ -270,7 +270,7 @@ func (ps *PetService) ClaimDailyBonusForStreak(ctx context.Context, userID strin
 		"xp":    amount,
 	}
 
-	ps.eventNotifier.SendToClient(userID, domain.EventStreakReward, payload)
+	_ = ps.eventNotifier.SendToClient(userID, domain.EventStreakReward, payload)
 
 	return nil
 }
@@ -322,7 +322,7 @@ func (ps *PetService) levelUp(ctx context.Context, userID string, level int) err
 		return err
 	}
 
-	ps.eventNotifier.SendToClient(userID, domain.EventLevelUp, reward)
+	_ = ps.eventNotifier.SendToClient(userID, domain.EventLevelUp, reward)
 
 	return nil
 }

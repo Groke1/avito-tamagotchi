@@ -1,12 +1,7 @@
 package main
 
-// TODO: фикс вебсокета // done
-// TODO: еженедельный лидерборд и выдача награды
-// TODO: наград за стрик
-// TODO: фиксировать действия через user service // done
-// TODO: обновить ручку internal/rewards // done
-
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -17,6 +12,7 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/websocket"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/worker"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -41,13 +37,16 @@ func main() {
 
 	petRepository := repository.NewPetRepository(db)
 	tripRepository := repository.NewTripRepository(db)
-	wsClientManager := websocket.NewClient()
+	wsUserManager := websocket.NewUserManager()
 	wsTicketManager := websocket.NewTicketManager()
 	levelPolicy := domain.NewLevelPolicy()
-	tripService := service.NewTripService(tripRepository, wsClientManager)
-	petService := service.NewPetService(petRepository, tripRepository, cfg.UserServiceURL, wsClientManager, levelPolicy)
+	tripService := service.NewTripService(tripRepository, petRepository, wsUserManager)
+	petService := service.NewPetService(petRepository, tripRepository, cfg.UserServiceURL, wsUserManager, levelPolicy)
 	petHandler := api.NewPetHandler(petService, tripService)
-	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, petService)
+	wsHandler := api.NewWSHandler(wsUserManager, wsTicketManager, petService)
+
+	tripWorker := worker.NewTripWorker(tripRepository, tripService)
+	go tripWorker.Run(context.Background())
 
 	r := chi.NewRouter()
 
@@ -68,7 +67,7 @@ func main() {
 				r.Post("/feed", petHandler.FeedPet)
 				r.Post("/stroke", petHandler.StrokePet)
 				r.Post("/ws-ticket", wsHandler.CreateWSTicket)
-				r.Post("/trip", petHandler.MakeTrip)
+				r.Get("/trip/last", petHandler.LastTrip)
 			})
 
 			r.Route("/leaderboard", func(r chi.Router) {
