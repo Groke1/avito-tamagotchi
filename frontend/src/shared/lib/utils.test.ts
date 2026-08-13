@@ -28,14 +28,21 @@ describe('utils', () => {
 
   describe('formatTaskDate', () => {
     it('returns empty string for null or undefined', () => {
-      expect(formatTaskDate(null)).toBe('')
-      expect(formatTaskDate(undefined)).toBe('')
+      expect(formatTaskDate({ dateStr: null })).toBe('')
+      expect(formatTaskDate({ dateStr: undefined })).toBe('')
     })
 
     it('formats ISO date string into Russian date', () => {
-      const formatted = formatTaskDate('2026-08-10T12:00:00Z')
+      const formatted = formatTaskDate({ dateStr: '2026-08-10T12:00:00Z' })
       expect(formatted).toContain('2026')
-      expect(formatted).toContain('августа')
+      expect(formatted).toContain('08')
+    })
+
+    it('supports object argument with hasMinutes option', () => {
+      const formatted = formatTaskDate({ dateStr: '2026-08-10T12:30:00Z', hasMinutes: true })
+      expect(formatted).toContain('2026')
+      expect(formatted).toContain('08')
+      expect(formatted).toMatch(/30/)
     })
   })
 })

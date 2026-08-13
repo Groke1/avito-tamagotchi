@@ -13,6 +13,7 @@ import {
   createApi,
   fetchBaseQuery,
 } from '@reduxjs/toolkit/query/react'
+import { Mutex } from 'async-mutex'
 
 export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'
 export const SOCKET_URL = import.meta.env.VITE_API_SOCKET_URL || 'ws://localhost:8082/api/v1/ws'
@@ -30,40 +31,54 @@ const rawBaseQuery = fetchBaseQuery({
   },
 })
 
+const mutex = new Mutex()
+
 const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
   extraOptions,
 ) => {
+  await mutex.waitForUnlock()
+
   let result = await rawBaseQuery(args, api, extraOptions)
 
   if (result.error && result.error.status === 401) {
-    const refreshToken = getStoredRefreshToken()
+    if (!mutex.isLocked()) {
+      const release = await mutex.acquire()
+      try {
+        const refreshToken = getStoredRefreshToken()
 
-    if (refreshToken) {
-      const refreshResult = await rawBaseQuery(
-        {
-          url: '/auth/refresh',
-          method: 'POST',
-          body: { refresh_token: refreshToken },
-        },
-        api,
-        extraOptions,
-      )
+        if (refreshToken) {
+          const refreshResult = await rawBaseQuery(
+            {
+              url: '/auth/refresh',
+              method: 'POST',
+              body: { refresh_token: refreshToken },
+            },
+            api,
+            extraOptions,
+          )
 
-      if (refreshResult.data) {
-        const tokens = refreshResult.data as AuthTokens
-        api.dispatch(setAccessToken(tokens.access_token))
-        if (tokens.refresh_token) {
-          setStoredRefreshToken(tokens.refresh_token)
+          if (refreshResult.data) {
+            const tokens = refreshResult.data as AuthTokens
+            api.dispatch(setAccessToken(tokens.access_token))
+            if (tokens.refresh_token) {
+              setStoredRefreshToken(tokens.refresh_token)
+            }
+
+            result = await rawBaseQuery(args, api, extraOptions)
+          } else {
+            api.dispatch(logout())
+          }
+        } else {
+          api.dispatch(logout())
         }
-
-        result = await rawBaseQuery(args, api, extraOptions)
-      } else {
-        api.dispatch(logout())
+      } finally {
+        release()
       }
     } else {
-      api.dispatch(logout())
+      await mutex.waitForUnlock()
+      result = await rawBaseQuery(args, api, extraOptions)
     }
   }
 
@@ -73,7 +88,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
+  refetchOnFocus: true,
   tagTypes: ['User', 'Pet', 'Tasks', 'Rewards', 'Leaderboard'],
   endpoints: () => ({}),
 })
-
