@@ -1,5 +1,5 @@
 import { HeaderDashboard } from '@/widgets/header'
-import { PetShowcase, TodayQuestsWidget } from '@/widgets/pet-dashboard'
+import { PetShowcase, StreakEntry, TodayQuestsWidget } from '@/widgets/pet-dashboard'
 import { PetHungry } from '@/widgets/pet-hungry'
 
 export const Dashboard = () => {
@@ -12,6 +12,7 @@ export const Dashboard = () => {
           <PetShowcase />
         </div>
         <div className="lg:col-span-5 space-y-6">
+          <StreakEntry />
           <TodayQuestsWidget />
         </div>
       </div>
