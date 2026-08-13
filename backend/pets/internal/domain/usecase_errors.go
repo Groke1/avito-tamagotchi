@@ -14,6 +14,8 @@ var (
 	ErrPetIsTooHungry    = errors.New("pet is too hungry")
 	ErrUserNotFound      = errors.New("user not found")
 	ErrNotEnoguhCoins    = errors.New("insuffient amount of coins")
+
+	ErrTripNotFound = errors.New("trip not found")
 )
 
 type ActionUnavailableError struct {
