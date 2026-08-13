@@ -1,3 +1,4 @@
 export { PetShowcase } from './ui/PetShowcase'
 export { TodayQuestsWidget } from './ui/TodayQuestsWidget'
 export { StreakEntry } from './ui/StreakEntry'
+export { StreakEntrySkeleton } from './ui/StreakEntrySkeleton'

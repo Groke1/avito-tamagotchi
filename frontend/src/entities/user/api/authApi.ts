@@ -32,6 +32,12 @@ export const authApi = baseApi.injectEndpoints({
         body: { refresh_token: token },
       }),
     }),
+    sendUserAction: builder.mutation<void, void>({
+      query: () => ({
+        url: '/action',
+        method: 'POST',
+      }),
+    }),
     getProfile: builder.query<UserResponse, void>({
       query: () => ({
         url: '/profile',
@@ -51,6 +57,7 @@ export const {
   useRegisterMutation,
   useLogoutMutation,
   useRefreshTokenMutation,
+  useSendUserActionMutation,
   useGetProfileQuery,
   useLazyGetProfileQuery,
 } = authApi

@@ -1,3 +1,4 @@
+import { formatTaskDate } from '@/shared/lib/utils'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import type { UserReward } from './types'
@@ -10,6 +11,8 @@ export const useRewardCard = (reward: UserReward) => {
   const isRedeemed = status === 'redeemed'
   const isExpired = status === 'expired'
   const isSupportedCopy = navigator.clipboard && window.isSecureContext
+
+  const formattedExpiresAt = formatTaskDate({ dateStr: expires_at, hasMinutes: true })
 
   const handleCopyCode = async () => {
     if (isSupportedCopy) {
@@ -33,6 +36,7 @@ export const useRewardCard = (reward: UserReward) => {
     name,
     description,
     expires_at,
+    formattedExpiresAt,
     promo_code,
     handleCopyCode,
   }

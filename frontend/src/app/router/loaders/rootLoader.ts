@@ -31,6 +31,8 @@ export const rootLoader = async () => {
       setStoredRefreshToken(refresh_token)
     }
 
+    await store.dispatch(authApi.endpoints.sendUserAction.initiate())
+
     const profile = await store.dispatch(authApi.endpoints.getProfile.initiate()).unwrap()
     store.dispatch(setUser(profile))
 
