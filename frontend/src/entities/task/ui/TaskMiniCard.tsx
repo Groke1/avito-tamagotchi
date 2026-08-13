@@ -36,7 +36,9 @@ export const TaskMiniCard = ({ task }: TaskMiniCardProps) => {
           <div className="flex items-center gap-2 flex-wrap">
             <h5 className="font-bold text-xs sm:text-sm text-on-surface truncate">{title}</h5>
           </div>
-          <p className="text-xs text-on-surface-variant line-clamp-2 wrap-break-word">{description}</p>
+          <p className="text-xs text-on-surface-variant line-clamp-2 wrap-break-word">
+            {description}
+          </p>
           <div className="flex items-center gap-1.5 sm:gap-2 pt-0.5 flex-wrap">
             <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-avito-yellow/15 text-yellow-700">
               <Coins className="size-3 text-yellow-600 shrink-0" />+{reward_coins} 🪙

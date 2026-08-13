@@ -1,6 +1,6 @@
-import { describe, expect, it, beforeEach } from 'vitest'
-import { userSlice, login, logout, setUser, setAccessToken } from './userSlice'
-import type { UserState, AuthResponse } from './types'
+import { beforeEach, describe, expect, it } from 'vitest'
+import type { AuthResponse, UserState } from './types'
+import { login, logout, setAccessToken, setUser, userSlice } from './userSlice'
 
 describe('userSlice', () => {
   let initialState: UserState
@@ -22,7 +22,13 @@ describe('userSlice', () => {
 
   it('should handle login', () => {
     const authPayload: AuthResponse = {
-      user: { user_id: 'u-123', email: 'test@avito.ru', username: 'Test User', coins: 100 },
+      user: {
+        user_id: 'u-123',
+        email: 'test@avito.ru',
+        username: 'Test User',
+        coins: 100,
+        streak: 1,
+      },
       accessToken: 'token-abc',
       refreshToken: 'refresh-xyz',
     }
@@ -38,7 +44,13 @@ describe('userSlice', () => {
 
   it('should handle logout', () => {
     const loggedInState: UserState = {
-      user: { user_id: 'u-123', email: 'test@avito.ru', username: 'Test User', coins: 100 },
+      user: {
+        user_id: 'u-123',
+        email: 'test@avito.ru',
+        username: 'Test User',
+        coins: 100,
+        streak: 1,
+      },
       accessToken: 'token-abc',
       isAuthenticated: true,
       isInitialized: true,
@@ -55,7 +67,7 @@ describe('userSlice', () => {
   })
 
   it('should handle setUser and setAccessToken', () => {
-    const user = { user_id: 'u-1', email: 'a@b.com', username: 'Alex', coins: 50 }
+    const user = { user_id: 'u-1', email: 'a@b.com', username: 'Alex', coins: 50, streak: 1 }
     let state = userSlice.reducer(initialState, setUser(user))
     expect(state.user).toEqual(user)
     expect(state.isAuthenticated).toBe(true)
