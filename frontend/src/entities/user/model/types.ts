@@ -3,6 +3,7 @@ export interface User {
   username: string
   email: string
   coins: number
+  streak: number
 }
 
 export interface UserResponse {
