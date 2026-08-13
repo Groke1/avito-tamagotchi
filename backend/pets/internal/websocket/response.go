@@ -1,5 +1,7 @@
 package websocket
 
+import "github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
+
 type PetResponse struct {
 	ID          int64  `json:"id"`
 	Name        string `json:"name"`
@@ -11,6 +13,6 @@ type PetResponse struct {
 }
 
 type Event struct {
-	EventType string `json:"event_type"`
-	Payload   any    `json:"payload"`
+	EventType domain.WsEvent `json:"event_type"`
+	Payload   any            `json:"payload"`
 }

@@ -21,6 +21,10 @@ type RewardDescriptionResponse struct {
 	Description string `json:"description"`
 }
 
+type TripResponse struct {
+	Story string `json:"story"`
+}
+
 type LeaderboardItemResponse struct {
 	Rank     int    `json:"rank"`
 	UserName string `json:"user_name"`

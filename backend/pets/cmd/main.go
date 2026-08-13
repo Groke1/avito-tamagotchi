@@ -1,12 +1,7 @@
 package main
 
-// TODO: фикс вебсокета // done
-// TODO: еженедельный лидерборд и выдача награды
-// TODO: наград за стрик
-// TODO: фиксировать действия через user service // done
-// TODO: обновить ручку internal/rewards // done
-
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -42,10 +37,10 @@ func main() {
 	defer db.Close()
 
 	petRepository := repository.NewPetRepository(db)
-	wsClientManager := websocket.NewClient()
+
+	wsClientManager := websocket.NewUserManager()
 	wsTicketManager := websocket.NewTicketManager()
 	levelPolicy := domain.NewLevelPolicy()
-	petService := service.NewPetService(petRepository, cfg.UserServiceURL, wsClientManager, levelPolicy)
 
 	gigaConfig, err := gigachat.NewConfigFromEnv()
 	if err != nil {
@@ -57,9 +52,15 @@ func main() {
 	executor := worker.NewGoroutineWorker()
 
 	trip_repo := repository.NewTripRepository(db)
-	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo)
+	tripRepository := repository.NewTripRepository(db)
+
+	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo, petRepository, wsClientManager)
+	petService := service.NewPetService(petRepository, tripRepository, cfg.UserServiceURL, wsClientManager, levelPolicy)
 	petHandler := api.NewPetHandler(petService, tripService)
 	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, petService)
+
+	tripWorker := worker.NewTripWorker(tripRepository, tripService)
+	go tripWorker.Run(context.Background())
 
 	r := chi.NewRouter()
 
@@ -80,7 +81,8 @@ func main() {
 				r.Post("/feed", petHandler.FeedPet)
 				r.Post("/stroke", petHandler.StrokePet)
 				r.Post("/ws-ticket", wsHandler.CreateWSTicket)
-				r.Post("/trip", petHandler.MakeTrip)
+				r.Get("/trip/last", petHandler.LastTrip)
+				r.Post("/trip/{pet_id}", petHandler.MakeTrip)
 			})
 
 			r.Route("/leaderboard", func(r chi.Router) {

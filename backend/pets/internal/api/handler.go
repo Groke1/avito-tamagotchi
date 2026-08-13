@@ -15,13 +15,13 @@ import (
 
 type PetHandler struct {
 	petService  *service.PetService
-	validator   *validator.Validate
 	tripService *service.TripService
+	validator   *validator.Validate
 }
 
-func NewPetHandler(service *service.PetService, tripService *service.TripService) *PetHandler {
+func NewPetHandler(petSerivce *service.PetService, tripService *service.TripService) *PetHandler {
 	return &PetHandler{
-		petService:  service,
+		petService:  petSerivce,
 		tripService: tripService,
 		validator:   validator.New(),
 	}
@@ -370,7 +370,29 @@ func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSONResponse(w, http.StatusAccepted, &domain.TripResponse{
-		Status: domain.InProgress,
-	})
+	writeJSONResponse(w, http.StatusNoContent, struct{}{})
+}
+
+func (ph *PetHandler) LastTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, err := GetUserIDFromContext(ctx)
+	if err != nil {
+		writeError(w, ErrUnauthorized)
+		return
+	}
+
+	trip, err := ph.tripService.GetLastTrip(ctx, userID)
+	if errors.Is(err, domain.ErrNotPendingTrip) {
+		writeJSONResponse(w, http.StatusNoContent, struct{}{})
+		return
+	} else if err != nil {
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	resp := &TripResponse{
+		Story: trip.Story,
+	}
+
+	writeJSONResponse(w, http.StatusOK, resp)
 }

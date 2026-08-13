@@ -11,28 +11,36 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 )
 
-var (
-	XPperStreak = 7
+const (
+	XPperStreak  = 7
+	TripDuration = 10 * time.Hour
 )
 
 type EventNotifier interface {
-	SendToClient(userID string, eventType string, v any)
+	SendToClient(userID string, eventType domain.WsEvent, v any) bool
 	BroadcastLeaderboard()
 }
 
 type PetService struct {
-	petRepository *repository.PetRepository
-	client        *clients.UserClient
-	eventNotifier EventNotifier
-	levelPolicy   *domain.LevelPolicy
+	petRepository  *repository.PetRepository
+	tripRepository *repository.TripRepository
+	client         *clients.UserClient
+	eventNotifier  EventNotifier
+	levelPolicy    *domain.LevelPolicy
 }
 
-func NewPetService(petRepository *repository.PetRepository, userServiceURL string, eventNotifier EventNotifier, levelPolicy *domain.LevelPolicy) *PetService {
+func NewPetService(
+	petRepository *repository.PetRepository,
+	tripRepository *repository.TripRepository,
+	userServiceURL string,
+	eventNotifier EventNotifier,
+	levelPolicy *domain.LevelPolicy) *PetService {
 	return &PetService{
-		petRepository: petRepository,
-		client:        clients.NewUserClient(userServiceURL + "/internal"),
-		eventNotifier: eventNotifier,
-		levelPolicy:   levelPolicy,
+		petRepository:  petRepository,
+		tripRepository: tripRepository,
+		client:         clients.NewUserClient(userServiceURL + "/internal"),
+		eventNotifier:  eventNotifier,
+		levelPolicy:    levelPolicy,
 	}
 }
 
@@ -77,6 +85,15 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
 		return nil, domain.ErrPetNotFound
+	}
+
+	trip, err := ps.tripRepository.GetLastTripByPetID(ctx, pet.ID)
+	if err != nil {
+		return nil, err
+	} else if trip.Status == domain.InProgress {
+		return nil, &domain.ActionUnavailableError{
+			RetryAfter: TripDuration,
+		}
 	}
 
 	pet.RecalculateState(time.Now())
@@ -124,6 +141,15 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	pet, err := ps.petRepository.GetPetForUpdate(ctx, tx, userID)
 	if err != nil {
 		return nil, domain.ErrPetNotFound
+	}
+
+	trip, err := ps.tripRepository.GetLastTripByPetID(ctx, pet.ID)
+	if err != nil {
+		return nil, err
+	} else if trip.Status == domain.InProgress {
+		return nil, &domain.ActionUnavailableError{
+			RetryAfter: TripDuration,
+		}
 	}
 
 	pet.RecalculateState(time.Now())
@@ -219,7 +245,7 @@ func (ps *PetService) GrantXP(ctx context.Context, userID string, amount int) (*
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	ps.eventNotifier.SendToClient(userID, "pet.updated", pet)
+	_ = ps.eventNotifier.SendToClient(userID, domain.EventPetUpdated, pet)
 
 	for _, level := range levelUp {
 		if err = ps.levelUp(ctx, userID, level); err != nil {
@@ -244,7 +270,7 @@ func (ps *PetService) ClaimDailyBonusForStreak(ctx context.Context, userID strin
 		"xp":    amount,
 	}
 
-	ps.eventNotifier.SendToClient(userID, domain.EventStreakReward, payload)
+	_ = ps.eventNotifier.SendToClient(userID, domain.EventStreakReward, payload)
 
 	return nil
 }
@@ -296,7 +322,7 @@ func (ps *PetService) levelUp(ctx context.Context, userID string, level int) err
 		return err
 	}
 
-	ps.eventNotifier.SendToClient(userID, domain.EventLevelUp, reward)
+	_ = ps.eventNotifier.SendToClient(userID, domain.EventLevelUp, reward)
 
 	return nil
 }

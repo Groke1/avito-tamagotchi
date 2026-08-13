@@ -27,7 +27,7 @@ type UserManager struct {
 	updateLeaderboardSig chan struct{}
 }
 
-func NewClient() *UserManager {
+func NewUserManager() *UserManager {
 	um := &UserManager{users: make(map[string]*UserConnections), updateLeaderboardSig: make(chan struct{}, 1)}
 
 	go um.leaderboadDebounce()
@@ -178,7 +178,7 @@ func (um *UserManager) leaderboadDebounce() {
 	}
 }
 
-func (um *UserManager) SendToClient(userID string, eventType string, v any) {
+func (um *UserManager) SendToClient(userID string, eventType domain.WsEvent, v any) bool {
 	log.Println("[WS CLIENT] sender started")
 
 	event := Event{
@@ -192,7 +192,7 @@ func (um *UserManager) SendToClient(userID string, eventType string, v any) {
 	if !exists {
 		um.mu.RUnlock()
 		log.Printf("[WS CLIENT] User '%s' is offline, event skipped", userID)
-		return
+		return false
 	}
 
 	clients := make([]*ClientConnection, 0, len(user.clients))
@@ -202,9 +202,14 @@ func (um *UserManager) SendToClient(userID string, eventType string, v any) {
 
 	um.mu.RUnlock()
 
+	sent := false
 	for _, client := range clients {
 		if err := client.WriteJSON(event); err != nil {
 			log.Printf("[WS CLIENT ERROR] Failed to send to userID '%s': %v", userID, err)
+			continue
 		}
+		sent = true
 	}
+
+	return sent
 }

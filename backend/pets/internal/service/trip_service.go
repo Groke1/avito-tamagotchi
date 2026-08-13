@@ -34,18 +34,24 @@ type TripStoryGeneratorInterface interface {
 type TripService struct {
 	storyGenerator TripStoryGeneratorInterface
 	executor       Executor
-	repository     repository.TripRepositoryInterface
+	tripRepository repository.TripRepositoryInterface
+	petRepository  *repository.PetRepository
+	eventNotifier  EventNotifier
 }
 
 func NewTripService(
 	storyGenerator TripStoryGeneratorInterface,
 	executor Executor,
-	repository repository.TripRepositoryInterface,
+	tripRepository repository.TripRepositoryInterface,
+	petRepository *repository.PetRepository,
+	eventNotifier EventNotifier,
 ) *TripService {
 	return &TripService{
 		storyGenerator: storyGenerator,
 		executor:       executor,
-		repository:     repository,
+		tripRepository: tripRepository,
+		petRepository:  petRepository,
+		eventNotifier:  eventNotifier,
 	}
 }
 
@@ -64,7 +70,7 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 func (s *TripService) generateAndSave(ctx context.Context, dto TripDTO) error {
 	IsNegativeInt := rand.IntN(2)
 
-	events, err := s.repository.GetTripEvents(ctx)
+	events, err := s.tripRepository.GetTripEvents(ctx)
 	shuffleEvents := getRandomDescriptions(&events, IsNegativeInt == 1, recentStoriesLimit)
 	if err != nil {
 		return fmt.Errorf("get recent stories: %w", err)
@@ -78,7 +84,7 @@ func (s *TripService) generateAndSave(ctx context.Context, dto TripDTO) error {
 		},
 	}
 
-	memory, err := s.repository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
+	memory, err := s.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
 	if err != nil {
 		return fmt.Errorf("get pet memory: %w", err)
 	}
@@ -101,7 +107,7 @@ func (s *TripService) generateAndSave(ctx context.Context, dto TripDTO) error {
 		RewardCoins: &journey.Reward.RewardCoins,
 		Story:       story.Story,
 	}
-	if err := s.repository.CreateTrip(ctx, tripFinal); err != nil {
+	if err := s.tripRepository.CreateTrip(ctx, tripFinal); err != nil {
 		return fmt.Errorf("save story: %w", err)
 	}
 
@@ -130,4 +136,34 @@ func getRandomDescriptions(events *[]domain.TripEvent, neg bool, count int) []st
 	}
 
 	return result
+}
+
+func (ts *TripService) CompleteTrip(ctx context.Context, trip *domain.PetTrip) (*domain.PetTrip, error) {
+	ok := ts.eventNotifier.SendToClient(trip.UserID, domain.EventTripCompleted, struct{}{})
+	if !ok {
+		ts.tripRepository.MarkTripPendingDelivery(ctx, trip.ID)
+		return trip, nil
+	}
+
+	ts.tripRepository.MarkTripDelivered(ctx, trip.ID)
+
+	return trip, nil
+}
+
+func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.PetTrip, error) {
+	pet, err := ts.petRepository.GetPet(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	trip, err := ts.tripRepository.GetLastTripByPetID(ctx, pet.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if trip.Status == domain.PendingDelivery {
+		return trip, nil
+	}
+
+	return nil, domain.ErrNotPendingTrip
 }

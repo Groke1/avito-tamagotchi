@@ -44,7 +44,6 @@ func (r *TripRepository) GetTripEvents(ctx context.Context) ([]domain.TripEvent,
 }
 
 // Создать новое путешествие для питомца
-
 func (r *TripRepository) CreateTrip(ctx context.Context, trip domain.PetTrip) error {
 	const query = `
 		INSERT INTO pet_trips (pet_id, user_id, location,
