@@ -126,8 +126,6 @@ describe('useHandleStroke', () => {
       await result.current.handleStroke()
     })
 
-    expect(toast.info).toHaveBeenCalledWith(
-      'Питомец устал от ласок. Попробуйте через 30 секунд',
-    )
+    expect(toast.info).toHaveBeenCalledWith('Питомец устал от ласок. Попробуйте через 30 секунд')
   })
 })

@@ -23,7 +23,8 @@ const PLACE_CONFIG = {
     avatar: 'size-13 sm:size-20 lg:size-24 border-slate-300 shadow-md shadow-slate-400/30',
     userName: 'font-bold text-[11px] sm:text-sm lg:text-lg max-w-20 sm:max-w-32 lg:max-w-42.5',
     petName: 'font-medium text-[10px] sm:text-xs lg:text-sm max-w-20 sm:max-w-32 lg:max-w-42.5',
-    levelBadge: 'bg-slate-100 border-slate-300 text-slate-700 px-1.5 sm:px-3 text-[10px] sm:text-xs',
+    levelBadge:
+      'bg-slate-100 border-slate-300 text-slate-700 px-1.5 sm:px-3 text-[10px] sm:text-xs',
     pedestal: 'w-18 sm:w-28 lg:w-36 h-18 sm:h-28 lg:h-32 bg-[#C5C8CC] shadow-sm',
     number: 'text-2xl sm:text-4xl lg:text-5xl',
     container: '',
@@ -32,7 +33,8 @@ const PLACE_CONFIG = {
     avatar: 'size-13 sm:size-20 lg:size-24 border-amber-700/60 shadow-md shadow-amber-800/30',
     userName: 'font-bold text-[11px] sm:text-sm lg:text-lg max-w-20 sm:max-w-32 lg:max-w-42.5',
     petName: 'font-medium text-[10px] sm:text-xs lg:text-sm max-w-20 sm:max-w-32 lg:max-w-42.5',
-    levelBadge: 'bg-amber-100/70 border-amber-300 text-amber-900 px-1.5 sm:px-3 text-[10px] sm:text-xs',
+    levelBadge:
+      'bg-amber-100/70 border-amber-300 text-amber-900 px-1.5 sm:px-3 text-[10px] sm:text-xs',
     pedestal: 'w-18 sm:w-28 lg:w-36 h-14 sm:h-20 lg:h-24 bg-[#C66B27] shadow-sm',
     number: 'text-2xl sm:text-4xl lg:text-5xl',
     container: '',
@@ -47,7 +49,9 @@ export const LeaderboardRankBadge = ({ leader, place, className }: LeaderboardRa
   const config = PLACE_CONFIG[place]
 
   return (
-    <div className={cn('flex flex-col items-center justify-end min-w-0', config.container, className)}>
+    <div
+      className={cn('flex flex-col items-center justify-end min-w-0', config.container, className)}
+    >
       <div className="relative group">
         <div
           className={cn(
@@ -78,7 +82,12 @@ export const LeaderboardRankBadge = ({ leader, place, className }: LeaderboardRa
           </div>
         )}
       </div>
-      <div className={cn('rounded-t-xl sm:rounded-t-[20px] flex items-center justify-center', config.pedestal)}>
+      <div
+        className={cn(
+          'rounded-t-xl sm:rounded-t-[20px] flex items-center justify-center',
+          config.pedestal,
+        )}
+      >
         <span className={cn('text-white font-extrabold select-none', config.number)}>{place}</span>
       </div>
     </div>

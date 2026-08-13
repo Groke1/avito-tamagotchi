@@ -5,15 +5,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const formatTaskDate = (dateStr?: string | null) => {
+export const formatTaskDate = ({
+  dateStr,
+  hasMinutes = false,
+}: {
+  dateStr?: string | null
+  hasMinutes?: boolean
+}) => {
   if (!dateStr) return ''
 
   try {
     const date = new Date(dateStr)
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
-      month: 'long',
+      month: 'numeric',
       year: 'numeric',
+      hour: hasMinutes ? 'numeric' : undefined,
+      minute: hasMinutes ? 'numeric' : undefined,
     })
   } catch {
     return dateStr

@@ -1,9 +1,15 @@
 package controller
 
+import "time"
+
 type (
 	UpdateCoinsRequest struct {
 		UserID string `json:"user_id"`
 		Delta  int    `json:"delta"`
+	}
+	NotifyActionRequest struct {
+		UserID     string    `json:"user_id"`
+		OccurredAt time.Time `json:"occurred_at"`
 	}
 	UpdateCoinsResponse struct {
 		UserID string `json:"user_id"`

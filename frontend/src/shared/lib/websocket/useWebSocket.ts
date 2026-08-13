@@ -51,6 +51,16 @@ export const useWebSocket = () => {
                   ? `Вы получили награду: ${rewardDesc}`
                   : 'Поздравляем с повышением уровня!',
               })
+            } else if (data.event_type === 'streak.rewards') {
+              dispatch(baseApi.util.invalidateTags(['User', 'Pet', 'Leaderboard']))
+              const { coins, xp } = data.payload || {}
+
+              toast.success('Бонус за серию заходов! 🔥', {
+                position: 'top-center',
+                duration: 6000,
+                closeButton: true,
+                description: `Получено +${xp ?? 0} XP питомцу${coins ? ` и +${coins} монет` : ''}!`,
+              })
             }
           } catch {
             toast.error('Ошибка при обработке сообщения сервера')

@@ -75,6 +75,35 @@ func (c *UserServiceClient) UpdateCoins(ctx context.Context, reqBody controller.
 	return &respBody, nil
 }
 
+func (uc *UserServiceClient) NotifyActionDone(ctx context.Context, reqBody controller.NotifyActionRequest) error {
+	url := uc.baseURL + "/internal/action"
+
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		fmt.Println(err.Error())
+		return fmt.Errorf("marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	resp, err := uc.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("%w: status %d, body: %s",
+			classifyStatus(resp.StatusCode), resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}
+
 func classifyStatus(status int) error {
 	switch {
 	case status == http.StatusNotFound:
