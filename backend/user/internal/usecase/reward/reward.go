@@ -133,7 +133,6 @@ func (s *rewardService) GrantReward(ctx context.Context, userID, code, earnedRea
 			}
 
 			return nil
-
 		})
 
 		if err == nil {

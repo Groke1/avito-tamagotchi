@@ -392,37 +392,6 @@ paths:
           $ref: '#/components/responses/UserNotFound'
         '500':
           $ref: '#/components/responses/InternalError'
-  /internal/daily-bonus:
-    post:
-      tags:
-        - Internal
-      operationId: grantDailyBonus
-      summary: Начислить ежедневный бонус пользователю
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DailyBonusRequest'
-            example:
-              user_id: 5dc2c52d-8dc9-4ca8-a51f-cd03a507ce63
-              streak: 7
-              coins: 50
-      responses:
-        '200':
-          description: Ежедневный бонус начислен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DailyBonusResponse'
-              example:
-                coins: 50
-        '404':
-          $ref: '#/components/responses/UserNotFound'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-        '500':
-          $ref: '#/components/responses/InternalError'
   /internal/rewards:
     post:
       tags:
@@ -840,36 +809,6 @@ components:
           type: string
           minLength: 1
           example: DELIVERYDISC-X8K2M7Q9WP
-    DailyBonusRequest:
-      type: object
-      additionalProperties: false
-      required:
-        - user_id
-        - streak
-        - coins
-      properties:
-        user_id:
-          type: string
-          format: uuid
-        streak:
-          type: integer
-          format: int32
-          minimum: 1
-        coins:
-          type: integer
-          format: int64
-          minimum: 0
-    DailyBonusResponse:
-      type: object
-      additionalProperties: false
-      required:
-        - coins
-      properties:
-        coins:
-          type: integer
-          format: int64
-          minimum: 0
-          readOnly: true
     ActionRequest:
       type: object
       additionalProperties: false
