@@ -51,6 +51,8 @@ export const useWebSocket = () => {
                   ? `Вы получили награду: ${rewardDesc}`
                   : 'Поздравляем с повышением уровня!',
               })
+            } else if (data.event_type === 'streak.rewards') {
+              dispatch(baseApi.util.invalidateTags(['Pet', 'Rewards', 'Leaderboard']))
             }
           } catch {
             toast.error('Ошибка при обработке сообщения сервера')
