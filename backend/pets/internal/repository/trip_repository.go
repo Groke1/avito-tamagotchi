@@ -111,7 +111,7 @@ func (r *TripRepository) GetFinishedTrips(ctx context.Context) ([]domain.PetTrip
 	const query = `
 		SELECT * FROM pet_trips
 		WHERE ended_at <= CURRENT_TIMESTAMP
-		  AND status IN 'in_progress'
+		  AND status = 'in_progress'
 		ORDER BY ended_at
 	`
 

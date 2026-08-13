@@ -40,7 +40,7 @@ func NewTemplateStoryGenerator() *TemplateStoryGenerator {
 func (g *TemplateStoryGenerator) Generate(_ context.Context, input domain.JourneyGenerationInput) (domain.JourneyStory, error) {
 	j := input.Journey
 
-	story := fmt.Sprintf("Я вернулся из путешествия в «%s»! "+
+	story := fmt.Sprintf("Я вернулся из путешествия в %s! "+
 		"В этот раз ничего интересного не произошло.", j.Location)
 
 	return domain.JourneyStory{

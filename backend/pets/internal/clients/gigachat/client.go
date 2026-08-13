@@ -54,7 +54,8 @@ func (c *Client) generate(ctx context.Context, input domain.JourneyGenerationInp
 			{Role: "system", Content: systemPrompt()},
 			{Role: "user", Content: userPrompt(input)},
 		},
-		//nolint:mnd // низкая температура — истории должны точно следовать переданным фактам, а не фантазировать
+		// низкая температура — истории должны точно следовать переданным фактам, а не фантазировать
+		//nolint:mnd
 		Temperature: 0.7,
 	}
 
@@ -78,6 +79,16 @@ func (c *Client) generate(ctx context.Context, input domain.JourneyGenerationInp
 		return domain.JourneyStory{}, fmt.Errorf("gigachat unavailable: %w", err)
 	}
 	defer resp.Body.Close()
+
+	// === БЕЗОПАСНЫЙ ВЫВОД ПРОМПТОВ В ЛОГИ ===
+	fmt.Println("=== ОТПРАВЛЯЕМЫЙ ПРОМПТ В GIGACHAT ===")
+	if len(reqBody.Messages) >= 2 {
+		fmt.Printf("[SYSTEM PROMPT]:\n%s\n\n", reqBody.Messages[0].Content)
+		fmt.Printf("[USER PROMPT]:\n%s\n", reqBody.Messages[1].Content)
+	} else {
+		fmt.Println("Предупреждение: слайс Messages пуст или содержит мало элементов")
+	}
+	fmt.Println("======================================")
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		return domain.JourneyStory{}, &gigachatAPIError{StatusCode: http.StatusUnauthorized, Message: "unauthorized"}
@@ -109,7 +120,7 @@ func (c *Client) generate(ctx context.Context, input domain.JourneyGenerationInp
 
 func isUnauthorized(err error) bool {
 	var apiErr *gigachatAPIError
-	if e, ok := err.(*gigachatAPIError); ok { //nolint:errorlint // локальная проверка без обёрток
+	if e, ok := err.(*gigachatAPIError); ok { //nolint:errorlint
 		apiErr = e
 		return apiErr.StatusCode == http.StatusUnauthorized
 	}
@@ -138,15 +149,14 @@ func parseStory(content string) (domain.JourneyStory, error) {
 func systemPrompt() string {
 	return "Ты — виртуальный питомец в мобильном приложении. " +
 		"Тебе дают JSON с уже посчитанными игровыми фактами о твоем завершённом путешествии: " +
-		"локация, список событий, награда, а также память питомца " +
-		"(личность, краткое summary истории, персонажи, незавершённые сюжетные линии) и 2-3 последние истории. " +
+		"локация, список событий, награда, а также 1-2 последние истории. " +
 		"Твоя единственная задача — превратить эти факты в тёплый, живой рассказ от первого лица питомца. " +
 		"СТРОГО ЗАПРЕЩЕНО придумывать новые события, награды, предметы или менять переданные факты — " +
 		"используй только то, что дано во входном JSON. " +
 		"Учитывай память питомца и предыдущие истории, чтобы путешествия ощущались как продолжающийся сериал. " +
 		"Ответ верни СТРОГО в виде JSON без markdown-обёртки, без пояснений до или после, " +
 		"со следующими и только следующими полями: " +
-		`{"title": string, "story": string, "teaser": string}. ` +
+		`{"title": string, "story": string}. ` +
 		"title — короткий заголовок истории. story — сам рассказ, 2-5 предложений, от первого лица. " +
 		"teaser — одна короткая интригующая фраза, зовущая пользователя в следующее путешествие."
 }

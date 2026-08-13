@@ -19,5 +19,5 @@ type JourneyStory struct {
 
 type JourneyGenerationInput struct {
 	Journey JourneyResult
-	Memory  []PetTrip // ожидается 2–3 последних, не больше
+	Memory  []string // ожидается 2–3 последних, не больше
 }

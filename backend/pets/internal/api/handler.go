@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -355,11 +356,13 @@ func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	petID, err := strconv.ParseInt(chi.URLParam(r, "pet_id"), 10, 64)
 	if err != nil {
+		fmt.Println(err.Error())
 		writeError(w, ErrInternalError)
 		return
 	}
 	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
+		fmt.Println(err.Error())
 		writeError(w, ErrUnauthorized)
 		return
 	}
@@ -369,6 +372,7 @@ func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	err = ph.tripService.Generate(ctx, tripDto)
 	if err != nil {
+		fmt.Println(err.Error())
 		writeError(w, ErrTripGenerationError)
 		return
 	}
