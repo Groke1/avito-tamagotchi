@@ -12,6 +12,7 @@ import (
 
 	cors "github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/api"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/clients/gigachat"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/config"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
@@ -43,9 +44,15 @@ func main() {
 	wsClientManager := websocket.NewClient()
 	wsTicketManager := websocket.NewTicketManager()
 	levelPolicy := domain.NewLevelPolicy()
-	service := service.NewPetService(repository, cfg.UserServiceURL, wsClientManager, levelPolicy)
-	petHandler := api.NewPetHandler(service)
-	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, service)
+	petService := service.NewPetService(repository, cfg.UserServiceURL, wsClientManager, levelPolicy)
+
+	gigaConfig, err := gigachat.NewConfigFromEnv()
+	if err != nil {
+		log.Fatalf("[MAIN] Failed to create GigaChat config: %v", err)
+	}
+	tripService := service.NewFallbackStoryGenerator(gigachat.NewClient(gigaConfig), service.NewTemplateStoryGenerator())
+	petHandler := api.NewPetHandler(petService, tripService)
+	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, petService)
 
 	r := chi.NewRouter()
 

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -17,10 +16,10 @@ import (
 type PetHandler struct {
 	petService  *service.PetService
 	validator   *validator.Validate
-	tripService service.JourneyStoryGenerator
+	tripService service.TripService
 }
 
-func NewPetHandler(service *service.PetService, tripService service.JourneyStoryGenerator) *PetHandler {
+func NewPetHandler(service *service.PetService, tripService service.TripService) *PetHandler {
 	return &PetHandler{
 		petService:  service,
 		tripService: tripService,
@@ -359,17 +358,13 @@ func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
 		writeError(w, ErrUnauthorized)
 		return
 	}
+	err = ph.tripService.Generate(ctx, userID)
+	if err != nil {
+		writeError(w, ErrTripGenerationError)
+		return
+	}
 
-	bgCtx := context.Background()
-
-	var tripResponce TripResponse
-	go func(ctx context.Context, userID string) {
-		story, err := ph.tripService.Generate()
-		if err != nil {
-
-		}
-
-	}(bgCtx, userID)
-	_ = userID
-	return http.StatusOK
+	writeJSONResponse(w, http.StatusAccepted, &TripResponse{
+		Status: TripStatusStarted,
+	})
 }

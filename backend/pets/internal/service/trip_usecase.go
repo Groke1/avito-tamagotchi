@@ -7,16 +7,10 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 )
 
-// JourneyStoryGenerator — абстракция над конкретной нейросетью, чтобы
-// бизнес-логика Journey Worker не зависела напрямую от GigaChat, OpenAI
-// и т.д. Реализации: gigachat.Client (LLM) и TemplateStoryGenerator (fallback).
 type JourneyStoryGenerator interface {
 	Generate(ctx context.Context, input domain.JourneyGenerationInput) (domain.JourneyStory, error)
 }
 
-// FallbackStoryGenerator оборачивает основной генератор (LLM) и подстраховывает
-// его шаблонным вариантом. Путешествие не должно зависеть от того, жив ли
-// внешний AI-провайдер: пользователь в любом случае получит историю.
 type FallbackStoryGenerator struct {
 	primary  JourneyStoryGenerator
 	fallback JourneyStoryGenerator
@@ -36,9 +30,6 @@ func (g *FallbackStoryGenerator) Generate(ctx context.Context, input domain.Jour
 	return g.fallback.Generate(ctx, input)
 }
 
-// TemplateStoryGenerator — примитивный, но всегда доступный генератор.
-// Не ходит в сеть, собирает историю из шаблонных фраз на основе
-// JourneyResult. Используется, когда LLM недоступна.
 type TemplateStoryGenerator struct{}
 
 func NewTemplateStoryGenerator() *TemplateStoryGenerator {
