@@ -13,8 +13,10 @@ sqlc.arg(coins)
 ) RETURNING id;
 
 -- name: GetUserByID :one
-SELECT id, username, email, coins
-FROM users.users WHERE id = sqlc.arg(id);
+SELECT u.id, u.username, u.email, u.coins, s.current_streak
+FROM users.users u JOIN users.user_streaks s
+ON u.id = s.user_id
+WHERE u.id = sqlc.arg(id);
 
 -- name: GetUserByEmail :one
 SELECT

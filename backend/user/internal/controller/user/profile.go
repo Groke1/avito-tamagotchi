@@ -33,5 +33,6 @@ func (c *controller) Profile(w http.ResponseWriter, r *http.Request) {
 		Username: profile.Username,
 		Email:    profile.Email,
 		Coins:    profile.Coins,
+		Streak:   profile.CurrentStreak,
 	})
 }

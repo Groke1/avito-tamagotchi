@@ -75,10 +75,11 @@ func (r *userRepository) GetUserByID(ctx context.Context, userID string) (*entit
 	}
 
 	return &entity.User{
-		ID:       user.ID.String(),
-		Username: user.Username,
-		Email:    user.Email,
-		Coins:    uint64(user.Coins),
+		ID:            user.ID.String(),
+		Username:      user.Username,
+		Email:         user.Email,
+		Coins:         uint64(user.Coins),
+		CurrentStreak: uint64(user.CurrentStreak),
 	}, nil
 }
 

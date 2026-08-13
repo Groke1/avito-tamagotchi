@@ -78,15 +78,18 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, email, coins
-FROM users.users WHERE id = $1
+SELECT u.id, u.username, u.email, u.coins, s.current_streak
+FROM users.users u JOIN users.user_streaks s
+ON u.id = s.user_id
+WHERE u.id = $1
 `
 
 type GetUserByIDRow struct {
-	ID       pgtype.UUID `json:"id"`
-	Username string      `json:"username"`
-	Email    string      `json:"email"`
-	Coins    int64       `json:"coins"`
+	ID            pgtype.UUID `json:"id"`
+	Username      string      `json:"username"`
+	Email         string      `json:"email"`
+	Coins         int64       `json:"coins"`
+	CurrentStreak int32       `json:"current_streak"`
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDRow, error) {
@@ -97,6 +100,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (GetUserByIDR
 		&i.Username,
 		&i.Email,
 		&i.Coins,
+		&i.CurrentStreak,
 	)
 	return i, err
 }

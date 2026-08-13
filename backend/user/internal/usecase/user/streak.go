@@ -47,7 +47,8 @@ func (s *userService) UpdateStreak(ctx context.Context, userID, occurredAt strin
 	}
 
 	if isStreakChanged {
-		err = s.petClient.SendDailyBonus(ctx, streak.UserID, streak.CurrentStreak)
+		bonusCoins := getBonusCoins(streak.CurrentStreak)
+		err = s.petClient.SendDailyBonus(ctx, streak.UserID, streak.CurrentStreak, bonusCoins)
 		if err != nil {
 			return fmt.Errorf("send daily bonus: %w", err)
 		}
