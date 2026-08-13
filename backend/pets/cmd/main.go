@@ -1,22 +1,19 @@
 package main
 
-// TODO: фикс вебсокета // done
-// TODO: еженедельный лидерборд и выдача награды
-// TODO: наград за стрик
-// TODO: фиксировать действия через user service // done
-// TODO: обновить ручку internal/rewards // done
-
 import (
+	"context"
 	"log"
 	"net/http"
 
 	cors "github.com/cayman444/avito-gamification-hackathon.pkg/middleware"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/api"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/clients/gigachat"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/config"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/websocket"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/worker"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -39,13 +36,31 @@ func main() {
 	}
 	defer db.Close()
 
-	repository := repository.NewPetRepository(db)
-	wsUserManager := websocket.NewUserManager()
+	petRepository := repository.NewPetRepository(db)
+
+	wsClientManager := websocket.NewUserManager()
 	wsTicketManager := websocket.NewTicketManager()
 	levelPolicy := domain.NewLevelPolicy()
-	service := service.NewPetService(repository, cfg.UserServiceURL, wsUserManager, levelPolicy)
-	petHandler := api.NewPetHandler(service)
-	wsHandler := api.NewWSHandler(wsUserManager, wsTicketManager, service)
+
+	gigaConfig, err := gigachat.NewConfigFromEnv()
+	if err != nil {
+		log.Fatalf("[MAIN] Failed to create GigaChat config: %v", err)
+	}
+	gigaClient := gigachat.NewClient(gigaConfig)
+	templateClient := service.NewTemplateStoryGenerator()
+	clientOrchestrator := service.NewFallbackStoryGenerator(gigaClient, templateClient)
+	executor := worker.NewGoroutineWorker()
+
+	trip_repo := repository.NewTripRepository(db)
+	tripRepository := repository.NewTripRepository(db)
+
+	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo, petRepository, cfg.UserServiceURL, wsClientManager)
+	petService := service.NewPetService(petRepository, tripRepository, cfg.UserServiceURL, wsClientManager, levelPolicy)
+	petHandler := api.NewPetHandler(petService, tripService)
+	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, petService)
+
+	tripWorker := worker.NewTripWorker(tripRepository, tripService)
+	go tripWorker.Run(context.Background())
 
 	r := chi.NewRouter()
 
@@ -66,6 +81,8 @@ func main() {
 				r.Post("/feed", petHandler.FeedPet)
 				r.Post("/stroke", petHandler.StrokePet)
 				r.Post("/ws-ticket", wsHandler.CreateWSTicket)
+				r.Get("/trip/last", petHandler.LastTrip)
+				r.Post("/trip/{pet_id}", petHandler.MakeTrip)
 			})
 
 			r.Route("/leaderboard", func(r chi.Router) {

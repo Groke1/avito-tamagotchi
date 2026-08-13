@@ -57,4 +57,9 @@ var (
 		Code:       "INTERNAL_ERROR",
 		Message:    "Внутренняя ошибка сервере",
 	}
+	ErrTripGenerationError = HTTPError{
+		StatusCode: http.StatusInternalServerError,
+		Code:       "TRIP_GENERATION_ERROR",
+		Message:    "Ошибка генерации путешествия",
+	}
 )

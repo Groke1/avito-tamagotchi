@@ -25,3 +25,4 @@ CREATE TABLE IF NOT EXISTS pets_daily_xp (
 
 CREATE INDEX IF NOT EXISTS idx_pets_daily_xp_leaderboard 
 ON pets_daily_xp (date, gained_xp DESC);
+

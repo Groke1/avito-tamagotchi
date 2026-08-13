@@ -14,3 +14,6 @@ type UpdateXPRequest struct {
 	UserID string `json:"user_id"`
 	XP     int    `json:"xp"`
 }
+type CreateTripRequest struct {
+	PetID int64 `json:"pet_id"`
+}
