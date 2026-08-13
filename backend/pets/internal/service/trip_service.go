@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand/v2"
+	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
@@ -98,7 +99,7 @@ func (s *TripService) generateAndSave(ctx context.Context, dto TripDTO) error {
 	if err != nil {
 		return fmt.Errorf("generate story: %w", err)
 	}
-
+	now := time.Now().UTC()
 	tripFinal := domain.PetTrip{
 		PetID:       dto.PetID,
 		UserID:      dto.UserID,
@@ -106,6 +107,9 @@ func (s *TripService) generateAndSave(ctx context.Context, dto TripDTO) error {
 		RewardXP:    &journey.Reward.RewardXP,
 		RewardCoins: &journey.Reward.RewardCoins,
 		Story:       story.Story,
+		StartedAt:   now,
+		EndedAt:     now.Add(60 * time.Second), // TODO: заменить на реальное время окончания путешествия
+		Status:      domain.PendingDelivery,
 	}
 	if err := s.tripRepository.CreateTrip(ctx, tripFinal); err != nil {
 		return fmt.Errorf("save story: %w", err)

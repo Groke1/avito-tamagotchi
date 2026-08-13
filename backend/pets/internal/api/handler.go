@@ -9,6 +9,7 @@ import (
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -352,16 +353,18 @@ func (ph *PetHandler) GetWeeklyLeaderboard(w http.ResponseWriter, r *http.Reques
 
 func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := CreateTripRequest{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-
+	petID, err := strconv.ParseInt(chi.URLParam(r, "pet_id"), 10, 64)
+	if err != nil {
+		writeError(w, ErrInternalError)
+		return
+	}
 	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
 	tripDto := service.TripDTO{
-		PetID:  req.PetID,
+		PetID:  petID,
 		UserID: userID,
 	}
 	err = ph.tripService.Generate(ctx, tripDto)
