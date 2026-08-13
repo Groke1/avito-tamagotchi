@@ -21,3 +21,9 @@ export interface PetState {
   pet: Pet | null
   isInitialized: boolean
 }
+
+export interface PetTripResponse {
+  story: string
+  xp: number
+  coins: number
+}

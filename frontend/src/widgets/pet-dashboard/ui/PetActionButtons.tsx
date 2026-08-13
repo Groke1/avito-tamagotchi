@@ -5,10 +5,12 @@ export const PetActionButtons = () => {
   const {
     handleFeed,
     handleStroke,
+    handleTrip,
     isFeedLoading,
     isFullHappiness,
     isFullSatiety,
     isStrokeLoading,
+    isTripLoading,
   } = usePetActionButtons()
 
   return (
@@ -35,7 +37,13 @@ export const PetActionButtons = () => {
       >
         🖐️ Погладить
       </Button>
-      <Button size="sm" className="col-span-1 xl:col-span-2">
+      <Button
+        size="sm"
+        className="col-span-1 xl:col-span-2"
+        isLoading={isTripLoading}
+        disabled={isFeedLoading || isStrokeLoading || isTripLoading}
+        onClick={handleTrip}
+      >
         🧭 Отправить в путешествие
       </Button>
     </div>
