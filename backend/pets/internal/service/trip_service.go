@@ -74,7 +74,7 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 
 	// проверить что нет активных путешествий
 	petTripReturned, err := s.tripRepository.GetLastTripByPetID(ctx, dto.PetID)
-	if err != nil {
+	if err != nil && err != domain.ErrTripNotFound {
 		return err
 	}
 	if petTripReturned.EndedAt.After(time.Now()) && petTripReturned.Status != domain.Delivered {
