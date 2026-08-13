@@ -18,6 +18,7 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/websocket"
+	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/worker"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -40,17 +41,23 @@ func main() {
 	}
 	defer db.Close()
 
-	repository := repository.NewPetRepository(db)
+	petRepository := repository.NewPetRepository(db)
 	wsClientManager := websocket.NewClient()
 	wsTicketManager := websocket.NewTicketManager()
 	levelPolicy := domain.NewLevelPolicy()
-	petService := service.NewPetService(repository, cfg.UserServiceURL, wsClientManager, levelPolicy)
+	petService := service.NewPetService(petRepository, cfg.UserServiceURL, wsClientManager, levelPolicy)
 
 	gigaConfig, err := gigachat.NewConfigFromEnv()
 	if err != nil {
 		log.Fatalf("[MAIN] Failed to create GigaChat config: %v", err)
 	}
-	tripService := service.NewFallbackStoryGenerator(gigachat.NewClient(gigaConfig), service.NewTemplateStoryGenerator())
+	gigaClient := gigachat.NewClient(gigaConfig)
+	templateClient := service.NewTemplateStoryGenerator()
+	clientOrchestrator := service.NewFallbackStoryGenerator(gigaClient, templateClient)
+	executor := worker.NewGoroutineWorker()
+
+	trip_repo := repository.NewTripRepository(db)
+	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo)
 	petHandler := api.NewPetHandler(petService, tripService)
 	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, petService)
 

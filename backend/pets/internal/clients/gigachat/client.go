@@ -155,20 +155,13 @@ func systemPrompt() string {
 }
 
 func userPrompt(input domain.JourneyGenerationInput) string {
-	recent := input.RecentStories
-	if len(recent) > maxRecentStories {
-		recent = recent[len(recent)-maxRecentStories:]
-	}
-
 	journeyJSON, _ := json.Marshal(input.Journey)
-	memoryJSON, _ := json.Marshal(input.Memory)
-	recentJSON, _ := json.Marshal(recent)
+	recentJSON, _ := json.Marshal(input.Memory)
 
 	return fmt.Sprintf(
 		"Факты о новом путешествии (JourneyResult):\n%s\n\n"+
-			"Память питомца (PetMemory):\n%s\n\n"+
 			"Последние истории (для стиля и продолжения сюжета):\n%s\n\n"+
 			"Сгенерируй JSON по описанному формату.",
-		journeyJSON, memoryJSON, recentJSON,
+		journeyJSON, recentJSON,
 	)
 }

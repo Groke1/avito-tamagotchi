@@ -50,9 +50,6 @@ func (g *TemplateStoryGenerator) Generate(_ context.Context, input domain.Journe
 		}
 		story += "."
 	}
-	if j.Reward.Item != "" {
-		story += fmt.Sprintf(" А ещё я нашёл кое-что интересное: %s.", j.Reward.Item)
-	}
 
 	return domain.JourneyStory{
 		Title:  fmt.Sprintf("Возвращение из «%s»", j.Location),

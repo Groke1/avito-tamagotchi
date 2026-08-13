@@ -16,10 +16,10 @@ import (
 type PetHandler struct {
 	petService  *service.PetService
 	validator   *validator.Validate
-	tripService service.TripService
+	tripService *service.TripService
 }
 
-func NewPetHandler(service *service.PetService, tripService service.TripService) *PetHandler {
+func NewPetHandler(service *service.PetService, tripService *service.TripService) *PetHandler {
 	return &PetHandler{
 		petService:  service,
 		tripService: tripService,
@@ -352,13 +352,19 @@ func (ph *PetHandler) GetWeeklyLeaderboard(w http.ResponseWriter, r *http.Reques
 
 func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	req := CreateTripRequest{}
+	err := json.NewDecoder(r.Body).Decode(&req)
 
 	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {
 		writeError(w, ErrUnauthorized)
 		return
 	}
-	err = ph.tripService.Generate(ctx, userID)
+	tripDto := service.TripDTO{
+		PetID:  req.PetID,
+		UserID: userID,
+	}
+	err = ph.tripService.Generate(ctx, tripDto)
 	if err != nil {
 		writeError(w, ErrTripGenerationError)
 		return
