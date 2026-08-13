@@ -30,7 +30,6 @@ func (c controller) InitRoutes(
 	_ *mux.Router,
 	authMiddleware func(http.Handler) http.Handler,
 ) {
-
 	events := api.PathPrefix("/events").Subrouter()
 	events.Use(authMiddleware)
 	events.HandleFunc("", c.GetNewEvents).Methods(http.MethodGet)
