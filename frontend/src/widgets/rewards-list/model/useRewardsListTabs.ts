@@ -7,11 +7,11 @@ export const useRewardsListTabs = (rewardsData?: UserRewardsResponse) => {
 
   const items = rewardsData?.items ?? []
   const activeCount = items.filter((r) => r.status === 'active').length
-  const usedCount = items.filter((r) => r.status !== 'active').length
+  const usedCount = items.filter((r) => r.status === 'redeemed').length
 
   const getFilteredRewards = (tab: FilterTab) => {
     if (tab === 'active') return items.filter((r) => r.status === 'active')
-    if (tab === 'used') return items.filter((r) => r.status !== 'active')
+    if (tab === 'used') return items.filter((r) => r.status === 'redeemed')
     return items
   }
 

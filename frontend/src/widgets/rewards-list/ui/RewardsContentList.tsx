@@ -25,7 +25,7 @@ export const RewardsContentList = ({
 }: RewardsContentListProps) => {
   const getEmptyMessage = (id: FilterTab) => {
     if (id === 'active') return 'У вас пока нет активных промокодов ✨'
-    if (id === 'used') return 'Нет использованных или просроченных наград'
+    if (id === 'used') return 'Нет использованных наград'
     return 'У вас пока нет доступных наград ✨'
   }
 
