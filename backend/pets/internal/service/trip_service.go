@@ -22,7 +22,7 @@ const (
 type TripDTO struct {
 	PetID  int64  `json:"pet_id"`
 	UserID string `json:"user_id"`
-	Coins  int32  `json:coins`
+	Coins  int32  `json:"coins"`
 }
 
 type Executor interface {
@@ -43,6 +43,7 @@ type TripService struct {
 	petRepository  *repository.PetRepository
 	eventNotifier  EventNotifier
 	userClient     *clients.UserClient
+	rewardPolicy   *domain.RewardPolicy
 }
 
 func NewTripService(
@@ -60,6 +61,7 @@ func NewTripService(
 		userClient:     clients.NewUserClient(userServiceURL + "/internal"),
 		petRepository:  petRepository,
 		eventNotifier:  eventNotifier,
+		rewardPolicy:   domain.NewRewardPolicy(),
 	}
 }
 
@@ -106,22 +108,11 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 		Location: defaultLocation,
 		Events:   shuffleEvents,
 		Reward: domain.JourneyReward{
-			RewardXP:    int32(IsNegativeInt * 100), // int32(IsNegativeInt * rand.IntN(100)),
-			RewardCoins: int32(coins),
+			RewardXP:    int32(IsNegativeInt * rand.IntN(100)),
+			RewardCoins: int32(IsNegativeInt*rand.IntN(50) + 30),
 		},
 	}
 
-	fmt.Println("113[service]: started gen")
-	return s.executor.Execute(func(ctx context.Context) error {
-		err := s.generateAndSave(ctx, journey, dto)
-		if err != nil {
-			log.Printf("failed to generate trip for user %s: %v", dto.UserID, err)
-		}
-		return nil
-	})
-}
-
-func (s *TripService) generateAndSave(ctx context.Context, journey domain.JourneyResult, dto TripDTO) error {
 	lastPetTrips, err := s.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
 	if err != nil {
 		return fmt.Errorf("get pet memory: %w", err)
@@ -148,6 +139,7 @@ func (s *TripService) generateAndSave(ctx context.Context, journey domain.Journe
 		Location:    journey.Location,
 		RewardXP:    &journey.Reward.RewardXP,
 		RewardCoins: &journey.Reward.RewardCoins,
+		RewardCode:  journey.Reward.RewardCode,
 		Story:       story.Story,
 		StartedAt:   now,
 		EndedAt:     now.Add(60 * time.Second), // TODO: заменить на реальное время окончания путешествия
@@ -197,20 +189,28 @@ func (ts *TripService) CompleteTrip(ctx context.Context, trip *domain.PetTrip) (
 	return trip, nil
 }
 
-func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.PetTrip, error) {
+func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.PetTrip, *domain.Reward, error) {
 	pet, err := ts.petRepository.GetPet(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	trip, err := ts.tripRepository.GetLastTripByPetID(ctx, pet.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if trip.Status == domain.PendingDelivery {
-		return trip, nil
+		var reward *domain.Reward
+		if trip.RewardCode != nil {
+			reward, err = ts.userClient.ClaimReward(ctx, trip.UserID, *trip.RewardCode)
+			if err != nil {
+				log.Printf("[LAST TRIP] lost reward trip `%d`", trip.ID)
+			}
+		}
+
+		return trip, reward, nil
 	}
 
-	return nil, domain.ErrNotPendingTrip
+	return nil, nil, domain.ErrNotPendingTrip
 }

@@ -1,8 +1,9 @@
 package domain
 
 type JourneyReward struct {
-	RewardXP    int32 `json:"reward_xp"`
-	RewardCoins int32 `json:"reward_coins"`
+	RewardXP    int32   `json:"reward_xp"`
+	RewardCoins int32   `json:"reward_coins"`
+	RewardCode  *string `json:"reward_code"`
 }
 
 type JourneyResult struct {

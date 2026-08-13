@@ -44,7 +44,7 @@ func (tw *TripWorker) processExpiredTrips(ctx context.Context) {
 	for _, trip := range trips {
 		_, err := tw.tripService.CompleteTrip(ctx, &trip)
 		if err != nil {
-			log.Println("log")
+			log.Printf("[TRIP WORKER] Trip '%d' failed with error: %v", trip.ID, err)
 			continue
 		}
 	}
