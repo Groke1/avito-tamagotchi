@@ -12,9 +12,9 @@ type JourneyResult struct {
 }
 
 type JourneyStory struct {
-	Title  string `json:"title"`
-	Story  string `json:"story"`
-	Teaser string `json:"teaser"`
+	Title string `json:"title"`
+	Story string `json:"story"`
+	// Teaser string `json:"teaser"`
 }
 
 type JourneyGenerationInput struct {

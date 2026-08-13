@@ -11,9 +11,6 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 )
 
-//nolint:mnd // сколько последних историй реально стоит класть в промпт
-const maxRecentStories = 3
-
 type Client struct {
 	cfg    *Config
 	http   *http.Client

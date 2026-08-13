@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 )
@@ -26,7 +27,7 @@ func (g *FallbackStoryGenerator) Generate(ctx context.Context, input domain.Jour
 		return story, nil
 	}
 
-	// сюда стоит добавить лог/метрику: "gigachat unavailable, using fallback"
+	log.Printf("primary story generator failed, falling back to template: %v", err)
 	return g.fallback.Generate(ctx, input)
 }
 
@@ -39,21 +40,12 @@ func NewTemplateStoryGenerator() *TemplateStoryGenerator {
 func (g *TemplateStoryGenerator) Generate(_ context.Context, input domain.JourneyGenerationInput) (domain.JourneyStory, error) {
 	j := input.Journey
 
-	story := fmt.Sprintf("Я вернулся из путешествия в «%s»!", j.Location)
-	if len(j.Events) > 0 {
-		story += " Там произошло вот что: "
-		for i, e := range j.Events {
-			if i > 0 {
-				story += ", "
-			}
-			story += e
-		}
-		story += "."
-	}
+	story := fmt.Sprintf("Я вернулся из путешествия в «%s»! "+
+		"В этот раз ничего интересного не произошло.", j.Location)
 
 	return domain.JourneyStory{
-		Title:  fmt.Sprintf("Возвращение из «%s»", j.Location),
-		Story:  story,
-		Teaser: "Кажется, рядом осталось ещё что-то неизведанное 👀",
+		Title: fmt.Sprintf("Возвращение из «%s»", j.Location),
+		Story: story,
+		// Teaser: "Кажется, рядом осталось ещё что-то неизведанное 👀",
 	}, nil
 }

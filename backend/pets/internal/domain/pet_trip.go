@@ -10,6 +10,10 @@ const (
 	Delivered       TripStatus = "delivered"        // Трип доставлен (либо воркером-2 по вебсокету, либо потом по ручке)
 )
 
+type TripResponse struct {
+	Status TripStatus `json:"status"`
+}
+
 type PetTrip struct {
 	ID          int64
 	PetID       int64

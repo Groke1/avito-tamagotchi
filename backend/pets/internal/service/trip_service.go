@@ -112,22 +112,18 @@ func getRandomDescriptions(events *[]domain.TripEvent, neg bool, count int) []st
 	if events == nil {
 		return nil
 	}
-
 	var indices []int
 	for i, event := range *events {
 		if event.IsNegative == neg {
 			indices = append(indices, i)
 		}
 	}
-
 	rand.Shuffle(len(indices), func(i, j int) {
 		indices[i], indices[j] = indices[j], indices[i]
 	})
-
 	if len(indices) < count {
 		count = len(indices)
 	}
-
 	result := make([]string, count)
 	for i := 0; i < count; i++ {
 		result[i] = (*events)[indices[i]].Description

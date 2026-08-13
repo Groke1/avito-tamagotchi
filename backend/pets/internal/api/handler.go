@@ -370,7 +370,7 @@ func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSONResponse(w, http.StatusAccepted, &TripResponse{
-		Status: TripStatusStarted,
+	writeJSONResponse(w, http.StatusAccepted, &domain.TripResponse{
+		Status: domain.InProgress,
 	})
 }
