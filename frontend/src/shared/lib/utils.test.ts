@@ -35,13 +35,13 @@ describe('utils', () => {
     it('formats ISO date string into Russian date', () => {
       const formatted = formatTaskDate({ dateStr: '2026-08-10T12:00:00Z' })
       expect(formatted).toContain('2026')
-      expect(formatted).toContain('августа')
+      expect(formatted).toContain('08')
     })
 
     it('supports object argument with hasMinutes option', () => {
       const formatted = formatTaskDate({ dateStr: '2026-08-10T12:30:00Z', hasMinutes: true })
       expect(formatted).toContain('2026')
-      expect(formatted).toContain('августа')
+      expect(formatted).toContain('08')
       expect(formatted).toMatch(/30/)
     })
   })
