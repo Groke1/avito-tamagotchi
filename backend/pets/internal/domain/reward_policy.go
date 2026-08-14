@@ -22,13 +22,7 @@ type RewardPolicy struct {
 
 func NewRewardPolicy() *RewardPolicy {
 	return &RewardPolicy{
-		codes: []string{
-			"DELIVERY_DISCOUNT_10",
-			"LISTING_DISCOUNT_15",
-			"AUTOTEKA_DISCOUNT_20",
-			"FREE_LISTING_HIGHLIGHT",
-			"FREE_LISTING_PROMOTION",
-		},
+		codes: rewardCodes,
 	}
 }
 
@@ -51,6 +45,7 @@ func (rp *RewardPolicy) GenerateReward(isNegative bool) JourneyReward {
 		RewardCode:  nil,
 	}
 
+	//nolint:mnd // шанс успеха
 	if rand.IntN(100) < jackpotReward {
 		code := rp.GetReward()
 		reward.RewardCode = &code

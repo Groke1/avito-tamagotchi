@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -55,7 +56,7 @@ func (c *Client) generate(ctx context.Context, input domain.JourneyGenerationInp
 			{Role: "user", Content: userPrompt(input)},
 		},
 		// низкая температура — истории должны точно следовать переданным фактам, а не фантазировать
-		//nolint:mnd
+		//nolint:mnd // температура генерации
 		Temperature: 0.7,
 	}
 
@@ -102,12 +103,12 @@ func (c *Client) generate(ctx context.Context, input domain.JourneyGenerationInp
 	}
 
 	var completion chatCompletionResponse
-	if err := json.NewDecoder(resp.Body).Decode(&completion); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&completion); err != nil {
 		return domain.JourneyStory{}, fmt.Errorf("gigachat: failed to decode response: %w", err)
 	}
 
 	if len(completion.Choices) == 0 {
-		return domain.JourneyStory{}, fmt.Errorf("gigachat: empty choices in response")
+		return domain.JourneyStory{}, errors.New("gigachat: empty choices in response")
 	}
 
 	story, err := parseStory(completion.Choices[0].Message.Content)
@@ -120,7 +121,7 @@ func (c *Client) generate(ctx context.Context, input domain.JourneyGenerationInp
 
 func isUnauthorized(err error) bool {
 	var apiErr *gigachatAPIError
-	if e, ok := err.(*gigachatAPIError); ok { //nolint:errorlint
+	if e, ok := err.(*gigachatAPIError); ok { //nolint:errorlint // who knows?
 		apiErr = e
 		return apiErr.StatusCode == http.StatusUnauthorized
 	}
@@ -140,7 +141,7 @@ func parseStory(content string) (domain.JourneyStory, error) {
 	}
 
 	if story.Title == "" || story.Story == "" {
-		return domain.JourneyStory{}, fmt.Errorf("gigachat: incomplete story in response")
+		return domain.JourneyStory{}, errors.New("gigachat: incomplete story in response")
 	}
 
 	return story, nil

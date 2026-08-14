@@ -75,8 +75,8 @@ func (c *UserServiceClient) UpdateCoins(ctx context.Context, reqBody controller.
 	return &respBody, nil
 }
 
-func (uc *UserServiceClient) NotifyActionDone(ctx context.Context, reqBody controller.NotifyActionRequest) error {
-	url := uc.baseURL + "/internal/action"
+func (c *UserServiceClient) NotifyActionDone(ctx context.Context, reqBody controller.NotifyActionRequest) error {
+	url := c.baseURL + "/internal/action"
 
 	body, err := json.Marshal(reqBody)
 	if err != nil {
@@ -89,7 +89,7 @@ func (uc *UserServiceClient) NotifyActionDone(ctx context.Context, reqBody contr
 		return err
 	}
 
-	resp, err := uc.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}

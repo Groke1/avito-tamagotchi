@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,7 +31,6 @@ func (tm *tokenManager) getToken(ctx context.Context, forceRefresh bool) (string
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	//nolint:mnd
 	if !forceRefresh && tm.token != "" && time.Now().Before(tm.expiresAt.Add(-1*time.Minute)) {
 		return tm.token, nil
 	}
@@ -97,17 +97,20 @@ func (tm *tokenManager) fetchToken(ctx context.Context) (string, time.Time, erro
 	}
 
 	if tokenResp.AccessToken == "" {
-		return "", time.Time{}, fmt.Errorf("gigachat oauth returned empty access token")
+		return "", time.Time{}, errors.New("gigachat oauth returned empty access token")
 	}
 
 	return tokenResp.AccessToken, time.UnixMilli(tokenResp.ExpiresAt), nil
 }
 
 func newRqUID() string {
+	//nolint:mnd // random bytes
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 
+	//nolint:mnd // bit magic
 	b[6] = (b[6] & 0x0f) | 0x40
+	//nolint:mnd // bit magic
 	b[8] = (b[8] & 0x3f) | 0x80
 
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
