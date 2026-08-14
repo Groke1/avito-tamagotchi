@@ -9,7 +9,6 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/api"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/clients/gigachat"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/config"
-	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/websocket"
@@ -40,7 +39,6 @@ func main() {
 
 	wsClientManager := websocket.NewUserManager()
 	wsTicketManager := websocket.NewTicketManager()
-	levelPolicy := domain.NewLevelPolicy()
 
 	gigaConfig, err := gigachat.NewConfigFromEnv()
 	if err != nil {
@@ -54,8 +52,8 @@ func main() {
 	trip_repo := repository.NewTripRepository(db)
 	tripRepository := repository.NewTripRepository(db)
 
-	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo, petRepository, cfg.UserServiceURL, wsClientManager)
-	petService := service.NewPetService(petRepository, tripRepository, cfg.UserServiceURL, wsClientManager, levelPolicy)
+	petService := service.NewPetService(petRepository, tripRepository, cfg.UserServiceURL, wsClientManager)
+	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo, petRepository, petService, cfg.UserServiceURL, wsClientManager)
 	petHandler := api.NewPetHandler(petService, tripService)
 	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, petService)
 

@@ -22,7 +22,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		defer server.Close()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(context.Background(), "user-1", 0)
+		err := client.AdjustCoins(context.Background(), "user-1", 0)
 
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -47,7 +47,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		defer server.Close()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(context.Background(), "user-1", 50)
+		err := client.AdjustCoins(context.Background(), "user-1", 50)
 
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -68,7 +68,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		defer server.Close()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(context.Background(), "user-1", 10)
+		err := client.AdjustCoins(context.Background(), "user-1", 10)
 
 		if !errors.Is(err, domain.ErrUserNotFound) {
 			t.Errorf("err = %v, want domain.ErrUserNotFound", err)
@@ -83,7 +83,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		defer server.Close()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(context.Background(), "user-1", 10)
+		err := client.AdjustCoins(context.Background(), "user-1", 10)
 
 		if !errors.Is(err, domain.ErrNotEnoguhCoins) {
 			t.Errorf("err = %v, want domain.ErrNotEnoguhCoins", err)
@@ -98,7 +98,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		defer server.Close()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(context.Background(), "user-1", 10)
+		err := client.AdjustCoins(context.Background(), "user-1", 10)
 
 		if err == nil {
 			t.Fatal("expected error, got nil")
@@ -113,7 +113,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		defer server.Close()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(context.Background(), "user-1", 10)
+		err := client.AdjustCoins(context.Background(), "user-1", 10)
 
 		if err == nil {
 			t.Fatal("expected error, got nil")
@@ -128,7 +128,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		defer server.Close()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(context.Background(), "user-1", 10)
+		err := client.AdjustCoins(context.Background(), "user-1", 10)
 
 		if err == nil {
 			t.Fatal("expected error, got nil")
@@ -143,7 +143,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		defer server.Close()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(context.Background(), "user-1", 10)
+		err := client.AdjustCoins(context.Background(), "user-1", 10)
 
 		if err == nil {
 			t.Fatal("expected error, got nil")
@@ -152,7 +152,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 
 	t.Run("server unreachable", func(t *testing.T) {
 		client := NewUserClient("http://127.0.0.1:0")
-		err := client.WithdrawCoins(context.Background(), "user-1", 10)
+		err := client.AdjustCoins(context.Background(), "user-1", 10)
 
 		if err == nil {
 			t.Fatal("expected error, got nil")
@@ -169,7 +169,7 @@ func TestUserClientWithdrawCoins(t *testing.T) {
 		cancel()
 
 		client := NewUserClient(server.URL)
-		err := client.WithdrawCoins(ctx, "user-1", 10)
+		err := client.AdjustCoins(ctx, "user-1", 10)
 
 		if err == nil {
 			t.Fatal("expected error, got nil")
