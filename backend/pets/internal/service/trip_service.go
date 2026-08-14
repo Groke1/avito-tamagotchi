@@ -18,6 +18,7 @@ const (
 	defaultLocation    = "Авито-Сити"
 	recentStoriesLimit = 1
 	eventsLimit        = 2
+	TripDuration       = 30 * time.Second
 )
 
 type TripDTO struct {
@@ -72,12 +73,12 @@ func NewTripService(
 // Generate запускает фоновую генерацию истории и сразу возвращает управление
 // хендлеру (для ответа 202 Accepted). Вся логика — в generateAndSave,
 // выполняется внутри executor.Execute в отдельной горутине.
-func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
+func (ts *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	IsNegativeInt := rand.IntN(2)
 	coins := 100
 
 	// проверить что нет активных путешествий
-	petTripReturned, err := s.tripRepository.GetLastTripByPetID(ctx, dto.PetID)
+	petTripReturned, err := ts.tripRepository.GetLastTripByPetID(ctx, dto.PetID)
 	switch {
 	case errors.Is(err, domain.ErrTripNotFound):
 
@@ -92,13 +93,13 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	fmt.Println("[trip_service] активных путешествий нет")
 
 	// спросить есть ли деньги
-	err = s.userClient.AdjustCoins(ctx, dto.UserID, coins)
+	err = ts.userClient.AdjustCoins(ctx, dto.UserID, coins)
 	if err != nil {
 		return err
 	}
 	fmt.Println("[trip_service] деньги есть")
 
-	events, err := s.tripRepository.GetTripEvents(ctx)
+	events, err := ts.tripRepository.GetTripEvents(ctx)
 	if err != nil {
 		fmt.Println("91: " + err.Error())
 		return err
@@ -115,10 +116,10 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	journey := domain.JourneyResult{
 		Location: defaultLocation,
 		Events:   shuffleEvents,
-		Reward:   s.rewardPolicy.GenerateReward(IsNegativeInt == 1),
+		Reward:   ts.rewardPolicy.GenerateReward(IsNegativeInt == 1),
 	}
 
-	lastPetTrips, err := s.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
+	lastPetTrips, err := ts.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
 	if err != nil {
 		return fmt.Errorf("get pet memory: %w", err)
 	}
@@ -132,7 +133,7 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 		Memory:   memory,
 	}
 
-	story, err := s.storyGenerator.Generate(ctx, input)
+	story, err := ts.storyGenerator.Generate(ctx, input)
 	if err != nil {
 		return fmt.Errorf("generate story: %w", err)
 	}
@@ -148,10 +149,10 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 		RewardCode:  journey.Reward.RewardCode,
 		Story:       story.Story,
 		StartedAt:   now,
-		EndedAt:     now.Add(30 * time.Second), // TODO: заменить на реальное время окончания путешествия
+		EndedAt:     now.Add(TripDuration), // TODO: заменить на реальное время окончания путешествия
 		Status:      domain.PendingDelivery,
 	}
-	err = s.tripRepository.CreateTrip(ctx, tripFinal)
+	err = ts.tripRepository.CreateTrip(ctx, tripFinal)
 	if err != nil {
 		return fmt.Errorf("save story: %w", err)
 	}

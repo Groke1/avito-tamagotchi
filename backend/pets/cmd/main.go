@@ -42,18 +42,18 @@ func main() {
 
 	gigaConfig, err := gigachat.NewConfigFromEnv()
 	if err != nil {
-		log.Fatalf("[MAIN] Failed to create GigaChat config: %v", err)
+		log.Printf("[MAIN] Failed to create GigaChat config: %v", err)
+		return
 	}
 	gigaClient := gigachat.NewClient(gigaConfig)
 	templateClient := service.NewTemplateStoryGenerator()
 	clientOrchestrator := service.NewFallbackStoryGenerator(gigaClient, templateClient)
 	executor := worker.NewGoroutineWorker()
 
-	trip_repo := repository.NewTripRepository(db)
 	tripRepository := repository.NewTripRepository(db)
 
 	petService := service.NewPetService(petRepository, tripRepository, cfg.UserServiceURL, wsClientManager)
-	tripService := service.NewTripService(clientOrchestrator, executor, trip_repo, petRepository, petService, cfg.UserServiceURL, wsClientManager)
+	tripService := service.NewTripService(clientOrchestrator, executor, tripRepository, petRepository, petService, cfg.UserServiceURL, wsClientManager)
 	petHandler := api.NewPetHandler(petService, tripService)
 	wsHandler := api.NewWSHandler(wsClientManager, wsTicketManager, petService)
 
