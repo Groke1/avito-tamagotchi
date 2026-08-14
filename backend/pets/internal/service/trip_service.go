@@ -211,9 +211,10 @@ func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.
 		return nil, nil, err
 	}
 
-	if trip.Status != domain.PendingDelivery {
-		// return nil, nil, domain.ErrNotPendingTrip // Пока возвращаю trip
+	if trip.Status == domain.Delivered {
 		return trip, nil, nil
+	} else if trip.Status == domain.InProgress {
+		return nil, nil, domain.ErrNotPendingTrip
 	}
 
 	tx, err := ts.petRepository.BeginTx(ctx)
