@@ -44,7 +44,7 @@ export const PetActionButtons = () => {
         disabled={isFeedLoading || isStrokeLoading || isTripLoading}
         onClick={handleTrip}
       >
-        🧭 Отправить в путешествие
+        🧭 Отправить в путешествие (-100 монет)
       </Button>
     </div>
   )

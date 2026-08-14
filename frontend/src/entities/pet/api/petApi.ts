@@ -9,8 +9,9 @@ export const petApi = baseApi.injectEndpoints({
       query: () => ({ url: PET_URL }),
       providesTags: ['Pet'],
     }),
-    getPetTripLast: builder.query<PetTripResponse, void>({
+    getPetTripLast: builder.query<PetTripResponse | null, void>({
       query: () => ({ url: `${PET_URL}/trip/last` }),
+      transformResponse: (response: PetTripResponse | null | undefined) => response ?? null,
       providesTags: ['Pet'],
     }),
     createPet: builder.mutation<PetResponse, PetDto>({
@@ -25,19 +26,15 @@ export const petApi = baseApi.injectEndpoints({
       query: () => ({ url: `${PET_URL}/stroke`, method: 'POST' }),
       invalidatesTags: ['Pet'],
     }),
-    makeTrip: builder.mutation<void, number>({
-      query: (petId) => ({ url: `${PET_URL}/trip/${petId}`, method: 'POST' }),
-      invalidatesTags: ['Pet', 'User', 'Leaderboard'],
-    }),
-    getWsTicket: builder.mutation<PetTicketResponse, void>({
-      query: () => ({ url: `${PET_URL}/ws-ticket`, method: 'POST' }),
-    }),
     tripPet: builder.mutation<void, number>({
       query: (petId) => ({
         url: `${PET_URL}/trip/${petId}`,
         method: 'POST',
       }),
-      invalidatesTags: ['Pet'],
+      invalidatesTags: ['Pet', 'User'],
+    }),
+    getWsTicket: builder.mutation<PetTicketResponse, void>({
+      query: () => ({ url: `${PET_URL}/ws-ticket`, method: 'POST' }),
     }),
   }),
 })

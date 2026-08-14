@@ -1,5 +1,10 @@
 import { HeaderDashboard } from '@/widgets/header'
-import { PetShowcase, StreakEntry, TodayQuestsWidget, TripResultWidget } from '@/widgets/pet-dashboard'
+import {
+  PetShowcase,
+  StreakEntry,
+  TodayQuestsWidget,
+  TripResultWidget,
+} from '@/widgets/pet-dashboard'
 import { PetHungry } from '@/widgets/pet-hungry'
 
 export const Dashboard = () => {

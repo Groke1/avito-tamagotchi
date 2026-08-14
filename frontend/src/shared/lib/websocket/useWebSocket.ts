@@ -1,4 +1,4 @@
-import { petApi, useGetWsTicketMutation } from '@/entities/pet'
+import { useGetWsTicketMutation } from '@/entities/pet'
 import { SOCKET_URL, baseApi } from '@/shared/api/baseApi'
 import { useAppDispatch, useAppSelector } from '@/shared/model/hooks'
 import { useEffect, useRef } from 'react'
@@ -63,42 +63,12 @@ export const useWebSocket = () => {
               })
             } else if (data.event_type === 'trip.completed') {
               dispatch(baseApi.util.invalidateTags(['Pet', 'User', 'Rewards', 'Leaderboard']))
-
-              void dispatch(
-                petApi.endpoints.getLastTrip.initiate(undefined, {
-                  forceRefetch: true,
-                  subscribe: false,
-                }),
-              )
-                .unwrap()
-                .then((trip) => {
-                  if (trip) {
-                    toast.success('Путешествие завершено! 🧭', {
-                      position: 'top-center',
-                      duration: 8000,
-                      closeButton: true,
-                      description: trip.reward
-                        ? `Получено +${trip.xp} XP, +${trip.coins} монет и награда «${trip.reward.name}».`
-                        : `Получено +${trip.xp} XP и +${trip.coins} монет.`,
-                    })
-                    return
-                  }
-
-                  toast.success('Путешествие завершено! 🧭', {
-                    position: 'top-center',
-                    duration: 5000,
-                    closeButton: true,
-                    description: 'Питомец вернулся. Проверьте карточку путешествия на главной странице.',
-                  })
-                })
-                .catch(() => {
-                  toast.success('Путешествие завершено! 🧭', {
-                    position: 'top-center',
-                    duration: 5000,
-                    closeButton: true,
-                    description: 'Питомец вернулся из путешествия.',
-                  })
-                })
+              toast.success('Питомец вернулся из путешествия! 🧭🎒', {
+                position: 'top-center',
+                duration: 8000,
+                closeButton: true,
+                description: 'Результаты и награды доступны на главном экране!',
+              })
             }
           } catch {
             toast.error('Ошибка при обработке сообщения сервера')

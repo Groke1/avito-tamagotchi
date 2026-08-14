@@ -1,6 +1,5 @@
-import { useHandleFeed, useHandleStroke } from '@/features/pet-actions'
+import { useHandleFeed, useHandleStroke, useHandleTrip } from '@/features/pet-actions'
 import { useAppSelector } from '@/shared/model'
-import { useHandleTrip } from './useHandleTrip'
 
 export const usePetActionButtons = () => {
   const { handleFeed, isFeedLoading } = useHandleFeed()

@@ -39,8 +39,6 @@ export const rootLoader = async () => {
     try {
       const pet = await store.dispatch(petApi.endpoints.getPet.initiate()).unwrap()
       store.dispatch(setPet(pet))
-
-      await store.dispatch(petApi.endpoints.getPetTripLast.initiate())
     } catch {
       store.dispatch(setPet(null))
     }

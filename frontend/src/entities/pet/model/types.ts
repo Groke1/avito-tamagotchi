@@ -38,11 +38,8 @@ export interface PetDto {
 export interface PetState {
   pet: Pet | null
   latestTrip: TripResult | null
+  dismissedStory: string | null
   isInitialized: boolean
 }
 
-export interface PetTripResponse {
-  story: string
-  xp: number
-  coins: number
-}
+export type PetTripResponse = TripResult
