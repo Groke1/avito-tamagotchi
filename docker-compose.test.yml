@@ -54,7 +54,7 @@ services:
       timeout: 3s
       retries: 20
     volumes:
-      - ./backend/pets/migrations/000001_create_pets.up.sql:/docker-entrypoint-initdb.d/010-create-pets.sql:ro
+      - ./backend/pets/migrations/000001_pets.up.sql:/docker-entrypoint-initdb.d/010-create-pets.sql:ro
     tmpfs:
       - /var/lib/postgresql/data
 

@@ -199,9 +199,11 @@ func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.
 		return nil, nil, err
 	}
 
-	if trip.Status != domain.PendingDelivery {
+	switch trip.Status {
+	case domain.Delivered:
+		return trip, nil, nil
+	case domain.InProgress:
 		return nil, nil, domain.ErrNotPendingTrip
-		// return trip, nil, nil // Пока возвращаю trip
 	}
 
 	_, err = ts.petService.GrantXP(ctx, userID, int(*trip.RewardXP))

@@ -86,10 +86,11 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 		return nil, domain.ErrPetNotFound
 	}
 
+	now := time.Now().UTC()
 	trip, err := ps.tripRepository.GetLastTripByPetID(ctx, pet.ID)
 	if err != nil && !errors.Is(err, domain.ErrTripNotFound) {
 		return nil, err
-	} else if !errors.Is(err, domain.ErrTripNotFound) && trip.Status == domain.InProgress {
+	} else if !errors.Is(err, domain.ErrTripNotFound) && trip.Status == domain.InProgress && now.Before(trip.EndedAt) {
 		return nil, &domain.ActionUnavailableError{
 			RetryAfter: trip.EndedAt.Sub(time.Now().UTC()),
 		}
@@ -142,10 +143,11 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 		return nil, domain.ErrPetNotFound
 	}
 
+	now := time.Now().UTC()
 	trip, err := ps.tripRepository.GetLastTripByPetID(ctx, pet.ID)
 	if err != nil && !errors.Is(err, domain.ErrTripNotFound) {
 		return nil, err
-	} else if !errors.Is(err, domain.ErrTripNotFound) && trip.Status == domain.InProgress {
+	} else if !errors.Is(err, domain.ErrTripNotFound) && trip.Status == domain.InProgress && now.Before(trip.EndedAt) {
 		return nil, &domain.ActionUnavailableError{
 			RetryAfter: trip.EndedAt.Sub(time.Now().UTC()),
 		}
