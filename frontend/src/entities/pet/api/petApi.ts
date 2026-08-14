@@ -13,6 +13,13 @@ export const petApi = baseApi.injectEndpoints({
       query: () => ({ url: `${PET_URL}/trip/last` }),
       transformResponse: (response: PetTripResponse | null | undefined) => response ?? null,
       providesTags: ['Pet'],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        const { data } = await queryFulfilled
+        if (data) {
+          dispatch(baseApi.util.invalidateTags(['User', 'Rewards', 'Leaderboard']))
+          dispatch(petApi.endpoints.getPet.initiate(undefined, { forceRefetch: true }))
+        }
+      },
     }),
     createPet: builder.mutation<PetResponse, PetDto>({
       query: (petData) => ({ url: PET_URL, method: 'POST', body: petData }),
