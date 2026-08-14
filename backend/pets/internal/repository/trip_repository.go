@@ -43,7 +43,6 @@ func (r *TripRepository) GetTripEvents(ctx context.Context) ([]domain.TripEvent,
 	return tripEvents, nil
 }
 
-// Создать новое путешествие для питомца
 func (r *TripRepository) CreateTrip(ctx context.Context, trip domain.PetTrip) error {
 	const query = `
 		INSERT INTO pet_trips (pet_id, user_id, location,
@@ -63,7 +62,6 @@ func (r *TripRepository) CreateTrip(ctx context.Context, trip domain.PetTrip) er
 	return nil
 }
 
-// Получить `limit` последних доставленных путешествий питомца, чтобы передать их истории в нейронку
 func (r *TripRepository) GetLastDeliveredTripsByPetID(ctx context.Context, petID int64, limit int) ([]domain.PetTrip, error) {
 	const query = `
 		SELECT * FROM pet_trips
@@ -85,8 +83,6 @@ func (r *TripRepository) GetLastDeliveredTripsByPetID(ctx context.Context, petID
 	return petTrips, nil
 }
 
-// Получить последнее путешествие для питомца. Например, чтобы проверить 'in-progres' ли оно, чтобы запретить действия (кормление, поглаживание) над питомцем
-// Если питомец еще ни разу не отправлялся в путешествия - верну ошибку ErrTripNotFound
 func (r *TripRepository) GetLastTripByPetID(ctx context.Context, petID int64) (*domain.PetTrip, error) {
 	const query = `
 		SELECT * FROM pet_trips
@@ -106,13 +102,13 @@ func (r *TripRepository) GetLastTripByPetID(ctx context.Context, petID int64) (*
 	return convertToPetTrip(&trip), nil
 }
 
-// Получить список завершенных трипов (для воркера-2 - затем он выставляет всем статусы либо delivered, либо pending_delivery)
 func (r *TripRepository) GetFinishedTrips(ctx context.Context) ([]domain.PetTrip, error) {
 	const query = `
-		SELECT * FROM pet_trips
+		UPDATE pet_trips
+		SET status = 'pending_delivery'
 		WHERE ended_at <= CURRENT_TIMESTAMP
 		  AND status = 'in_progress'
-		ORDER BY ended_at
+		RETURNING *
 	`
 
 	var dbTrips []petTrip
@@ -128,7 +124,6 @@ func (r *TripRepository) GetFinishedTrips(ctx context.Context) ([]domain.PetTrip
 	return trips, nil
 }
 
-// Пометить, что путешествие не получилось доставить на фронт по вебсокету
 func (r *TripRepository) MarkTripPendingDelivery(ctx context.Context, tripID int64) error {
 	const query = `UPDATE pet_trips
 		SET status = 'pending_delivery' WHERE id = $1;
@@ -151,7 +146,6 @@ func (r *TripRepository) MarkTripPendingDelivery(ctx context.Context, tripID int
 	return nil
 }
 
-// Пометить, что путешествие доставлено на фронт
 func (r *TripRepository) MarkTripDelivered(ctx context.Context, tripID int64) error {
 	const query = `
 		UPDATE pet_trips

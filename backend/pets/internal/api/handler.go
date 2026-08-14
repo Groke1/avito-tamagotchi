@@ -370,6 +370,11 @@ func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
 		UserID: userID,
 	}
 	err = ph.tripService.Generate(ctx, tripDto)
+	if errors.Is(err, domain.ErrNotEnoguhCoins) {
+		writeError(w, ErrNotEnoughCoins)
+		return
+	}
+
 	if err != nil {
 		fmt.Println(err.Error())
 		writeError(w, ErrTripGenerationError)
@@ -388,7 +393,7 @@ func (ph *PetHandler) LastTrip(w http.ResponseWriter, r *http.Request) {
 	}
 
 	trip, reward, err := ph.tripService.GetLastTrip(ctx, userID)
-	if errors.Is(err, domain.ErrNotPendingTrip) {
+	if errors.Is(err, domain.ErrNotPendingTrip) || errors.Is(err, domain.ErrTripNotFound) {
 		writeJSONResponse(w, http.StatusNoContent, struct{}{})
 		return
 	} else if err != nil {

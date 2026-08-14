@@ -2,14 +2,13 @@ package worker
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/repository"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 )
 
-const TripWorkerCooldown = 5 * time.Minute
+const TripWorkerCooldown = 30 * time.Second
 
 type TripWorker struct {
 	tripRepository *repository.TripRepository
@@ -42,10 +41,6 @@ func (tw *TripWorker) processExpiredTrips(ctx context.Context) {
 	}
 
 	for _, trip := range trips {
-		_, err := tw.tripService.CompleteTrip(ctx, &trip)
-		if err != nil {
-			log.Printf("[TRIP WORKER] Trip '%d' failed with error: %v", trip.ID, err)
-			continue
-		}
+		tw.tripService.SendToClient(&trip)
 	}
 }

@@ -20,6 +20,14 @@ const (
 	eventsLimit        = 2
 )
 
+var rewardCodes = []string{
+	"DELIVERY_DISCOUNT_10",
+	"FREE_LISTING_PROMOTION",
+	"AUTOTEKA_DISCOUNT_20",
+	"FREE_LISTING_HIGHLIGHT",
+	"LISTING_DISCOUNT_15",
+}
+
 type TripDTO struct {
 	PetID  int64  `json:"pet_id"`
 	UserID string `json:"user_id"`
@@ -109,12 +117,17 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	shuffleEvents := getRandomDescriptions(&events, IsNegativeInt == 0, eventsLimit)
 	fmt.Println("events: " + strconv.Itoa(len(shuffleEvents)))
 
+	var rewardCode *string
+	if IsNegativeInt == 1 {
+		rewardCode = &rewardCodes[rand.IntN(len(rewardCodes))]
+	}
 	journey := domain.JourneyResult{
 		Location: defaultLocation,
 		Events:   shuffleEvents,
 		Reward: domain.JourneyReward{
 			RewardXP:    int32(IsNegativeInt * rand.IntN(100)),
 			RewardCoins: int32(IsNegativeInt*rand.IntN(50) + 30),
+			RewardCode:  rewardCode,
 		},
 	}
 
@@ -148,7 +161,7 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 		RewardCode:  journey.Reward.RewardCode,
 		Story:       story.Story,
 		StartedAt:   now,
-		EndedAt:     now.Add(60 * time.Second), // TODO: заменить на реальное время окончания путешествия
+		EndedAt:     now.Add(30 * time.Second), // TODO: заменить на реальное время окончания путешествия
 		Status:      domain.PendingDelivery,
 	}
 	err = s.tripRepository.CreateTrip(ctx, tripFinal)
@@ -183,16 +196,8 @@ func getRandomDescriptions(events *[]domain.TripEvent, neg bool, count int) []st
 	return result
 }
 
-func (ts *TripService) CompleteTrip(ctx context.Context, trip *domain.PetTrip) (*domain.PetTrip, error) {
-	ok := ts.eventNotifier.SendToClient(trip.UserID, domain.EventTripCompleted, struct{}{})
-	if !ok {
-		ts.tripRepository.MarkTripPendingDelivery(ctx, trip.ID)
-		return trip, nil
-	}
-
-	ts.tripRepository.MarkTripDelivered(ctx, trip.ID)
-
-	return trip, nil
+func (ts *TripService) SendToClient(trip *domain.PetTrip) {
+	_ = ts.eventNotifier.SendToClient(trip.UserID, domain.EventTripCompleted, struct{}{})
 }
 
 func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.PetTrip, *domain.Reward, error) {
@@ -206,17 +211,45 @@ func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.
 		return nil, nil, err
 	}
 
-	if trip.Status == domain.PendingDelivery {
-		var reward *domain.Reward
-		if trip.RewardCode != nil {
-			reward, err = ts.userClient.ClaimReward(ctx, trip.UserID, *trip.RewardCode)
-			if err != nil {
-				log.Printf("[LAST TRIP] lost reward trip `%d`", trip.ID)
-			}
-		}
-
-		return trip, reward, nil
+	if trip.Status != domain.PendingDelivery {
+		// return nil, nil, domain.ErrNotPendingTrip // Пока возвращаю trip
+		return trip, nil, nil
 	}
 
-	return nil, nil, domain.ErrNotPendingTrip
+	tx, err := ts.petRepository.BeginTx(ctx)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	pet.XP += int(*trip.RewardXP) // Как понимаю, считаем, что RewardXP nil
+	err = ts.petRepository.UpdatePet(ctx, tx, pet)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to update pet: %w", err)
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	err = ts.userClient.WithdrawCoins(ctx, userID, -int(*trip.RewardCoins)) // Мб переименовать метод? А то, чтобы увеличить баланс приходится отнимать отрицательное число монет
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to withdraw coins: %w", err)
+	}
+
+	var reward *domain.Reward
+	if trip.RewardCode != nil {
+		reward, err = ts.userClient.ClaimReward(ctx, trip.UserID, *trip.RewardCode)
+		if err != nil {
+			log.Printf("[LAST TRIP] lost reward trip `%d`", trip.ID)
+		}
+	}
+
+	if err = ts.tripRepository.MarkTripDelivered(ctx, trip.ID); err != nil {
+		return nil, nil, fmt.Errorf("failed to mark trip delivered: %w", err)
+	}
+
+	return trip, reward, nil
 }

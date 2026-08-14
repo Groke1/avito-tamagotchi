@@ -5,9 +5,9 @@ import "time"
 type TripStatus string
 
 const (
-	InProgress      TripStatus = "in_progress"      // Воркер-1 создал трип
-	PendingDelivery TripStatus = "pending_delivery" // Если воркер-2 не смог доставить по вебсокету
-	Delivered       TripStatus = "delivered"        // Трип доставлен (либо воркером-2 по вебсокету, либо потом по ручке)
+	InProgress      TripStatus = "in_progress"
+	PendingDelivery TripStatus = "pending_delivery"
+	Delivered       TripStatus = "delivered"
 )
 
 type PetTrip struct {

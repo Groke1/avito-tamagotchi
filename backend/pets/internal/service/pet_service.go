@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -87,9 +88,9 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 	}
 
 	trip, err := ps.tripRepository.GetLastTripByPetID(ctx, pet.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, domain.ErrTripNotFound) {
 		return nil, err
-	} else if trip.Status == domain.InProgress {
+	} else if !errors.Is(err, domain.ErrTripNotFound) && trip.Status == domain.InProgress {
 		return nil, &domain.ActionUnavailableError{
 			RetryAfter: time.Duration(trip.EndedAt.Sub(time.Now().UTC()).Seconds()),
 		}
@@ -143,9 +144,9 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 	}
 
 	trip, err := ps.tripRepository.GetLastTripByPetID(ctx, pet.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, domain.ErrTripNotFound) {
 		return nil, err
-	} else if trip.Status == domain.InProgress {
+	} else if !errors.Is(err, domain.ErrTripNotFound) && trip.Status == domain.InProgress {
 		return nil, &domain.ActionUnavailableError{
 			RetryAfter: time.Duration(trip.EndedAt.Sub(time.Now().UTC()).Seconds()),
 		}
