@@ -33,14 +33,13 @@ func NewPetService(
 	petRepository *repository.PetRepository,
 	tripRepository *repository.TripRepository,
 	userServiceURL string,
-	eventNotifier EventNotifier,
-	levelPolicy *domain.LevelPolicy) *PetService {
+	eventNotifier EventNotifier) *PetService {
 	return &PetService{
 		petRepository:  petRepository,
 		tripRepository: tripRepository,
 		client:         clients.NewUserClient(userServiceURL + "/internal"),
 		eventNotifier:  eventNotifier,
-		levelPolicy:    levelPolicy,
+		levelPolicy:    domain.NewLevelPolicy(),
 	}
 }
 
@@ -106,7 +105,7 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 		return nil, domain.ErrUnavailableAction
 	}
 
-	err = ps.client.WithdrawCoins(ctx, userID, cost)
+	err = ps.client.AdjustCoins(ctx, userID, cost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to withdraw coins: %w", err)
 	}

@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=controller.go -destination=mocks/controller_mocks.go -package=mocks
+
 type Service interface {
 	GetAllRewards(ctx context.Context, userID string) ([]entity.UserReward, error)
 	GetActiveRewards(ctx context.Context, userID string) ([]entity.UserReward, error)

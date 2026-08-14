@@ -2,7 +2,7 @@ package gigachat
 
 import (
 	"encoding/base64"
-	"fmt"
+	"errors"
 	"os"
 	"strings"
 	"time"
@@ -32,7 +32,7 @@ func NewConfigFromEnv() (*Config, error) {
 		Model:      envOrDefault("GIGACHAT_MODEL", "GigaChat-2"),
 		OAuthURL:   envOrDefault("GIGACHAT_OAUTH_URL", "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"),
 		APIBaseURL: envOrDefault("GIGACHAT_API_BASE_URL", "https://api.giga.chat/v1"),
-
+		//nolint:mnd // таймаут реквеста
 		RequestTimeout: 15 * time.Second,
 	}
 
@@ -50,11 +50,11 @@ func (c *Config) prepareAuthKey() error {
 	}
 
 	if c.ClientID == "" {
-		return fmt.Errorf("GIGACHAT_CLIENT_ID is required")
+		return errors.New("GIGACHAT_CLIENT_ID is required")
 	}
 
 	if c.ClientSecret == "" {
-		return fmt.Errorf("GIGACHAT_CLIENT_SECRET is required")
+		return errors.New("GIGACHAT_CLIENT_SECRET is required")
 	}
 
 	raw := c.ClientID + ":" + c.ClientSecret

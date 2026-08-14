@@ -20,12 +20,12 @@ GOLANGCI_LINT_BIN := $(LOCAL_BIN)/golangci-lint$(EXE_EXT)
 
 .PHONY: run
 run:
-	docker compose -f docker-compose.yml up -d --build
+	docker-compose -f docker-compose.yml up -d --build
 
 
 .PHONY: stop
 stop:
-	docker compose -f docker-compose.yml down -v
+	docker-compose -f docker-compose.yml down -v
 
 
 .PHONY: generate

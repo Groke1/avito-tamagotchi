@@ -18,15 +18,8 @@ const (
 	defaultLocation    = "Авито-Сити"
 	recentStoriesLimit = 1
 	eventsLimit        = 2
+	TripDuration       = 30 * time.Second
 )
-
-var rewardCodes = []string{
-	"DELIVERY_DISCOUNT_10",
-	"FREE_LISTING_PROMOTION",
-	"AUTOTEKA_DISCOUNT_20",
-	"FREE_LISTING_HIGHLIGHT",
-	"LISTING_DISCOUNT_15",
-}
 
 type TripDTO struct {
 	PetID  int64  `json:"pet_id"`
@@ -50,6 +43,7 @@ type TripService struct {
 	executor       Executor
 	tripRepository repository.TripRepositoryInterface
 	petRepository  *repository.PetRepository
+	petService     *PetService
 	eventNotifier  EventNotifier
 	userClient     *clients.UserClient
 	rewardPolicy   *domain.RewardPolicy
@@ -60,6 +54,7 @@ func NewTripService(
 	executor Executor,
 	tripRepository repository.TripRepositoryInterface,
 	petRepository *repository.PetRepository,
+	petService *PetService,
 	userServiceURL string,
 	eventNotifier EventNotifier,
 ) *TripService {
@@ -69,6 +64,7 @@ func NewTripService(
 		tripRepository: tripRepository,
 		userClient:     clients.NewUserClient(userServiceURL + "/internal"),
 		petRepository:  petRepository,
+		petService:     petService,
 		eventNotifier:  eventNotifier,
 		rewardPolicy:   domain.NewRewardPolicy(),
 	}
@@ -77,12 +73,12 @@ func NewTripService(
 // Generate запускает фоновую генерацию истории и сразу возвращает управление
 // хендлеру (для ответа 202 Accepted). Вся логика — в generateAndSave,
 // выполняется внутри executor.Execute в отдельной горутине.
-func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
+func (ts *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	IsNegativeInt := rand.IntN(2)
 	coins := 100
 
 	// проверить что нет активных путешествий
-	petTripReturned, err := s.tripRepository.GetLastTripByPetID(ctx, dto.PetID)
+	petTripReturned, err := ts.tripRepository.GetLastTripByPetID(ctx, dto.PetID)
 	switch {
 	case errors.Is(err, domain.ErrTripNotFound):
 
@@ -97,13 +93,13 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	fmt.Println("[trip_service] активных путешествий нет")
 
 	// спросить есть ли деньги
-	err = s.userClient.WithdrawCoins(ctx, dto.UserID, coins)
+	err = ts.userClient.AdjustCoins(ctx, dto.UserID, coins)
 	if err != nil {
 		return err
 	}
 	fmt.Println("[trip_service] деньги есть")
 
-	events, err := s.tripRepository.GetTripEvents(ctx)
+	events, err := ts.tripRepository.GetTripEvents(ctx)
 	if err != nil {
 		fmt.Println("91: " + err.Error())
 		return err
@@ -117,21 +113,13 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	shuffleEvents := getRandomDescriptions(&events, IsNegativeInt == 0, eventsLimit)
 	fmt.Println("events: " + strconv.Itoa(len(shuffleEvents)))
 
-	var rewardCode *string
-	if IsNegativeInt == 1 {
-		rewardCode = &rewardCodes[rand.IntN(len(rewardCodes))]
-	}
 	journey := domain.JourneyResult{
 		Location: defaultLocation,
 		Events:   shuffleEvents,
-		Reward: domain.JourneyReward{
-			RewardXP:    int32(IsNegativeInt * rand.IntN(100)),
-			RewardCoins: int32(IsNegativeInt*rand.IntN(50) + 30),
-			RewardCode:  rewardCode,
-		},
+		Reward:   ts.rewardPolicy.GenerateReward(IsNegativeInt == 1),
 	}
 
-	lastPetTrips, err := s.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
+	lastPetTrips, err := ts.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
 	if err != nil {
 		return fmt.Errorf("get pet memory: %w", err)
 	}
@@ -145,7 +133,7 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 		Memory:   memory,
 	}
 
-	story, err := s.storyGenerator.Generate(ctx, input)
+	story, err := ts.storyGenerator.Generate(ctx, input)
 	if err != nil {
 		return fmt.Errorf("generate story: %w", err)
 	}
@@ -161,10 +149,10 @@ func (s *TripService) Generate(ctx context.Context, dto TripDTO) error {
 		RewardCode:  journey.Reward.RewardCode,
 		Story:       story.Story,
 		StartedAt:   now,
-		EndedAt:     now.Add(30 * time.Second), // TODO: заменить на реальное время окончания путешествия
+		EndedAt:     now.Add(TripDuration), // TODO: заменить на реальное время окончания путешествия
 		Status:      domain.PendingDelivery,
 	}
-	err = s.tripRepository.CreateTrip(ctx, tripFinal)
+	err = ts.tripRepository.CreateTrip(ctx, tripFinal)
 	if err != nil {
 		return fmt.Errorf("save story: %w", err)
 	}
@@ -217,25 +205,12 @@ func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.
 		return nil, nil, domain.ErrNotPendingTrip
 	}
 
-	tx, err := ts.petRepository.BeginTx(ctx)
-
+	_, err = ts.petService.GrantXP(ctx, userID, int(*trip.RewardXP))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer func() {
-		_ = tx.Rollback()
-	}()
-
-	pet.XP += int(*trip.RewardXP) // Как понимаю, считаем, что RewardXP nil
-	err = ts.petRepository.UpdatePet(ctx, tx, pet)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to update pet: %w", err)
-	}
-	if err = tx.Commit(); err != nil {
-		return nil, nil, fmt.Errorf("failed to commit transaction: %w", err)
+		return nil, nil, fmt.Errorf("failed to grant xp: %w", err)
 	}
 
-	err = ts.userClient.WithdrawCoins(ctx, userID, -int(*trip.RewardCoins)) // Мб переименовать метод? А то, чтобы увеличить баланс приходится отнимать отрицательное число монет
+	err = ts.userClient.AdjustCoins(ctx, userID, -int(*trip.RewardCoins))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to withdraw coins: %w", err)
 	}

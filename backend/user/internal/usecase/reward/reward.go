@@ -11,6 +11,7 @@ import (
 
 const maxPromoCodeGenerationAttempts = 5
 
+//go:generate mockgen -source=reward.go -destination=mocks/reward_mocks.go -package=mocks
 type (
 	rewardRepository interface {
 		GetUserRewardsByUserID(ctx context.Context, userID string) ([]entity.UserReward, error)
