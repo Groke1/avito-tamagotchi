@@ -19,7 +19,7 @@ export const PetActionButtons = () => {
         variant="outline"
         size="sm"
         isLoading={isFeedLoading}
-        disabled={isFeedLoading || isStrokeLoading}
+        disabled={isFeedLoading || isStrokeLoading || isTripLoading}
         onClick={handleFeed}
         title={isFullSatiety ? 'Питомец полностью сыт! (100/100)' : ''}
         className="w-full hover:bg-avito-green/10 hover:border-avito-green/60 hover:text-avito-green-dark transition-all duration-200"
@@ -30,7 +30,7 @@ export const PetActionButtons = () => {
         variant="outline"
         size="sm"
         isLoading={isStrokeLoading}
-        disabled={isFeedLoading || isStrokeLoading}
+        disabled={isFeedLoading || isStrokeLoading || isTripLoading}
         onClick={handleStroke}
         title={isFullHappiness ? 'Питомец уже максимально счастлив! (100/100)' : ''}
         className="w-full hover:bg-avito-blue/10 hover:border-avito-blue/60 hover:text-avito-blue-dark transition-all duration-200"

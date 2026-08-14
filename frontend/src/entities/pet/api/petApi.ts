@@ -25,6 +25,10 @@ export const petApi = baseApi.injectEndpoints({
       query: () => ({ url: `${PET_URL}/stroke`, method: 'POST' }),
       invalidatesTags: ['Pet'],
     }),
+    makeTrip: builder.mutation<void, number>({
+      query: (petId) => ({ url: `${PET_URL}/trip/${petId}`, method: 'POST' }),
+      invalidatesTags: ['Pet', 'User', 'Leaderboard'],
+    }),
     getWsTicket: builder.mutation<PetTicketResponse, void>({
       query: () => ({ url: `${PET_URL}/ws-ticket`, method: 'POST' }),
     }),

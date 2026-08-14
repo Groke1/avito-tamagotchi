@@ -3,25 +3,29 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/domain"
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/go-playground/validator/v10"
 )
 
 type PetHandler struct {
-	service   *service.PetService
-	validator *validator.Validate
+	petService  *service.PetService
+	tripService *service.TripService
+	validator   *validator.Validate
 }
 
-func NewPetHandler(service *service.PetService) *PetHandler {
+func NewPetHandler(petSerivce *service.PetService, tripService *service.TripService) *PetHandler {
 	return &PetHandler{
-		service:   service,
-		validator: validator.New(),
+		petService:  petSerivce,
+		tripService: tripService,
+		validator:   validator.New(),
 	}
 }
 
@@ -34,7 +38,7 @@ func (ph *PetHandler) GetPet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pet, err := ph.service.GetPet(ctx, userID)
+	pet, err := ph.petService.GetPet(ctx, userID)
 	if err != nil {
 		writeError(w, ErrPetNotFound)
 		return
@@ -71,7 +75,7 @@ func (ph *PetHandler) CreatePet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pet, err := ph.service.CreatePet(ctx, userID, req.Name)
+	pet, err := ph.petService.CreatePet(ctx, userID, req.Name)
 	if err != nil {
 		writeError(w, ErrPetAlreadyExists)
 		return
@@ -101,7 +105,7 @@ func (ph *PetHandler) FeedPet(w http.ResponseWriter, r *http.Request) {
 
 	var actionUnavailableError *domain.ActionUnavailableError
 
-	pet, err := ph.service.FeedPet(ctx, userID)
+	pet, err := ph.petService.FeedPet(ctx, userID)
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
@@ -134,7 +138,7 @@ func (ph *PetHandler) StrokePet(w http.ResponseWriter, r *http.Request) {
 
 	var actionUnavailableError *domain.ActionUnavailableError
 
-	pet, err := ph.service.StrokePet(ctx, userID)
+	pet, err := ph.petService.StrokePet(ctx, userID)
 	if errors.Is(err, domain.ErrPetNotFound) {
 		writeError(w, ErrPetNotFound)
 		return
@@ -174,7 +178,7 @@ func (ph *PetHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	leaderboardItems, currentUser, err := ph.service.GetLeaderboard(ctx, userID, limit)
+	leaderboardItems, currentUser, err := ph.petService.GetLeaderboard(ctx, userID, limit)
 	if err != nil {
 		log.Printf("[GET LEADERBOARD] %v", err)
 		writeError(w, ErrInternalError)
@@ -211,12 +215,11 @@ func (ph *PetHandler) DailyBonusForStreak(w http.ResponseWriter, r *http.Request
 
 	var req BonusXpRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-
 		writeError(w, ErrValidationError)
 		return
 	}
 
-	err := ph.service.ClaimDailyBonusForStreak(ctx, req.UserID, req.Streak, req.Coins)
+	err := ph.petService.ClaimDailyBonusForStreak(ctx, req.UserID, req.Streak, req.Coins)
 	if err != nil {
 		log.Printf("[DAILY BONUS] %v", err)
 		writeError(w, ErrInternalError)
@@ -236,7 +239,7 @@ func (ph *PetHandler) UpdateXP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := ph.service.GrantXP(ctx, req.UserID, req.XP)
+	_, err := ph.petService.GrantXP(ctx, req.UserID, req.XP)
 	if err != nil {
 		log.Printf("[UPDATED XP] %v", err)
 		writeError(w, ErrInternalError)
@@ -258,7 +261,7 @@ func (ph *PetHandler) DailyGainedXP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gainedXP, err := ph.service.ClaimDailyGainedXP(ctx, req.UserID)
+	gainedXP, err := ph.petService.ClaimDailyGainedXP(ctx, req.UserID)
 	if err != nil {
 		log.Printf("[DAILY GAINED XP] %v", err)
 		writeError(w, ErrInternalError)
@@ -282,7 +285,7 @@ func (ph *PetHandler) GetNextRewardDescription(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	reward, err := ph.service.GetNextRewardDescription(ctx, userID)
+	reward, err := ph.petService.GetNextRewardDescription(ctx, userID)
 	if err != nil {
 		log.Printf("[NEXT REWARD DESCRIPTION] %v", err)
 		writeError(w, ErrInternalError)
@@ -316,7 +319,7 @@ func (ph *PetHandler) GetWeeklyLeaderboard(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	leaderboardItems, currentUser, err := ph.service.GetWeeklyLeaderboard(ctx, userID, limit)
+	leaderboardItems, currentUser, err := ph.petService.GetWeeklyLeaderboard(ctx, userID, limit)
 	if err != nil {
 		log.Printf("[GET WEEKLY LEADERBOARD] %v", err)
 		writeError(w, ErrInternalError)
@@ -346,4 +349,78 @@ func (ph *PetHandler) GetWeeklyLeaderboard(w http.ResponseWriter, r *http.Reques
 	}
 
 	writeJSONResponse(w, http.StatusOK, leaderboardResponse)
+}
+
+func (ph *PetHandler) MakeTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	petID, err := strconv.ParseInt(chi.URLParam(r, "pet_id"), 10, 64)
+	if err != nil {
+		fmt.Println(err.Error())
+		writeError(w, ErrInternalError)
+		return
+	}
+	userID, err := GetUserIDFromContext(ctx)
+	if err != nil {
+		fmt.Println(err.Error())
+		writeError(w, ErrUnauthorized)
+		return
+	}
+	tripDto := service.TripDTO{
+		PetID:  petID,
+		UserID: userID,
+	}
+	err = ph.tripService.Generate(ctx, tripDto)
+	if errors.Is(err, domain.ErrNotEnoguhCoins) {
+		writeError(w, ErrNotEnoughCoins)
+		return
+	}
+
+	if err != nil {
+		fmt.Println(err.Error())
+		writeError(w, ErrTripGenerationError)
+		return
+	}
+
+	writeJSONResponse(w, http.StatusNoContent, struct{}{})
+}
+
+func (ph *PetHandler) LastTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, err := GetUserIDFromContext(ctx)
+	if err != nil {
+		writeError(w, ErrUnauthorized)
+		return
+	}
+
+	trip, reward, err := ph.tripService.GetLastTrip(ctx, userID)
+	if errors.Is(err, domain.ErrNotPendingTrip) || errors.Is(err, domain.ErrTripNotFound) {
+		writeJSONResponse(w, http.StatusNoContent, struct{}{})
+		return
+	} else if err != nil {
+		writeError(w, ErrInternalError)
+		return
+	}
+
+	var rewardResponse *RewardResponse
+	if reward != nil {
+		rewardResponse = &RewardResponse{
+			ID:           reward.ID,
+			PromoCode:    reward.PromoCode,
+			Name:         reward.Name,
+			Description:  reward.Description,
+			Status:       reward.Status,
+			ExpiresAt:    reward.ExpiresAt,
+			EarnedReason: reward.EarnedReason,
+			RedeemedAt:   reward.RedeemedAt,
+		}
+	}
+
+	resp := &TripResponse{
+		Story:  trip.Story,
+		Coins:  *trip.RewardCoins,
+		XP:     *trip.RewardXP,
+		Reward: rewardResponse,
+	}
+
+	writeJSONResponse(w, http.StatusOK, resp)
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 type PetResponse struct {
@@ -19,6 +20,24 @@ type RewardDescriptionResponse struct {
 	Code        string `json:"code"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+}
+
+type RewardResponse struct {
+	ID           string     `json:"id"`
+	PromoCode    string     `json:"promo_code"`
+	Name         string     `json:"name"`
+	Description  string     `json:"description"`
+	Status       string     `json:"status"`
+	ExpiresAt    string     `json:"expires_at"`
+	EarnedReason string     `json:"earned_reason"`
+	RedeemedAt   *time.Time `json:"redeemed_at"`
+}
+
+type TripResponse struct {
+	Story  string          `json:"story"`
+	Coins  int32           `json:"coins"`
+	XP     int32           `json:"xp"`
+	Reward *RewardResponse `json:"reward,omitempty"`
 }
 
 type LeaderboardItemResponse struct {

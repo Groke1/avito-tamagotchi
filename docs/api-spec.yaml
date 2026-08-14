@@ -215,6 +215,50 @@ paths:
                 $ref: "#/components/schemas/WebSocketTicket"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /pet/trip/last:
+    get:
+      tags:
+        - Pet
+      summary: Получить информацию о последнем путешествии
+      responses:
+        "200":
+          description: Информация о последнем путешествии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripResponse"
+        "204":
+          description: Нет путешествий для показа
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервера
+  /pet/trip/{pet_id}:
+    post:
+      tags: 
+        - Pet
+      summary: Создать путешествие для питомца
+      responses:
+        "204": 
+            description: Путешествие создано
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервера
   /ws:
     get:
       tags:
@@ -251,6 +295,41 @@ paths:
       tags:
         - Leaderboard
       summary: Получить топ пользователей
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Количество записей, максимум 100
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Список лидеров
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LeaderboardEntry"
+                  current_user:
+                    allOf:
+                      - $ref: "#/components/schemas/LeaderboardEntry"
+                    nullable: true
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /leaderboard/weekly:
+    get:
+      tags:
+        - Leaderboard
+      summary: Получить топ пользователей за неделю набравших наибольшее число опыта
       parameters:
         - name: limit
           in: query
@@ -501,6 +580,15 @@ components:
             code: VALIDATION_ERROR
             message: Проверьте переданные данные
   schemas:
+    TripResponse:
+      type: object
+      required:
+        - story
+      properties:
+        story:
+          type: string
+          description: история путешествия
+          example: "Погулял в Авитоленде и вернулся супер счастливым"
     RewardDescriptionResponse:
       type: object
       required:

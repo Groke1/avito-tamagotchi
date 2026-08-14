@@ -11,7 +11,12 @@ export type AuthErrorCode =
   | 'UNAUTHORIZED'
   | 'VALIDATION_ERROR'
 
-export type PetErrorCode = 'PET_NOT_FOUND' | 'PET_ALREADY_EXISTS' | 'PET_ACTION_UNAVAILABLE'
+export type PetErrorCode =
+  | 'PET_NOT_FOUND'
+  | 'PET_ALREADY_EXISTS'
+  | 'PET_ACTION_UNAVAILABLE'
+  | 'INSUFFICIENT_COINS'
+  | 'TRIP_GENERATION_ERROR'
 
 export type TaskErrorCode = 'TASK_NOT_FOUND' | 'TASK_ALREADY_COMPLETED' | 'TASK_EXPIRED'
 

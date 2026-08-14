@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/cayman444/avito-gamification-hackathon.tasks/internal/controller"
@@ -80,6 +81,7 @@ func (h *Handlers) CompleteTask(con *gin.Context) {
 	taskID := con.Param("task_id")
 	result, err := h.completeTaskHandler.Handle(con.Request.Context(), controller.CompleteTaskQuery{TaskID: taskID, UserID: uid})
 	if err != nil {
+		fmt.Println(err)
 		if errors.Is(err, entity.ErrTaskNotFound) {
 			SendError(con, entity.ErrTaskNotFound)
 			return
