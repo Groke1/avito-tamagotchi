@@ -91,7 +91,7 @@ func (ps *PetService) FeedPet(ctx context.Context, userID string) (*domain.Pet, 
 		return nil, err
 	} else if !errors.Is(err, domain.ErrTripNotFound) && trip.Status == domain.InProgress {
 		return nil, &domain.ActionUnavailableError{
-			RetryAfter: time.Duration(trip.EndedAt.Sub(time.Now().UTC()).Seconds()),
+			RetryAfter: trip.EndedAt.Sub(time.Now().UTC()),
 		}
 	}
 
@@ -147,7 +147,7 @@ func (ps *PetService) StrokePet(ctx context.Context, userID string) (*domain.Pet
 		return nil, err
 	} else if !errors.Is(err, domain.ErrTripNotFound) && trip.Status == domain.InProgress {
 		return nil, &domain.ActionUnavailableError{
-			RetryAfter: time.Duration(trip.EndedAt.Sub(time.Now().UTC()).Seconds()),
+			RetryAfter: trip.EndedAt.Sub(time.Now().UTC()),
 		}
 	}
 

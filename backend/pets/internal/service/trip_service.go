@@ -116,7 +116,7 @@ func (ts *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	journey := domain.JourneyResult{
 		Location: defaultLocation,
 		Events:   shuffleEvents,
-		Reward:   ts.rewardPolicy.GenerateReward(IsNegativeInt == 1),
+		Reward:   ts.rewardPolicy.GenerateReward(IsNegativeInt == 0),
 	}
 
 	lastPetTrips, err := ts.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
@@ -199,10 +199,9 @@ func (ts *TripService) GetLastTrip(ctx context.Context, userID string) (*domain.
 		return nil, nil, err
 	}
 
-	if trip.Status == domain.Delivered {
-		return trip, nil, nil
-	} else if trip.Status == domain.InProgress {
+	if trip.Status != domain.PendingDelivery {
 		return nil, nil, domain.ErrNotPendingTrip
+		// return trip, nil, nil // Пока возвращаю trip
 	}
 
 	_, err = ts.petService.GrantXP(ctx, userID, int(*trip.RewardXP))
