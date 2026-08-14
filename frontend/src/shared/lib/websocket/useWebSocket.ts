@@ -61,6 +61,14 @@ export const useWebSocket = () => {
                 closeButton: true,
                 description: `Получено +${xp ?? 0} XP питомцу${coins ? ` и +${coins} монет` : ''}!`,
               })
+            } else if (data.event_type === 'trip.completed') {
+              dispatch(baseApi.util.invalidateTags(['Pet', 'User', 'Rewards', 'Leaderboard']))
+              toast.success('Питомец вернулся из путешествия! 🧭🎒', {
+                position: 'top-center',
+                duration: 8000,
+                closeButton: true,
+                description: 'Результаты и награды доступны на главном экране!',
+              })
             }
           } catch {
             toast.error('Ошибка при обработке сообщения сервера')

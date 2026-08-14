@@ -1,11 +1,12 @@
-import { logout } from '@/entities/user'
 import { describe, expect, it } from 'vitest'
-import { petSlice, setPet } from './petSlice'
-import type { Pet, PetState } from './types'
+import { clearLatestTrip, petSlice, setPet } from './petSlice'
+import type { Pet, PetState, TripResult } from './types'
 
 describe('petSlice', () => {
   const initialState: PetState = {
     pet: null,
+    latestTrip: null,
+    dismissedStory: null,
     isInitialized: false,
   }
 
@@ -19,6 +20,13 @@ describe('petSlice', () => {
     happiness: 90,
   }
 
+  const mockTrip: TripResult = {
+    story: 'Кот исследовал город',
+    coins: 50,
+    xp: 40,
+    reward: null,
+  }
+
   it('should handle setPet', () => {
     const state = petSlice.reducer(initialState, setPet(mockPet))
 
@@ -26,15 +34,15 @@ describe('petSlice', () => {
     expect(state.isInitialized).toBe(true)
   })
 
-  it('should reset pet state on logout', () => {
-    const activeState: PetState = {
-      pet: mockPet,
-      isInitialized: true,
+  it('should handle clearLatestTrip and save dismissedStory', () => {
+    const stateWithTrip: PetState = {
+      ...initialState,
+      latestTrip: mockTrip,
     }
 
-    const state = petSlice.reducer(activeState, logout())
+    const state = petSlice.reducer(stateWithTrip, clearLatestTrip())
 
-    expect(state.pet).toBeNull()
-    expect(state.isInitialized).toBe(false)
+    expect(state.latestTrip).toBeNull()
+    expect(state.dismissedStory).toBe(mockTrip.story)
   })
 })
