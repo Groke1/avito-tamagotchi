@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/frontend-trips
     paths:
       - ".github/workflows/**"
       - "backend/**"
