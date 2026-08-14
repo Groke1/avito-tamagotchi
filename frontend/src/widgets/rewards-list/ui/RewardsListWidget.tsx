@@ -7,7 +7,10 @@ import { RewardsContentList } from './RewardsContentList'
 import { RewardsTabList } from './RewardsTabList'
 
 export const RewardsListWidget = () => {
-  const { data: rewardsData, isLoading, isError, refetch } = useGetRewardsQuery()
+  const { data: rewardsData, isLoading, isError, refetch } = useGetRewardsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  })
+
   const { redeemingPromoCode, handleRedeem } = useRedeemReward()
   const { items, activeCount, usedCount, activeTab, getFilteredRewards, handleSetTab } =
     useRewardsListTabs(rewardsData)

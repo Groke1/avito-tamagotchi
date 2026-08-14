@@ -7,7 +7,9 @@ import { TasksContentList } from './TasksContentList'
 import { TasksTabList } from './TasksTabList'
 
 export const TasksListWidget = () => {
-  const { data: tasksData, isLoading, isError, refetch } = useGetTasksQuery()
+  const { data: tasksData, isLoading, isError, refetch } = useGetTasksQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  })
   const { completingTaskId, handleComplete } = useCompleteTask()
   const { items, activeCount, activeTab, completedCount, getFilteredTasks, handleSetTab } =
     useTasksListTabs(tasksData)
