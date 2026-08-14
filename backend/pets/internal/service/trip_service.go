@@ -116,7 +116,7 @@ func (ts *TripService) Generate(ctx context.Context, dto TripDTO) error {
 	journey := domain.JourneyResult{
 		Location: defaultLocation,
 		Events:   shuffleEvents,
-		Reward:   ts.rewardPolicy.GenerateReward(IsNegativeInt == 1),
+		Reward:   ts.rewardPolicy.GenerateReward(IsNegativeInt == 0),
 	}
 
 	lastPetTrips, err := ts.tripRepository.GetLastDeliveredTripsByPetID(ctx, dto.PetID, recentStoriesLimit)
