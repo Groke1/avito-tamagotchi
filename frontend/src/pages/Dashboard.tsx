@@ -1,5 +1,10 @@
 import { HeaderDashboard } from '@/widgets/header'
-import { PetShowcase, StreakEntry, TodayQuestsWidget } from '@/widgets/pet-dashboard'
+import {
+  PetShowcase,
+  StreakEntry,
+  TodayQuestsWidget,
+  TripResultWidget,
+} from '@/widgets/pet-dashboard'
 import { PetHungry } from '@/widgets/pet-hungry'
 
 export const Dashboard = () => {
@@ -8,8 +13,9 @@ export const Dashboard = () => {
       <HeaderDashboard />
       <PetHungry />
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 ">
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-5 space-y-6">
           <PetShowcase />
+          <TripResultWidget />
         </div>
         <div className="lg:col-span-5 space-y-6">
           <StreakEntry />

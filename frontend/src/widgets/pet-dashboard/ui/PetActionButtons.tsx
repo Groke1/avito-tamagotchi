@@ -5,10 +5,12 @@ export const PetActionButtons = () => {
   const {
     handleFeed,
     handleStroke,
+    handleTrip,
     isFeedLoading,
     isFullHappiness,
     isFullSatiety,
     isStrokeLoading,
+    isTripLoading,
   } = usePetActionButtons()
 
   return (
@@ -17,7 +19,7 @@ export const PetActionButtons = () => {
         variant="outline"
         size="sm"
         isLoading={isFeedLoading}
-        disabled={isFeedLoading || isStrokeLoading}
+        disabled={isFeedLoading || isStrokeLoading || isTripLoading}
         onClick={handleFeed}
         title={isFullSatiety ? 'Питомец полностью сыт! (100/100)' : ''}
         className="w-full hover:bg-avito-green/10 hover:border-avito-green/60 hover:text-avito-green-dark transition-all duration-200"
@@ -28,15 +30,21 @@ export const PetActionButtons = () => {
         variant="outline"
         size="sm"
         isLoading={isStrokeLoading}
-        disabled={isFeedLoading || isStrokeLoading}
+        disabled={isFeedLoading || isStrokeLoading || isTripLoading}
         onClick={handleStroke}
         title={isFullHappiness ? 'Питомец уже максимально счастлив! (100/100)' : ''}
         className="w-full hover:bg-avito-blue/10 hover:border-avito-blue/60 hover:text-avito-blue-dark transition-all duration-200"
       >
         🖐️ Погладить
       </Button>
-      <Button size="sm" className="col-span-1 xl:col-span-2">
-        🧭 Отправить в путешествие
+      <Button
+        size="sm"
+        className="col-span-1 xl:col-span-2"
+        isLoading={isTripLoading}
+        disabled={isFeedLoading || isStrokeLoading || isTripLoading}
+        onClick={handleTrip}
+      >
+        🧭 Отправить в путешествие (-100 монет)
       </Button>
     </div>
   )
