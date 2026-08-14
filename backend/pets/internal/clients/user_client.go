@@ -23,7 +23,7 @@ func NewUserClient(baseURL string) *UserClient {
 		client: &http.Client{Timeout: 3 * time.Second}}
 }
 
-func (uc *UserClient) WithdrawCoins(ctx context.Context, userID string, amount int) error {
+func (uc *UserClient) AdjustCoins(ctx context.Context, userID string, amount int) error {
 	if amount == 0 {
 		return nil
 	}

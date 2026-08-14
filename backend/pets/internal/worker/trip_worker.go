@@ -8,7 +8,7 @@ import (
 	"github.com/cayman444/avito-gamification-hackathon/backend/pets/internal/service"
 )
 
-const TripWorkerCooldown = 30 * time.Second
+const TripWorkerCooldown = 20 * time.Second
 
 type TripWorker struct {
 	tripRepository *repository.TripRepository

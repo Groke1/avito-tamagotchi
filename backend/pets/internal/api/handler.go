@@ -394,9 +394,11 @@ func (ph *PetHandler) LastTrip(w http.ResponseWriter, r *http.Request) {
 
 	trip, reward, err := ph.tripService.GetLastTrip(ctx, userID)
 	if errors.Is(err, domain.ErrNotPendingTrip) || errors.Is(err, domain.ErrTripNotFound) {
+		log.Printf("[LAST TRIP] no travel: %v", err)
 		writeJSONResponse(w, http.StatusNoContent, struct{}{})
 		return
 	} else if err != nil {
+		log.Printf("[LAST TRIP] Internal error: %v", err)
 		writeError(w, ErrInternalError)
 		return
 	}
